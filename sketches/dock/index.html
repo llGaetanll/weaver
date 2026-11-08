@@ -21,9 +21,9 @@
   is argued about once rather than twice.
 </p>
 <p class="lead">
-  The library draws three things and no more: <b>a window's title bar</b>, <b>the
-  gap between two windows</b>, and <b>the ghost and the drop region</b> that
-  exist only while a window is being moved. Everything inside a window belongs to
+  The library draws three things and no more: <b>a window's tab</b>, <b>the gap
+  between two windows</b>, and <b>the ghost and the drop regions</b> that exist
+  only while a window is being moved. Everything inside a window belongs to
   whoever is using the library. The look is borrowed from <code>hl</code> to
   have something to draw with — it is a role in
   <code>design/theme.css</code> away from being something else.
@@ -64,7 +64,7 @@
         <div class="col" style="grid-template-rows: 1fr var(--gap) 120px">
           <div class="pane sketch">
             <div class="pane-strip"></div><div class="tab is-showing">
-              <button class="grip" title="Drag to move this window"><svg viewBox="0 0 10 16" width="10" height="16" aria-hidden="true"><circle cx="3" cy="4" r="1.1"/><circle cx="7" cy="4" r="1.1"/><circle cx="3" cy="8" r="1.1"/><circle cx="7" cy="8" r="1.1"/><circle cx="3" cy="12" r="1.1"/><circle cx="7" cy="12" r="1.1"/></svg></button>
+              <span class="tab-icon"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2 H10 V10 H2 Z" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></span>
               <h3>Canvas</h3>
               <span class="slot"><button class="slotbtn" title="The host's one control"><svg width="13" height="13" viewBox="0 0 13 13" aria-hidden="true"><circle cx="2.5" cy="6.5" r="1.1" fill="currentColor"/><circle cx="6.5" cy="6.5" r="1.1" fill="currentColor"/><circle cx="10.5" cy="6.5" r="1.1" fill="currentColor"/></svg></button></span>
             </div>
@@ -73,7 +73,7 @@
           <div class="gap gap-h"></div>
           <div class="pane sketch">
             <div class="pane-strip"></div><div class="tab is-showing">
-              <button class="grip"><svg viewBox="0 0 10 16" width="10" height="16" aria-hidden="true"><circle cx="3" cy="4" r="1.1"/><circle cx="7" cy="4" r="1.1"/><circle cx="3" cy="8" r="1.1"/><circle cx="7" cy="8" r="1.1"/><circle cx="3" cy="12" r="1.1"/><circle cx="7" cy="12" r="1.1"/></svg></button>
+              <span class="tab-icon"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2 H10 V10 H2 Z" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></span>
               <h3>Timeline</h3>
             </div>
             <div class="win"><div class="fill lines"></div></div>
@@ -82,7 +82,7 @@
         <div class="gap gap-v"></div>
         <div class="pane sketch">
           <div class="pane-strip"></div><div class="tab is-showing">
-            <button class="grip"><svg viewBox="0 0 10 16" width="10" height="16" aria-hidden="true"><circle cx="3" cy="4" r="1.1"/><circle cx="7" cy="4" r="1.1"/><circle cx="3" cy="8" r="1.1"/><circle cx="7" cy="8" r="1.1"/><circle cx="3" cy="12" r="1.1"/><circle cx="7" cy="12" r="1.1"/></svg></button>
+            <span class="tab-icon"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2 H10 V10 H2 Z" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></span>
             <h3>Inspector</h3>
           </div>
           <div class="win"><div class="fill lines"></div></div>
@@ -91,10 +91,15 @@
     </div>
   </div>
   <p class="note">
-    The grip is <b>always drawn</b>, dim until the pointer is on the title bar.
-    A handle that appears only once you are already over it is a handle nobody
-    finds, and where a window sits is the user's arrangement rather than the
-    program's opinion.
+    <b>A window's title bar is a tab</b>, even when it is the only one. There
+    is no second way of drawing a window that happens to be alone, and no
+    handle hidden inside it: the whole tab moves the window, and the whole tab
+    picks it. One target, so there is nothing to aim at.
+  </p>
+  <p class="note">
+    The mark before the name is the <b>host's</b>. The library has no opinion
+    about what a window is, so it leaves room for one and draws nothing when
+    there is none.
   </p>
 </section>
 
@@ -112,12 +117,12 @@
         <div class="hostbar"><b>weaver</b> <span>a gap held</span></div>
         <div class="dock row" style="grid-template-columns: 1fr var(--gap) 300px">
           <div class="pane sketch">
-            <div class="pane-strip"></div><div class="tab is-showing"><button class="grip"><svg viewBox="0 0 10 16" width="10" height="16" aria-hidden="true"><circle cx="3" cy="4" r="1.1"/><circle cx="7" cy="4" r="1.1"/><circle cx="3" cy="8" r="1.1"/><circle cx="7" cy="8" r="1.1"/><circle cx="3" cy="12" r="1.1"/><circle cx="7" cy="12" r="1.1"/></svg></button><h3>Canvas</h3></div>
+            <div class="pane-strip"></div><div class="tab is-showing"><span class="tab-icon"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2 H10 V10 H2 Z" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></span><h3>Canvas</h3></div>
             <div class="win"><div class="fill">flex</div></div>
           </div>
           <div class="gap gap-v held"></div>
           <div class="pane sketch">
-            <div class="pane-strip"></div><div class="tab is-showing"><button class="grip"><svg viewBox="0 0 10 16" width="10" height="16" aria-hidden="true"><circle cx="3" cy="4" r="1.1"/><circle cx="7" cy="4" r="1.1"/><circle cx="3" cy="8" r="1.1"/><circle cx="7" cy="8" r="1.1"/><circle cx="3" cy="12" r="1.1"/><circle cx="7" cy="12" r="1.1"/></svg></button><h3>Inspector</h3></div>
+            <div class="pane-strip"></div><div class="tab is-showing"><span class="tab-icon"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2 H10 V10 H2 Z" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></span><h3>Inspector</h3></div>
             <div class="win"><div class="fill">300px</div></div>
           </div>
         </div>
@@ -136,12 +141,12 @@
         <div class="hostbar"><b>weaver</b> <span>a gap held</span></div>
         <div class="dock col" style="grid-template-rows: 1fr var(--gap) 1fr">
           <div class="pane sketch">
-            <div class="pane-strip"></div><div class="tab is-showing"><button class="grip"><svg viewBox="0 0 10 16" width="10" height="16" aria-hidden="true"><circle cx="3" cy="4" r="1.1"/><circle cx="7" cy="4" r="1.1"/><circle cx="3" cy="8" r="1.1"/><circle cx="7" cy="8" r="1.1"/><circle cx="3" cy="12" r="1.1"/><circle cx="7" cy="12" r="1.1"/></svg></button><h3>Canvas</h3></div>
+            <div class="pane-strip"></div><div class="tab is-showing"><span class="tab-icon"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2 H10 V10 H2 Z" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></span><h3>Canvas</h3></div>
             <div class="win"><div class="fill">flex 1</div></div>
           </div>
           <div class="gap gap-h held"></div>
           <div class="pane sketch">
-            <div class="pane-strip"></div><div class="tab is-showing"><button class="grip"><svg viewBox="0 0 10 16" width="10" height="16" aria-hidden="true"><circle cx="3" cy="4" r="1.1"/><circle cx="7" cy="4" r="1.1"/><circle cx="3" cy="8" r="1.1"/><circle cx="7" cy="8" r="1.1"/><circle cx="3" cy="12" r="1.1"/><circle cx="7" cy="12" r="1.1"/></svg></button><h3>Timeline</h3></div>
+            <div class="pane-strip"></div><div class="tab is-showing"><span class="tab-icon"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2 H10 V10 H2 Z" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></span><h3>Timeline</h3></div>
             <div class="win"><div class="fill">flex 1</div></div>
           </div>
         </div>
@@ -159,8 +164,8 @@
     Every window carries a <b>minimum</b> in logical pixels, and a drag stops
     when it reaches one rather than pushing the next window along. Dragging the
     gap never changes which windows exist or where they sit in the tree —
-    that is the other gesture, and keeping them apart is why the grip is not
-    on the gap.
+    that is the other gesture, and keeping them apart is why a window is moved
+    by its tab and never by a gap.
   </p>
   <div class="gap-note">
     <b>Not decided:</b> what the dock does when the surface is smaller than the
@@ -250,7 +255,7 @@
 <section class="sheet" id="edge">
   <div class="name"><h2>Moving — over a window's edge</h2><code>#edge</code></div>
   <p class="note">
-    The inspector has been picked up by its grip and the pointer is in the
+    The inspector has been picked up by its tab and the pointer is in the
     canvas's left band. What is drawn is <b>every region the canvas offers</b>,
     with the one under the pointer darker — the regions the pointer has to be
     in, and not the slots the window would end up with.
@@ -268,18 +273,18 @@
       <div class="dock row" style="grid-template-columns: 1fr var(--gap) 300px">
         <div class="col" style="grid-template-rows: 1fr var(--gap) 120px">
           <div class="pane sketch">
-            <div class="pane-strip"></div><div class="tab is-showing"><button class="grip"><svg viewBox="0 0 10 16" width="10" height="16" aria-hidden="true"><circle cx="3" cy="4" r="1.1"/><circle cx="7" cy="4" r="1.1"/><circle cx="3" cy="8" r="1.1"/><circle cx="7" cy="8" r="1.1"/><circle cx="3" cy="12" r="1.1"/><circle cx="7" cy="12" r="1.1"/></svg></button><h3>Canvas</h3></div>
+            <div class="pane-strip"></div><div class="tab is-showing"><span class="tab-icon"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2 H10 V10 H2 Z" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></span><h3>Canvas</h3></div>
             <div class="win"><div class="fill">the host's</div></div>
           </div>
           <div class="gap gap-h"></div>
           <div class="pane sketch">
-            <div class="pane-strip"></div><div class="tab is-showing"><button class="grip"><svg viewBox="0 0 10 16" width="10" height="16" aria-hidden="true"><circle cx="3" cy="4" r="1.1"/><circle cx="7" cy="4" r="1.1"/><circle cx="3" cy="8" r="1.1"/><circle cx="7" cy="8" r="1.1"/><circle cx="3" cy="12" r="1.1"/><circle cx="7" cy="12" r="1.1"/></svg></button><h3>Timeline</h3></div>
+            <div class="pane-strip"></div><div class="tab is-showing"><span class="tab-icon"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2 H10 V10 H2 Z" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></span><h3>Timeline</h3></div>
             <div class="win"><div class="fill lines"></div></div>
           </div>
         </div>
         <div class="gap gap-v"></div>
         <div class="pane sketch is-lifted">
-          <div class="pane-strip"></div><div class="tab is-showing"><button class="grip"><svg viewBox="0 0 10 16" width="10" height="16" aria-hidden="true"><circle cx="3" cy="4" r="1.1"/><circle cx="7" cy="4" r="1.1"/><circle cx="3" cy="8" r="1.1"/><circle cx="7" cy="8" r="1.1"/><circle cx="3" cy="12" r="1.1"/><circle cx="7" cy="12" r="1.1"/></svg></button><h3>Inspector</h3></div>
+          <div class="pane-strip"></div><div class="tab is-showing"><span class="tab-icon"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2 H10 V10 H2 Z" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></span><h3>Inspector</h3></div>
           <div class="win"><div class="fill lines"></div></div>
         </div>
 
@@ -292,7 +297,7 @@
         </div>
 
         <div class="ghost sketch" style="left: 150px; top: 120px; width: 280px; height: 130px">
-          <div class="pane-strip"></div><div class="tab is-showing"><button class="grip"><svg viewBox="0 0 10 16" width="10" height="16" aria-hidden="true"><circle cx="3" cy="4" r="1.1"/><circle cx="7" cy="4" r="1.1"/><circle cx="3" cy="8" r="1.1"/><circle cx="7" cy="8" r="1.1"/><circle cx="3" cy="12" r="1.1"/><circle cx="7" cy="12" r="1.1"/></svg></button><h3>Inspector</h3></div>
+          <div class="pane-strip"></div><div class="tab is-showing"><span class="tab-icon"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2 H10 V10 H2 Z" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></span><h3>Inspector</h3></div>
           <div class="win"><div class="fill lines"></div></div>
         </div>
         <div class="cursor" style="left: 188px; top: 133px">
@@ -327,9 +332,10 @@
     either of those reads as lag rather than as motion.
   </p>
   <p class="note">
-    <b>A press is not yet a move.</b> The grip has to travel a few pixels before
-    anything lifts, so a click on it is still a click and a twitch does not
-    rearrange the screen. The threshold is a distance and not a duration, which
+    <b>A press is not yet a move.</b> A tab is picked the moment it is pressed,
+    and has to travel a few pixels before anything lifts — so a press that goes
+    nowhere has brought a window forward and done nothing else, and a twitch
+    does not rearrange the screen. The threshold is a distance and not a duration, which
     is why nothing in the library reads a clock.
   </p>
 </section>
@@ -357,18 +363,18 @@
       <div class="dock row" style="grid-template-columns: 1fr var(--gap) 300px">
         <div class="col" style="grid-template-rows: 1fr var(--gap) 120px">
           <div class="pane sketch">
-            <div class="pane-strip"></div><div class="tab is-showing"><button class="grip"><svg viewBox="0 0 10 16" width="10" height="16" aria-hidden="true"><circle cx="3" cy="4" r="1.1"/><circle cx="7" cy="4" r="1.1"/><circle cx="3" cy="8" r="1.1"/><circle cx="7" cy="8" r="1.1"/><circle cx="3" cy="12" r="1.1"/><circle cx="7" cy="12" r="1.1"/></svg></button><h3>Canvas</h3></div>
+            <div class="pane-strip"></div><div class="tab is-showing"><span class="tab-icon"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2 H10 V10 H2 Z" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></span><h3>Canvas</h3></div>
             <div class="win"><div class="fill">the host's</div></div>
           </div>
           <div class="gap gap-h"></div>
           <div class="pane sketch is-lifted">
-            <div class="pane-strip"></div><div class="tab is-showing"><button class="grip"><svg viewBox="0 0 10 16" width="10" height="16" aria-hidden="true"><circle cx="3" cy="4" r="1.1"/><circle cx="7" cy="4" r="1.1"/><circle cx="3" cy="8" r="1.1"/><circle cx="7" cy="8" r="1.1"/><circle cx="3" cy="12" r="1.1"/><circle cx="7" cy="12" r="1.1"/></svg></button><h3>Timeline</h3></div>
+            <div class="pane-strip"></div><div class="tab is-showing"><span class="tab-icon"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2 H10 V10 H2 Z" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></span><h3>Timeline</h3></div>
             <div class="win"><div class="fill lines"></div></div>
           </div>
         </div>
         <div class="gap gap-v"></div>
         <div class="pane sketch">
-          <div class="pane-strip"></div><div class="tab is-showing"><button class="grip"><svg viewBox="0 0 10 16" width="10" height="16" aria-hidden="true"><circle cx="3" cy="4" r="1.1"/><circle cx="7" cy="4" r="1.1"/><circle cx="3" cy="8" r="1.1"/><circle cx="7" cy="8" r="1.1"/><circle cx="3" cy="12" r="1.1"/><circle cx="7" cy="12" r="1.1"/></svg></button><h3>Inspector</h3></div>
+          <div class="pane-strip"></div><div class="tab is-showing"><span class="tab-icon"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2 H10 V10 H2 Z" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></span><h3>Inspector</h3></div>
           <div class="win"><div class="fill lines"></div></div>
         </div>
 
@@ -377,7 +383,7 @@
         </div>
 
         <div class="ghost sketch" style="left: calc(100% - 430px); top: 150px; width: 260px; height: 120px">
-          <div class="pane-strip"></div><div class="tab is-showing"><button class="grip"><svg viewBox="0 0 10 16" width="10" height="16" aria-hidden="true"><circle cx="3" cy="4" r="1.1"/><circle cx="7" cy="4" r="1.1"/><circle cx="3" cy="8" r="1.1"/><circle cx="7" cy="8" r="1.1"/><circle cx="3" cy="12" r="1.1"/><circle cx="7" cy="12" r="1.1"/></svg></button><h3>Timeline</h3></div>
+          <div class="pane-strip"></div><div class="tab is-showing"><span class="tab-icon"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2 H10 V10 H2 Z" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></span><h3>Timeline</h3></div>
           <div class="win"><div class="fill lines"></div></div>
         </div>
         <div class="cursor" style="left: calc(100% - 303px); top: 163px">
@@ -414,18 +420,18 @@
       <div class="dock row" style="grid-template-columns: 1fr var(--gap) 300px">
         <div class="col" style="grid-template-rows: 1fr var(--gap) 120px">
           <div class="pane sketch">
-            <div class="pane-strip"></div><div class="tab is-showing"><button class="grip"><svg viewBox="0 0 10 16" width="10" height="16" aria-hidden="true"><circle cx="3" cy="4" r="1.1"/><circle cx="7" cy="4" r="1.1"/><circle cx="3" cy="8" r="1.1"/><circle cx="7" cy="8" r="1.1"/><circle cx="3" cy="12" r="1.1"/><circle cx="7" cy="12" r="1.1"/></svg></button><h3>Canvas</h3></div>
+            <div class="pane-strip"></div><div class="tab is-showing"><span class="tab-icon"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2 H10 V10 H2 Z" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></span><h3>Canvas</h3></div>
             <div class="win"><div class="fill">the host's</div></div>
           </div>
           <div class="gap gap-h"></div>
           <div class="pane sketch">
-            <div class="pane-strip"></div><div class="tab is-showing"><button class="grip"><svg viewBox="0 0 10 16" width="10" height="16" aria-hidden="true"><circle cx="3" cy="4" r="1.1"/><circle cx="7" cy="4" r="1.1"/><circle cx="3" cy="8" r="1.1"/><circle cx="7" cy="8" r="1.1"/><circle cx="3" cy="12" r="1.1"/><circle cx="7" cy="12" r="1.1"/></svg></button><h3>Timeline</h3></div>
+            <div class="pane-strip"></div><div class="tab is-showing"><span class="tab-icon"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2 H10 V10 H2 Z" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></span><h3>Timeline</h3></div>
             <div class="win"><div class="fill lines"></div></div>
           </div>
         </div>
         <div class="gap gap-v"></div>
         <div class="pane sketch is-lifted">
-          <div class="pane-strip"></div><div class="tab is-showing"><button class="grip"><svg viewBox="0 0 10 16" width="10" height="16" aria-hidden="true"><circle cx="3" cy="4" r="1.1"/><circle cx="7" cy="4" r="1.1"/><circle cx="3" cy="8" r="1.1"/><circle cx="7" cy="8" r="1.1"/><circle cx="3" cy="12" r="1.1"/><circle cx="7" cy="12" r="1.1"/></svg></button><h3>Inspector</h3></div>
+          <div class="pane-strip"></div><div class="tab is-showing"><span class="tab-icon"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2 H10 V10 H2 Z" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></span><h3>Inspector</h3></div>
           <div class="win"><div class="fill lines"></div></div>
         </div>
 
@@ -434,7 +440,7 @@
         </div>
 
         <div class="ghost sketch" style="left: 24px; top: 140px; width: 260px; height: 120px">
-          <div class="pane-strip"></div><div class="tab is-showing"><button class="grip"><svg viewBox="0 0 10 16" width="10" height="16" aria-hidden="true"><circle cx="3" cy="4" r="1.1"/><circle cx="7" cy="4" r="1.1"/><circle cx="3" cy="8" r="1.1"/><circle cx="7" cy="8" r="1.1"/><circle cx="3" cy="12" r="1.1"/><circle cx="7" cy="12" r="1.1"/></svg></button><h3>Inspector</h3></div>
+          <div class="pane-strip"></div><div class="tab is-showing"><span class="tab-icon"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2 H10 V10 H2 Z" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></span><h3>Inspector</h3></div>
           <div class="win"><div class="fill lines"></div></div>
         </div>
         <div class="cursor" style="left: 7px; top: 152px">
@@ -471,23 +477,23 @@
       <div class="dock row" style="grid-template-columns: 1fr var(--gap) 300px">
         <div class="col" style="grid-template-rows: 1fr var(--gap) 120px">
           <div class="pane sketch">
-            <div class="pane-strip"></div><div class="tab is-showing"><button class="grip"><svg viewBox="0 0 10 16" width="10" height="16" aria-hidden="true"><circle cx="3" cy="4" r="1.1"/><circle cx="7" cy="4" r="1.1"/><circle cx="3" cy="8" r="1.1"/><circle cx="7" cy="8" r="1.1"/><circle cx="3" cy="12" r="1.1"/><circle cx="7" cy="12" r="1.1"/></svg></button><h3>Canvas</h3></div>
+            <div class="pane-strip"></div><div class="tab is-showing"><span class="tab-icon"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2 H10 V10 H2 Z" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></span><h3>Canvas</h3></div>
             <div class="win"><div class="fill">the host's</div></div>
           </div>
           <div class="gap gap-h"></div>
           <div class="pane sketch">
-            <div class="pane-strip"></div><div class="tab is-showing"><button class="grip"><svg viewBox="0 0 10 16" width="10" height="16" aria-hidden="true"><circle cx="3" cy="4" r="1.1"/><circle cx="7" cy="4" r="1.1"/><circle cx="3" cy="8" r="1.1"/><circle cx="7" cy="8" r="1.1"/><circle cx="3" cy="12" r="1.1"/><circle cx="7" cy="12" r="1.1"/></svg></button><h3>Timeline</h3></div>
+            <div class="pane-strip"></div><div class="tab is-showing"><span class="tab-icon"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2 H10 V10 H2 Z" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></span><h3>Timeline</h3></div>
             <div class="win"><div class="fill lines"></div></div>
           </div>
         </div>
         <div class="gap gap-v"></div>
         <div class="pane sketch is-lifted">
-          <div class="pane-strip"></div><div class="tab is-showing"><button class="grip"><svg viewBox="0 0 10 16" width="10" height="16" aria-hidden="true"><circle cx="3" cy="4" r="1.1"/><circle cx="7" cy="4" r="1.1"/><circle cx="3" cy="8" r="1.1"/><circle cx="7" cy="8" r="1.1"/><circle cx="3" cy="12" r="1.1"/><circle cx="7" cy="12" r="1.1"/></svg></button><h3>Inspector</h3></div>
+          <div class="pane-strip"></div><div class="tab is-showing"><span class="tab-icon"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2 H10 V10 H2 Z" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></span><h3>Inspector</h3></div>
           <div class="win"><div class="fill lines"></div></div>
         </div>
 
         <div class="ghost sketch" style="left: 50%; top: -22px; width: 260px; height: 120px">
-          <div class="pane-strip"></div><div class="tab is-showing"><button class="grip"><svg viewBox="0 0 10 16" width="10" height="16" aria-hidden="true"><circle cx="3" cy="4" r="1.1"/><circle cx="7" cy="4" r="1.1"/><circle cx="3" cy="8" r="1.1"/><circle cx="7" cy="8" r="1.1"/><circle cx="3" cy="12" r="1.1"/><circle cx="7" cy="12" r="1.1"/></svg></button><h3>Inspector</h3></div>
+          <div class="pane-strip"></div><div class="tab is-showing"><span class="tab-icon"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2 H10 V10 H2 Z" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></span><h3>Inspector</h3></div>
           <div class="win"><div class="fill lines"></div></div>
         </div>
       </div>
@@ -507,9 +513,9 @@
   <div class="name"><h2>Alone, and empty</h2><code>#alone</code></div>
   <p class="note">
     One window has <b>no gaps</b>, because a gap is a thing between two windows
-    and not a border. It keeps its title bar: the grip is how it will be moved
-    once there is somewhere to move it to, and a bar that comes and goes with
-    the window count is a bar whose height nobody can lay anything out against.
+    and not a border. It keeps its tab: the tab is how it will be moved once
+    there is somewhere to move it to, and a bar that comes and goes with the
+    window count is a bar whose height nobody can lay anything out against.
   </p>
   <div class="frame two">
     <figure>
@@ -517,7 +523,7 @@
         <div class="hostbar"><b>weaver</b> <span>one window</span></div>
         <div class="dock">
           <div class="pane sketch">
-            <div class="pane-strip"></div><div class="tab is-showing"><button class="grip"><svg viewBox="0 0 10 16" width="10" height="16" aria-hidden="true"><circle cx="3" cy="4" r="1.1"/><circle cx="7" cy="4" r="1.1"/><circle cx="3" cy="8" r="1.1"/><circle cx="7" cy="8" r="1.1"/><circle cx="3" cy="12" r="1.1"/><circle cx="7" cy="12" r="1.1"/></svg></button><h3>Canvas</h3></div>
+            <div class="pane-strip"></div><div class="tab is-showing"><span class="tab-icon"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2 H10 V10 H2 Z" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></span><h3>Canvas</h3></div>
             <div class="win"><div class="fill">the host's</div></div>
           </div>
         </div>

@@ -78,5 +78,6 @@ h1 { margin: 0; font-size: 24px; font-weight: 700; letter-spacing: -.03em; }
    it lets the browser stack them in a row. */
 .pane.sketch { position: relative; display: grid; grid-template-rows: var(--tab) 1fr; }
 .pane.sketch > .tab { width: 160px; }
+.pane.sketch > .tab.is-showing { box-shadow: inset 1px 0 0 var(--border), inset -1px 0 0 var(--border); }
 .ghost.sketch { display: grid; grid-template-rows: var(--tab) 1fr; }
 .ghost.sketch > .tab { width: 100%; }
