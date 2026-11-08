@@ -32,7 +32,9 @@ the ramps and the roles (`--bg`, `--panel`, `--border`, `--accent`, `--gap`,
 and every picture follows. What is here is borrowed from `hl`: black on white,
 black as the accent, red kept for the one thing red is for.
 
-`design/dock.css` is everything the library itself draws, and nothing else: a
-window's title bar, the gap between two windows, and the ghost and preview
-that exist only while a window is being moved. There are no buttons, inputs or
-rows here, because the library has no opinion about what goes inside a window.
+`../crates/dock-web/dock.css` is everything the library itself draws, and
+nothing else: a window's title bar, the gap between two windows, and the ghost
+and preview that exist only while a window is being moved. There are no
+buttons, inputs or rows in it, because the library has no opinion about what
+goes inside a window. The boards wear that file rather than a copy of it, so a
+change to one is a change to both.

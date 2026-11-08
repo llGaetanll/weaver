@@ -1,0 +1,21 @@
+[package]
+name = "dock-web"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+dock-state = { workspace = true }
+leptos = { workspace = true }
+wasm-bindgen = { workspace = true }
+
+[dependencies.web-sys]
+workspace = true
+features = [
+  "CssStyleDeclaration",
+  "DomRect",
+  "Element",
+  "HtmlElement",
+  "KeyboardEvent",
+  "PointerEvent",
+  "Window",
+]

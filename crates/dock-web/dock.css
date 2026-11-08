@@ -17,15 +17,25 @@ body {
 /* --- The dock ----------------------------------------------------------- */
 
 /* The surface every window lives on. Nothing overlaps: a window is a tile,
-   and the only thing ever drawn over one is the ghost under the cursor. */
+   and the only thing ever drawn over one is the ghost under the cursor.
+   Everything in it is placed by the machine, which is why there is no layout
+   here beyond "fill what you were given". */
 .dock {
   position: relative;
   display: grid;
   min-width: 0;
   min-height: 0;
+  height: 100%;
   background: var(--sunken);
   isolation: isolate;
+  user-select: none;
 }
+
+/* While a gesture is running the cursor belongs to the gesture, not to
+   whatever the pointer happens to be over. */
+.dock.is-col-resize, .dock.is-col-resize * { cursor: col-resize; }
+.dock.is-row-resize, .dock.is-row-resize * { cursor: row-resize; }
+.dock.is-grabbing, .dock.is-grabbing * { cursor: grabbing; }
 
 /* A group: children along one axis, with a gap between each pair. The axis
    alternates with depth, so a column inside a row needs no extra wrapper. */
