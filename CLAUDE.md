@@ -85,4 +85,5 @@ second copy of half the tree.
 ## Commits
 
 A commit is small and does one thing. Its description is at most three
-sentences and one paragraph — no bullet lists and no headings.
+sentences and one paragraph — no bullet lists and no headings. The
+`Co-Authored-By` trailer is welcome.
