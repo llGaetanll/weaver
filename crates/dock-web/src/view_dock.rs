@@ -77,7 +77,7 @@ pub fn DockView(
     // A region fades while a window is being carried and is simply gone once
     // it has been put down. The ghost is what says which of those is true.
     let moving = move || {
-        if dock.frame().ghost.is_some() {
+        if dock.frame().carried.is_some() {
             " is-moving"
         } else {
             ""
@@ -463,25 +463,15 @@ fn towards(from: Point, to: Point, by: f32) -> Point {
 /// and it would cover the hole it is going into.
 #[component]
 fn Ghost(dock: Dock, icon: Option<Callback<WindowId, AnyView>>) -> impl IntoView {
-    let rect = move || dock.frame().ghost;
-
-    let carried = move || {
-        dock.frame()
-            .panes
-            .iter()
-            .flat_map(|pane| pane.tabs.clone())
-            .find(|tab| tab.lifted)
-    };
-
-    let mark = move || {
-        let tab = carried()?;
-
-        Some(icon?.run(tab.window))
-    };
+    let carried = move || dock.frame().carried;
+    let mark = move || Some(icon?.run(carried()?.window));
 
     view! {
-        <Show when=move || rect().is_some()>
-            <div class="ghost" style=move || rect().map(place).unwrap_or_default()>
+        <Show when=move || carried().is_some()>
+            <div
+                class="ghost"
+                style=move || carried().map(|tab| place(tab.rect)).unwrap_or_default()
+            >
                 <div class="tab is-showing is-only">
                     <span class="tab-icon">{mark}</span>
                     <h3>{move || carried().map(|tab| tab.title).unwrap_or_default()}</h3>

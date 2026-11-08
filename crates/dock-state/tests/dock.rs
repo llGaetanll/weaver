@@ -156,7 +156,7 @@ fn a_press_on_a_tab_is_not_a_move() {
     eval!(&mut dock, < down(10.0, 10.0));
     eval!(&mut dock, < up(10.0, 10.0));
 
-    assert!(dock.frame().ghost.is_none());
+    assert!(dock.frame().carried.is_none());
     near(rect(&dock, A).w, 399.5, "nothing moved");
 }
 
@@ -166,17 +166,17 @@ fn a_press_that_travels_lifts_the_window() {
 
     eval!(&mut dock, < down(10.0, 10.0));
 
-    assert!(dock.frame().ghost.is_none(), "not yet past the threshold");
+    assert!(dock.frame().carried.is_none(), "not yet past the threshold");
 
     eval!(&mut dock, < moved(12.0, 11.0));
 
-    assert!(dock.frame().ghost.is_none(), "two pixels is a twitch");
+    assert!(dock.frame().carried.is_none(), "two pixels is a twitch");
 
     eval!(&mut dock, < moved(200.0, 300.0));
 
     let frame = dock.frame();
 
-    assert!(frame.ghost.is_some(), "now it is a move");
+    assert!(frame.carried.is_some(), "now it is a move");
     assert!(
         frame
             .windows
@@ -264,7 +264,7 @@ fn a_window_over_its_own_slot_proposes_nothing() {
     eval!(&mut dock, < down(10.0, 10.0));
     eval!(&mut dock, < moved(200.0, 300.0));
 
-    assert!(dock.frame().ghost.is_some(), "still being carried");
+    assert!(dock.frame().carried.is_some(), "still being carried");
     assert!(
         dock.frame().regions.is_empty(),
         "but its own slot is not a target"

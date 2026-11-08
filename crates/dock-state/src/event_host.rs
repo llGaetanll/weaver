@@ -25,4 +25,11 @@ pub enum EventHost {
     Closed {
         window: WindowId,
     },
+
+    /// Bring a window to the front of the slot it shares. A host that has
+    /// just laid out several windows has an opinion about which of them is
+    /// being looked at, and pressing a tab is not something it can do.
+    Show {
+        window: WindowId,
+    },
 }

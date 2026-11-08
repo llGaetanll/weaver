@@ -101,9 +101,11 @@ pub struct Frame {
     pub panes: Vec<PaneFrame>,
     pub windows: Vec<WindowFrame>,
     pub gaps: Vec<GapFrame>,
-    /// The window under the cursor, drawn over everything. The only thing in
-    /// the library ever drawn over a window.
-    pub ghost: Option<Rect>,
+    /// The tab under the cursor, drawn over everything — the only thing in
+    /// the library ever drawn over a window. It is given whole rather than as
+    /// a rectangle because what is being carried has a name, and while it is
+    /// in the air it is in no slot to read one from.
+    pub carried: Option<TabFrame>,
     /// Every region on offer where the pointer is: the five a window is
     /// divided into, or the single one a gap or the dock's edge makes. They
     /// are the shapes you have to be inside rather than the slots a window

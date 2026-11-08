@@ -146,6 +146,8 @@ impl StateDock {
                 place(&mut self.root, *window, *at, *share);
             }
 
+            EventHost::Show { window } => self.show(*window),
+
             EventHost::Closed { window } => {
                 self.windows.retain(|open| open.id != *window);
                 remove(&mut self.root, *window);
@@ -553,7 +555,7 @@ impl StateDock {
 
         let moving = self.moving();
 
-        let (ghost, regions, aim) = match &self.gesture {
+        let (carried, regions, aim) = match &self.gesture {
             Some(Gesture::Moving {
                 window,
                 grab,
@@ -562,7 +564,15 @@ impl StateDock {
             }) => {
                 let (regions, aim) = self.targets(*window, *at);
 
-                (Some(self.carried(*at, *grab, *size, &solved)), regions, aim)
+                let carried = TabFrame {
+                    window: *window,
+                    title: self.title(*window),
+                    rect: self.carried(*at, *grab, *size, &solved),
+                    showing: true,
+                    lifted: true,
+                };
+
+                (Some(carried), regions, aim)
             }
 
             _ => (None, Vec::new(), None),
@@ -614,7 +624,7 @@ impl StateDock {
             panes,
             windows,
             gaps,
-            ghost,
+            carried,
             regions,
             cursor: self.cursor(),
             settling: self.settling,
