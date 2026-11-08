@@ -19,9 +19,10 @@
 
 ## What this is
 
-A **tiled dock**: a library for arranging windows on a surface, where a window
-can be dragged somewhere else, dropped, and resized, and where it then stays
-until somebody moves it again.
+**weaver** is a tiled dock: a library for arranging windows on a surface,
+where a window can be dragged somewhere else, dropped, and resized, where
+windows that share a slot wear a tab each, and where a window you put
+somewhere stays there until somebody moves it again.
 
 It is a library and not a program. The host supplies the windows and draws
 what is inside them; the dock decides only where the rectangles go. It will be

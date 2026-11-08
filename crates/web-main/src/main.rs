@@ -37,7 +37,7 @@ fn Page(dock: Dock) -> impl IntoView {
     view! {
         <div class="page">
             <div class="hostbar">
-                <b>ui-lib</b>
+                <b>weaver</b>
                 <span>"drag a grip to move a window, a gap to resize one, a tab to leaf through a stack"</span>
             </div>
 
