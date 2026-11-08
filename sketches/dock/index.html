@@ -22,8 +22,8 @@
 </p>
 <p class="lead">
   The library draws three things and no more: <b>a window's tab</b>, <b>the gap
-  between two windows</b>, and <b>the ghost and the drop regions</b> that exist
-  only while a window is being moved. Everything inside a window belongs to
+  between two windows</b>, and <b>the tab under the cursor and the drop
+  regions</b> that exist only while a window is being moved. Everything inside a window belongs to
   whoever is using the library. The look is borrowed from <code>hl</code> to
   have something to draw with — it is a role in
   <code>design/theme.css</code> away from being something else.
@@ -307,9 +307,8 @@
           <div class="region" style="opacity: 1; clip-path: polygon(10% 10%, 90% 10%, 90% 90%, 10% 90%)"></div>
         </div>
 
-        <div class="ghost sketch" style="left: 150px; top: 120px; width: 280px; height: 130px">
-          <div class="pane-strip"></div><div class="tab is-showing is-only"><span class="tab-icon"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2 H10 V10 H2 Z" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></span><h3>Inspector</h3></div>
-          <div class="win"><div class="fill lines"></div></div>
+        <div class="ghost" style="left: 150px; top: 120px; width: 160px; height: var(--tab)">
+          <div class="tab is-showing is-only"><span class="tab-icon"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2 H10 V10 H2 Z" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></span><h3>Inspector</h3></div>
         </div>
         <div class="cursor" style="left: 188px; top: 133px">
           <svg width="14" height="20" viewBox="0 0 14 20" aria-hidden="true"><path d="M1.2 1.2 L1.2 15.2 L5.2 11.4 L7.8 18 L10.4 17 L7.9 10.5 L12.4 10.5 Z" fill="#0a0a0a" stroke="#fff" stroke-width="1.3"/></svg>
@@ -321,10 +320,11 @@
     Four decisions are drawn here.
   </p>
   <p class="note">
-    <b>The window being moved stays where it is, dimmed.</b> It does not vanish
-    and the layout does not close up behind it. A dock that reflows the moment
-    you pick something up moves the target you were aiming at out from under
-    your cursor.
+    <b>The window being moved stays where it is, dimmed</b>, and what follows
+    the cursor is its tab. It does not vanish and the layout does not close up
+    behind it: a dock that reflows the moment you pick something up moves the
+    target you were aiming at out from under your cursor, and a picture of the
+    window under the pointer would cover the very thing being aimed at.
   </p>
   <p class="note">
     <b>What the window will get is an equal share of whatever group it lands
@@ -393,9 +393,8 @@
           <div class="region" style="opacity: 1; background: var(--drop-chosen)"></div>
         </div>
 
-        <div class="ghost sketch" style="left: calc(100% - 430px); top: 150px; width: 260px; height: 120px">
-          <div class="pane-strip"></div><div class="tab is-showing is-only"><span class="tab-icon"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2 H10 V10 H2 Z" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></span><h3>Timeline</h3></div>
-          <div class="win"><div class="fill lines"></div></div>
+        <div class="ghost" style="left: calc(100% - 430px); top: 150px; width: 160px; height: var(--tab)">
+          <div class="tab is-showing is-only"><span class="tab-icon"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2 H10 V10 H2 Z" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></span><h3>Timeline</h3></div>
         </div>
         <div class="cursor" style="left: calc(100% - 303px); top: 163px">
           <svg width="14" height="20" viewBox="0 0 14 20" aria-hidden="true"><path d="M1.2 1.2 L1.2 15.2 L5.2 11.4 L7.8 18 L10.4 17 L7.9 10.5 L12.4 10.5 Z" fill="#0a0a0a" stroke="#fff" stroke-width="1.3"/></svg>
@@ -450,9 +449,8 @@
           <div class="region" style="opacity: 1; background: var(--drop-chosen)"></div>
         </div>
 
-        <div class="ghost sketch" style="left: 24px; top: 140px; width: 260px; height: 120px">
-          <div class="pane-strip"></div><div class="tab is-showing is-only"><span class="tab-icon"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2 H10 V10 H2 Z" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></span><h3>Inspector</h3></div>
-          <div class="win"><div class="fill lines"></div></div>
+        <div class="ghost" style="left: 24px; top: 140px; width: 160px; height: var(--tab)">
+          <div class="tab is-showing is-only"><span class="tab-icon"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2 H10 V10 H2 Z" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></span><h3>Inspector</h3></div>
         </div>
         <div class="cursor" style="left: 7px; top: 152px">
           <svg width="14" height="20" viewBox="0 0 14 20" aria-hidden="true"><path d="M1.2 1.2 L1.2 15.2 L5.2 11.4 L7.8 18 L10.4 17 L7.9 10.5 L12.4 10.5 Z" fill="#0a0a0a" stroke="#fff" stroke-width="1.3"/></svg>
@@ -503,9 +501,8 @@
           <div class="win"><div class="fill lines"></div></div>
         </div>
 
-        <div class="ghost sketch" style="left: 50%; top: -22px; width: 260px; height: 120px">
-          <div class="pane-strip"></div><div class="tab is-showing is-only"><span class="tab-icon"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2 H10 V10 H2 Z" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></span><h3>Inspector</h3></div>
-          <div class="win"><div class="fill lines"></div></div>
+        <div class="ghost" style="left: 50%; top: -22px; width: 160px; height: var(--tab)">
+          <div class="tab is-showing is-only"><span class="tab-icon"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2 H10 V10 H2 Z" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></span><h3>Inspector</h3></div>
         </div>
       </div>
     </div>
