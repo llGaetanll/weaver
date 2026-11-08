@@ -14,6 +14,12 @@ pub struct Metrics {
     pub grip: f32,
     /// The strip along the dock's edge that drops at the root.
     pub edge: f32,
+    /// How much of a window's width and height each drop band takes. What is
+    /// left in the middle proposes nothing — it is the room tabs will need,
+    /// and until they arrive a drop there is a drop that does not happen.
+    /// The same fraction on both axes is what makes the four bands meet the
+    /// middle exactly along the window's diagonals.
+    pub band: f32,
     /// How far a press has to travel before it is a move rather than a click.
     pub threshold: f32,
     /// How small a window may be made.
@@ -30,6 +36,7 @@ impl Default for Metrics {
             gap: 5.0,
             grip: 24.0,
             edge: 16.0,
+            band: 0.3,
             threshold: 4.0,
             min: Size::new(120.0, 80.0),
             ghost: Size::new(320.0, 180.0),

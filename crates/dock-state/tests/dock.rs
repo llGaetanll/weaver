@@ -152,21 +152,47 @@ fn a_press_that_travels_lifts_the_window() {
     );
 }
 
-/// The preview is solved from the tree the drop would produce, so the
-/// rectangle drawn under the cursor is the rectangle the window ends up with.
-/// If these two ever differ, the drop has started lying.
+/// The region drawn and the drop carried out are one decision: `slot` hands
+/// back both, and the frame and the drop each take their half. If a band ever
+/// highlights one side and the window lands on another, this is the test that
+/// goes red.
 #[test]
-fn a_drop_lands_exactly_where_the_preview_said() {
+fn a_drop_lands_on_the_side_its_band_was_on() {
     let mut dock = three();
 
     eval!(&mut dock, < down(10.0, 10.0));
     eval!(&mut dock, < moved(500.0, 100.0));
 
-    let preview = dock.frame().preview.expect("over B's left wedge");
+    let zone = dock.frame().preview.expect("in B's left band");
+    let against = zone.points.iter().filter(|point| point.x < 403.0).count();
+
+    assert_eq!(against, 2, "a trapezium with its long side on B's left edge");
 
     eval!(&mut dock, < up(500.0, 100.0));
 
-    assert_eq!(rect(&dock, A), preview);
+    assert!(rect(&dock, A).x < rect(&dock, B).x, "A went to B's left");
+    near(rect(&dock, A).h, rect(&dock, B).h, "and shares its height");
+    near(rect(&dock, A).y, rect(&dock, B).y, "and its top");
+}
+
+/// The middle of a window is the room tabs will need. Until they have it,
+/// being there means no drop rather than the nearest one — which is also the
+/// only way to carry a window across the dock without proposing something at
+/// every step.
+#[test]
+fn the_middle_of_a_window_proposes_nothing() {
+    let mut dock = three();
+
+    eval!(&mut dock, < down(10.0, 10.0));
+    eval!(&mut dock, < moved(600.0, 150.0));
+
+    assert!(dock.frame().ghost.is_some(), "still being carried");
+    assert!(dock.frame().preview.is_none(), "but nowhere to put it");
+
+    eval!(&mut dock, < up(600.0, 150.0));
+
+    near(rect(&dock, A).x, 0.0, "so letting go changed nothing");
+    near(rect(&dock, A).w, 397.5, "so letting go changed nothing");
 }
 
 /// Dropping beside a window whose group already runs that way folds into the
@@ -272,4 +298,27 @@ fn a_fixed_window_keeps_its_size_when_it_is_moved() {
 
     near(rect(&dock, B).x, 0.0, "now on the left");
     near(rect(&dock, B).w, 300.0, "and still 300");
+}
+
+/// Whether the windows should move to where they now belong or simply be
+/// there. A drop settles; a gap being dragged and the browser being resized
+/// are continuous, and a window that eased into place behind either would
+/// read as lag.
+#[test]
+fn a_drop_settles_and_a_drag_does_not() {
+    let mut dock = dock();
+
+    eval!(&mut dock, < opened(B, beside(A, Side::Right), Share::Flex(1.0)));
+    eval!(&mut dock, < down(400.0, 300.0));
+    eval!(&mut dock, < moved(500.0, 300.0));
+
+    assert!(!dock.frame().settling, "the gap is under the pointer");
+
+    eval!(&mut dock, < up(500.0, 300.0));
+
+    assert!(dock.frame().settling, "and now it is not");
+
+    eval!(&mut dock, < resized(900.0, 600.0));
+
+    assert!(!dock.frame().settling, "the browser's edge is under one too");
 }

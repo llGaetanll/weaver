@@ -8,6 +8,7 @@ use crate::frame::Cursor;
 use crate::frame::Frame;
 use crate::frame::GapFrame;
 use crate::frame::WindowFrame;
+use crate::frame::Zone;
 use crate::geometry::Axis;
 use crate::geometry::Point;
 use crate::geometry::Rect;
@@ -64,6 +65,9 @@ pub struct StateDock {
     root: Option<Node>,
     windows: Vec<Window>,
     gesture: Option<Gesture>,
+    /// Whether the last thing that happened was something the layout should
+    /// be moved into rather than snapped to. A drop settles; a drag does not.
+    settling: bool,
 }
 
 impl StateDock {
@@ -95,6 +99,11 @@ impl StateDock {
     }
 
     fn handle_event_host(&mut self, event: &EventHost) {
+        // Dragging the browser's own edge is continuous, so the windows keep
+        // up with it; a window opening or closing is not, so the rest of them
+        // move over to make room.
+        self.settling = !matches!(event, EventHost::Resized { .. });
+
         match event {
             EventHost::Resized { size } => self.surface = *size,
 
@@ -128,6 +137,9 @@ impl StateDock {
     }
 
     fn handle_event_pointer(&mut self, event: &EventPointer) {
+        // Everything under the pointer is continuous until it is let go of.
+        self.settling = matches!(event, EventPointer::Up { .. } | EventPointer::Cancelled);
+
         match event {
             EventPointer::Down { at } => self.press(*at),
             EventPointer::Moved { at } => self.drag(*at),
@@ -209,7 +221,7 @@ impl StateDock {
 
     fn release(&mut self, at: Point) {
         if let Some(Gesture::Moving { window, .. }) = self.gesture.clone()
-            && let Some(slot) = self.slot(window, at)
+            && let Some((slot, _)) = self.slot(window, at)
         {
             self.root = self.dropped(window, slot);
         }
@@ -292,10 +304,14 @@ impl StateDock {
         root
     }
 
-    /// Where a window being moved would land. The three targets the board
-    /// draws, in the order they take precedence: the dock's edge, a gap, then
-    /// the window under the pointer.
-    fn slot(&self, moving: WindowId, at: Point) -> Option<Slot> {
+    /// Where a window being moved would land, and the region the pointer is
+    /// in to land it there. The two are worked out together and handed back
+    /// together, so the shape drawn and the drop carried out cannot be about
+    /// different things.
+    ///
+    /// The three targets the board draws, in the order they take precedence:
+    /// the dock's edge, a gap, then the window under the pointer.
+    fn slot(&self, moving: WindowId, at: Point) -> Option<(Slot, Zone)> {
         if !self.area().contains(at) {
             return None;
         }
@@ -315,7 +331,7 @@ impl StateDock {
         .min_by(|(a, _), (b, _)| a.total_cmp(b));
 
         if let Some((_, side)) = outer {
-            return Some(Slot::Edge { side });
+            return Some((Slot::Edge { side }, Zone::from(strip(area, side, edge))));
         }
 
         let gap = solved
@@ -323,7 +339,7 @@ impl StateDock {
             .iter()
             .find(|gap| gap.rect.grown(edge / 2.0).contains(at));
 
-        let slot = match gap {
+        let found = match gap {
             Some(gap) => {
                 let before = self.leaf(&gap.group, gap.index)?;
                 let side = match gap.axis {
@@ -331,32 +347,40 @@ impl StateDock {
                     Axis::Col => Side::Down,
                 };
 
-                Slot::Beside {
-                    window: before,
-                    side,
-                }
+                (
+                    Slot::Beside {
+                        window: before,
+                        side,
+                    },
+                    Zone::from(gap.rect.grown(edge / 2.0)),
+                )
             }
 
             None => {
                 let (window, rect) = solved.at(at)?;
+                let side = band(rect, at, self.metrics.band)?;
 
-                Slot::Beside {
-                    window,
-                    side: wedge(rect, at),
-                }
+                (
+                    Slot::Beside { window, side },
+                    trapezium(rect, side, self.metrics.band),
+                )
             }
         };
 
-        // Dropping a window beside itself is not a move.
-        match slot {
-            Slot::Beside { window, .. } if window == moving => None,
-            slot => Some(slot),
+        // Dropping a window beside itself is not a move, and a drop that does
+        // nothing is not drawn.
+        match found {
+            (Slot::Beside { window, .. }, _) if window == moving => None,
+            found => Some(found),
         }
     }
 
     pub fn frame(&self) -> Frame {
         let Some(solved) = self.solved() else {
-            return Frame::default();
+            return Frame {
+                settling: self.settling,
+                ..Frame::default()
+            };
         };
 
         let moving = self.moving();
@@ -386,10 +410,7 @@ impl StateDock {
                 let size = self.ghost(*window, &solved);
                 let ghost = Rect::new(at.x - grab.x, at.y - grab.y, size.w, size.h);
 
-                let preview = self
-                    .slot(*window, *at)
-                    .and_then(|slot| self.dropped(*window, slot))
-                    .and_then(|root| solve(&root, self.area(), &self.metrics).rect(*window));
+                let preview = self.slot(*window, *at).map(|(_, zone)| zone);
 
                 (Some(ghost), preview)
             }
@@ -403,6 +424,7 @@ impl StateDock {
             ghost,
             preview,
             cursor: self.cursor(),
+            settling: self.settling,
         }
     }
 
@@ -553,21 +575,76 @@ impl StateDock {
     }
 }
 
-/// Which wedge of a window a point is in. The distances are fractions of the
-/// width and the height, which is the same as cutting the rectangle along its
-/// diagonals — so a wide short window behaves like a tall narrow one.
-fn wedge(rect: Rect, at: Point) -> Side {
+/// Which band of a window a point is in, or nothing at all when it is in the
+/// middle.
+///
+/// The distances are fractions of the width and the height, so comparing them
+/// cuts the window along its diagonals — which is what makes a wide short
+/// window behave like a tall narrow one, and what makes the four bands meet
+/// the middle exactly at its corners.
+fn band(rect: Rect, at: Point, band: f32) -> Option<Side> {
     let left = (at.x - rect.x) / rect.w.max(1.0);
     let up = (at.y - rect.y) / rect.h.max(1.0);
 
-    [
+    let (near, side) = [
         (left, Side::Left),
         (1.0 - left, Side::Right),
         (up, Side::Up),
         (1.0 - up, Side::Down),
     ]
     .into_iter()
-    .min_by(|(a, _), (b, _)| a.total_cmp(b))
-    .map(|(_, side)| side)
-    .unwrap_or(Side::Right)
+    .min_by(|(a, _), (b, _)| a.total_cmp(b))?;
+
+    // The middle is the room tabs will want. Until they have it, being there
+    // means no drop rather than the nearest one.
+    (near < band).then_some(side)
+}
+
+/// The band itself: the wedge between two diagonals with the middle taken
+/// out, which is a trapezium with its short side against the middle.
+fn trapezium(rect: Rect, side: Side, band: f32) -> Zone {
+    let x = rect.w * band;
+    let y = rect.h * band;
+
+    let (left, top) = (rect.x, rect.y);
+    let (right, bottom) = (rect.right(), rect.bottom());
+
+    let points = match side {
+        Side::Left => [
+            Point::new(left, top),
+            Point::new(left + x, top + y),
+            Point::new(left + x, bottom - y),
+            Point::new(left, bottom),
+        ],
+        Side::Right => [
+            Point::new(right, top),
+            Point::new(right, bottom),
+            Point::new(right - x, bottom - y),
+            Point::new(right - x, top + y),
+        ],
+        Side::Up => [
+            Point::new(left, top),
+            Point::new(right, top),
+            Point::new(right - x, top + y),
+            Point::new(left + x, top + y),
+        ],
+        Side::Down => [
+            Point::new(left, bottom),
+            Point::new(left + x, bottom - y),
+            Point::new(right - x, bottom - y),
+            Point::new(right, bottom),
+        ],
+    };
+
+    Zone { points }
+}
+
+/// The strip along one side of the dock.
+fn strip(area: Rect, side: Side, edge: f32) -> Rect {
+    match side {
+        Side::Left => Rect::new(area.x, area.y, edge, area.h),
+        Side::Right => Rect::new(area.right() - edge, area.y, edge, area.h),
+        Side::Up => Rect::new(area.x, area.y, area.w, edge),
+        Side::Down => Rect::new(area.x, area.bottom() - edge, area.w, edge),
+    }
 }
