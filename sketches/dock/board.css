@@ -67,3 +67,8 @@ h1 { margin: 0; font-size: 24px; font-weight: 700; letter-spacing: -.03em; }
            border: 0; border-radius: var(--radius-sm); background: transparent;
            color: var(--text-faint); cursor: pointer; }
 .slotbtn:hover { background: var(--raised); color: var(--text); }
+
+/* A window's regions, drawn over the window they belong to. The library puts
+   them over the whole dock and clips them in pixels; a picture has no pixels
+   to hand, so it puts them over one window and clips them in percentages. */
+.regions-at { position: absolute; }

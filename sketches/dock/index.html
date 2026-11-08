@@ -177,7 +177,15 @@
     A window being moved has to land <b>somewhere definite</b>, and the user has
     to be able to tell where that is before letting go. So a window is cut into
     four bands and a middle: the bands are where the nearest edge wins, and the
-    middle is where <b>nothing is proposed at all</b>.
+    middle is where <b>nothing is proposed at all</b>. A tenth off each side
+    leaves four fifths of the window in the middle, which is room enough to
+    carry a window across the dock without anything being offered on the way.
+  </p>
+  <p class="note">
+    <b>All five are drawn at once</b>, and the one under the pointer is darker
+    than the rest. Showing only the chosen one makes every move of the pointer
+    a guess about where the boundaries are; showing the whole division answers
+    that once, and the dark one answers what would happen.
   </p>
   <p class="note">
     Which band is decided by comparing the distances as fractions of the width
@@ -190,10 +198,10 @@
     <figure>
       <div class="wedges">
         <svg viewBox="0 0 400 230" preserveAspectRatio="none" aria-hidden="true">
-          <path d="M0 0 L120 69 M400 0 L280 69 M0 230 L120 161 M400 230 L280 161"
+          <path d="M0 0 L40 23 M400 0 L360 23 M0 230 L40 207 M400 230 L360 207"
                 stroke="#d4d4d4" stroke-width="1" vector-effect="non-scaling-stroke"
                 fill="none" stroke-dasharray="4 3"/>
-          <rect x="120" y="69" width="160" height="92" fill="none" stroke="#d4d4d4"
+          <rect x="40" y="23" width="320" height="184" fill="none" stroke="#d4d4d4"
                 stroke-width="1" vector-effect="non-scaling-stroke" stroke-dasharray="4 3"/>
         </svg>
         <span class="lbl" style="left: 10px; top: 50%; transform: translateY(-50%)">left</span>
@@ -203,18 +211,18 @@
         <span class="lbl" style="left: 50%; top: 50%; transform: translate(-50%,-50%)">no drop</span>
       </div>
       <figcaption>
-        <b>Four bands and a middle.</b> Three tenths of the width and of the
-        height, which leaves a middle you can carry a window across without
+        <b>Four bands and a middle.</b> A tenth of the width and of the height
+        each, which leaves a middle you can carry a window across without
         proposing anything.
       </figcaption>
     </figure>
     <figure>
       <div class="wedges">
         <svg viewBox="0 0 400 230" preserveAspectRatio="none" aria-hidden="true">
-          <path d="M0 0 L120 69 M400 0 L280 69 M0 230 L120 161 M400 230 L280 161"
+          <path d="M0 0 L40 23 M400 0 L360 23 M0 230 L40 207 M400 230 L360 207"
                 stroke="#ededed" stroke-width="1" vector-effect="non-scaling-stroke"
                 fill="none" stroke-dasharray="4 3"/>
-          <rect x="120" y="69" width="160" height="92" fill="#f5f5f5" stroke="#a8a8a8"
+          <rect x="40" y="23" width="320" height="184" fill="#f5f5f5" stroke="#a8a8a8"
                 stroke-width="1" vector-effect="non-scaling-stroke"/>
         </svg>
         <span class="lbl" style="left: 50%; top: 50%; transform: translate(-50%,-50%)">a tab, later</span>
@@ -240,8 +248,9 @@
   <div class="name"><h2>Moving — over a window's edge</h2><code>#edge</code></div>
   <p class="note">
     The inspector has been picked up by its grip and the pointer is in the
-    canvas's left band. What is drawn is <b>the band itself</b> — the region
-    the pointer has to be in — and not the slot the window would end up with.
+    canvas's left band. What is drawn is <b>every region the canvas offers</b>,
+    with the one under the pointer darker — the regions the pointer has to be
+    in, and not the slots the window would end up with.
   </p>
   <p class="note">
     Drawing the region rather than the result was a decision. The slot is the
@@ -271,8 +280,12 @@
           <div class="win-body"><div class="fill lines"></div></div>
         </div>
 
-        <div class="preview is-on" style="inset: auto; left: 0; top: 0; width: calc(100% - 300px - var(--gap)); height: calc(100% - 120px - var(--gap))">
-          <svg viewBox="0 0 100 100" preserveAspectRatio="none"><polygon points="0,0 30,30 30,70 0,100" vector-effect="non-scaling-stroke" /></svg>
+        <div class="regions-at" style="left: 0; top: 0; width: calc(100% - 300px - var(--gap)); height: calc(100% - 120px - var(--gap))">
+          <div class="region" style="opacity: 1; background: var(--drop-chosen); clip-path: polygon(0 0, 10% 10%, 10% 90%, 0 100%)"></div>
+          <div class="region" style="opacity: 1; clip-path: polygon(0 0, 100% 0, 90% 10%, 10% 10%)"></div>
+          <div class="region" style="opacity: 1; clip-path: polygon(100% 0, 100% 100%, 90% 90%, 90% 10%)"></div>
+          <div class="region" style="opacity: 1; clip-path: polygon(0 100%, 10% 90%, 90% 90%, 100% 100%)"></div>
+          <div class="region" style="opacity: 1; clip-path: polygon(10% 10%, 90% 10%, 90% 90%, 10% 90%)"></div>
         </div>
 
         <div class="ghost" style="left: 150px; top: 120px; width: 280px; height: 130px">
@@ -301,11 +314,12 @@
     gap and the outer edge follow.
   </p>
   <p class="note">
-    <b>The region fades, and it is the only thing in the library that does.</b>
-    It appears and disappears under a pointer that is already moving, and two
-    tenths of a second is what keeps that from reading as a flicker. Once the
-    pointer lets go, the windows <b>move</b> to where they now belong rather
-    than appearing there — but only then: a gap being dragged and a browser
+    <b>Two things move, at two speeds.</b> The regions fade, and the dark one
+    moves between them by fading as well — they appear and disappear under a
+    pointer that is already moving, so a fifth of a second is what keeps that
+    from reading as a flicker. Once the pointer lets go, the windows
+    <b>settle</b> into where they now belong rather than appearing there, and
+    that is the slow one. But only then: a gap being dragged and a browser
     window being resized are continuous, and a window easing along behind
     either of those reads as lag rather than as motion.
   </p>
@@ -355,8 +369,8 @@
           <div class="win-body"><div class="fill lines"></div></div>
         </div>
 
-        <div class="preview is-on" style="inset: auto; left: calc(100% - 313px); top: 0; width: 21px; height: 100%">
-          <svg viewBox="0 0 100 100" preserveAspectRatio="none"><polygon points="0,0 100,0 100,100 0,100" vector-effect="non-scaling-stroke" /></svg>
+        <div class="regions-at" style="left: calc(100% - 313px); top: 0; width: 21px; height: 100%">
+          <div class="region" style="opacity: 1; background: var(--drop-chosen)"></div>
         </div>
 
         <div class="ghost" style="left: calc(100% - 430px); top: 150px; width: 260px; height: 120px">
@@ -412,8 +426,8 @@
           <div class="win-body"><div class="fill lines"></div></div>
         </div>
 
-        <div class="preview is-on" style="inset: auto; left: 0; top: 0; width: 16px; height: 100%">
-          <svg viewBox="0 0 100 100" preserveAspectRatio="none"><polygon points="0,0 100,0 100,100 0,100" vector-effect="non-scaling-stroke" /></svg>
+        <div class="regions-at" style="left: 0; top: 0; width: 16px; height: 100%">
+          <div class="region" style="opacity: 1; background: var(--drop-chosen)"></div>
         </div>
 
         <div class="ghost" style="left: 24px; top: 140px; width: 260px; height: 120px">
