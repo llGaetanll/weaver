@@ -52,36 +52,19 @@ pub fn DockView(
         }
     });
 
-    // The list of windows, which changes when one opens or closes — not every
-    // time one moves. Keying on it is what keeps a window's contents alive
-    // across a drag.
-    let windows = Memo::new(move |_| {
-        dock.frame()
-            .windows
-            .iter()
-            .map(|window| window.window)
-            .collect::<Vec<_>>()
-    });
-
-    // Both lists are keyed by what the thing *is* rather than where it is.
-    // An element has to follow its own slot across a rearrangement, or it
-    // takes on another one's rectangle and eases between two places that have
+    // Every list is keyed by what the thing *is* rather than where it is: an
+    // element has to follow its own slot across a rearrangement, or it takes
+    // on another one's rectangle and eases between two places that have
     // nothing to do with each other.
-    let panes = Memo::new(move |_| {
-        dock.frame()
-            .panes
-            .iter()
-            .map(|pane| pane.key)
-            .collect::<Vec<_>>()
-    });
-
-    let gaps = Memo::new(move |_| {
-        dock.frame()
-            .gaps
-            .iter()
-            .map(|gap| gap.after)
-            .collect::<Vec<_>>()
-    });
+    //
+    // And every list is kept in one order, which is nobody's idea of the
+    // order things are in on screen. Everything here is placed by its own
+    // rectangle, so the order the elements sit in makes no difference to the
+    // picture — while moving one to keep a list tidy takes it out of the page
+    // and puts it back, which ends whatever it was in the middle of doing.
+    let windows = Memo::new(move |_| sorted(dock.frame().windows.iter().map(|w| w.window)));
+    let panes = Memo::new(move |_| sorted(dock.frame().panes.iter().map(|pane| pane.key)));
+    let gaps = Memo::new(move |_| sorted(dock.frame().gaps.iter().map(|gap| gap.after)));
 
     let settling = move || {
         if dock.frame().settling {
@@ -156,13 +139,16 @@ fn PaneView(dock: Dock, pane: WindowId, icon: Option<Callback<WindowId, AnyView>
     };
     let tabs = Memo::new(move |_| pane().map(|pane| pane.tabs.len()).unwrap_or_default());
 
-    // Keyed by window rather than by place: an element has to follow its own
-    // tab from one place to the next, or the tabs swap their names instead of
-    // moving and there is nothing left to animate.
+    // Keyed by window and kept in one order, for the reasons above: a tab
+    // that changed places in the list would be taken out of the page and put
+    // back, which is the one thing that stops it sliding there.
     let windows = Memo::new(move |_| {
-        pane()
-            .map(|pane| pane.tabs.iter().map(|tab| tab.window).collect::<Vec<_>>())
-            .unwrap_or_default()
+        sorted(
+            pane()
+                .map(|pane| pane.tabs.iter().map(|tab| tab.window).collect::<Vec<_>>())
+                .unwrap_or_default()
+                .into_iter(),
+        )
     });
 
     let strip = move || match tabs.get() {
@@ -503,6 +489,16 @@ fn Ghost(dock: Dock, icon: Option<Callback<WindowId, AnyView>>) -> impl IntoView
             </div>
         </Show>
     }
+}
+
+/// The same windows in the same order every time, whatever order they happen
+/// to be drawn in.
+fn sorted(windows: impl Iterator<Item = WindowId>) -> Vec<WindowId> {
+    let mut windows: Vec<WindowId> = windows.collect();
+
+    windows.sort_by_key(|window| window.0);
+
+    windows
 }
 
 fn place(rect: Rect) -> String {

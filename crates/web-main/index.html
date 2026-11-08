@@ -60,21 +60,24 @@
       setTimeout(() => {
         const start = performance.now();
         const rows = [];
+        let marks = 0;
 
         const tick = () => {
           const at = performance.now() - start;
-          const seen = [...document.querySelectorAll(".dock, .pane, .tab, .gap, .ghost")];
+          const seen = [...document.querySelectorAll(".dock, .pane, .win, .tab, .gap, .ghost")];
 
           rows.push([
             Math.round(at),
             seen.map((node) => {
               const box = node.getBoundingClientRect();
               // Stamped the first time it is seen, so an element that was
-              // thrown away and built again says so.
+              // thrown away and built again says so, and so that two of the
+              // same kind can be told apart.
               node.dataset.born ??= Math.round(performance.now() - start);
+              node.dataset.mark ??= ++marks;
 
               const name = node.className + (node.querySelector("h3")?.textContent || "")
-                + "|born " + node.dataset.born;
+                + "|" + node.dataset.mark + " born " + node.dataset.born;
               return [name, Math.round(box.x), Math.round(box.y),
                       Math.round(box.width), Math.round(box.height)];
             }),
