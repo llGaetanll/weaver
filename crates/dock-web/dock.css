@@ -167,7 +167,13 @@ body {
    header. */
 .tab.is-only { background: transparent; }
 
-.tab.is-lifted { opacity: .4; }
+/* The tab being carried is a hole rather than a dimmed tab: what is drawn
+   under the cursor is that tab, and the space it leaves is where it lands.
+   The others slide into their new places while it is away, the way a row of
+   tabs does anywhere else. */
+.tab.is-lifted { opacity: 0; }
+
+.dock.is-moving .tab { transition: left var(--fade) ease, width var(--fade) ease; }
 
 /* What the host put in a window. */
 .win {
@@ -182,18 +188,26 @@ body {
 
 /* --- Moving a window ---------------------------------------------------- */
 
-/* The window follows the cursor. It is the one thing in the library allowed
-   over another window, and it is why the dock is a positioned surface. */
+/* The tab follows the cursor — the tab and nothing else. The window it
+   belongs to is still on screen behind it, so a picture of that window under
+   the pointer would be a second copy of something already there, and it
+   would cover the hole it is going into. It is the one thing in the library
+   allowed over another window, and it is why the dock is a positioned
+   surface. */
 .ghost {
   position: absolute;
   z-index: 2;
-  display: grid;
-  border: 1px solid var(--accent);
-  border-radius: var(--radius);
+  border-radius: var(--radius-sm);
   background: var(--panel);
-  box-shadow: 0 10px 28px rgb(0 0 0 / .14);
+  box-shadow: 0 0 0 1px var(--border-firm), 0 5px 14px rgb(0 0 0 / .14);
   overflow: hidden;
   pointer-events: none;
+}
+
+.ghost .tab {
+  position: absolute;
+  inset: 0;
+  color: var(--text-muted);
 }
 .ghost .tab { height: var(--tab); background: var(--panel); }
 

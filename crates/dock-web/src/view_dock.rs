@@ -118,7 +118,7 @@ pub fn DockView(
             </For>
 
             <Regions dock=dock />
-            <Ghost dock=dock />
+            <Ghost dock=dock icon=icon />
         </div>
     }
 }
@@ -438,27 +438,34 @@ fn towards(from: Point, to: Point, by: f32) -> Point {
     )
 }
 
-/// The window under the cursor. Its title and nothing else: the host's
-/// contents are already on screen, in the window that stayed behind.
+/// What is under the cursor while a window is being carried: its tab, and
+/// nothing else. The window itself is still on screen behind, so a picture of
+/// it under the pointer would be a second copy of something already there —
+/// and it would cover the hole it is going into.
 #[component]
-fn Ghost(dock: Dock) -> impl IntoView {
+fn Ghost(dock: Dock, icon: Option<Callback<WindowId, AnyView>>) -> impl IntoView {
     let rect = move || dock.frame().ghost;
 
-    let title = move || {
+    let carried = move || {
         dock.frame()
             .panes
             .iter()
             .flat_map(|pane| pane.tabs.clone())
             .find(|tab| tab.lifted)
-            .map(|tab| tab.title)
-            .unwrap_or_default()
+    };
+
+    let mark = move || {
+        let tab = carried()?;
+
+        Some(icon?.run(tab.window))
     };
 
     view! {
         <Show when=move || rect().is_some()>
             <div class="ghost" style=move || rect().map(place).unwrap_or_default()>
-                <div class="tab is-showing">
-                    <h3>{title}</h3>
+                <div class="tab is-showing is-only">
+                    <span class="tab-icon">{mark}</span>
+                    <h3>{move || carried().map(|tab| tab.title).unwrap_or_default()}</h3>
                 </div>
             </div>
         </Show>
