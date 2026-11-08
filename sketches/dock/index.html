@@ -1,0 +1,499 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>The dock, state by state</title>
+<link rel="stylesheet" href="../design/theme.css" />
+<link rel="stylesheet" href="../design/dock.css" />
+<link rel="stylesheet" href="board.css" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+</head>
+<body>
+<div class="wrap">
+
+<h1>The dock, state by state</h1>
+<p class="lead">
+  Every state the dock can be in, each in a frame of its own. <b>Nothing here
+  runs.</b> Every file is a picture, drawn before it is built, so that a state
+  is argued about once rather than twice.
+</p>
+<p class="lead">
+  The library draws three things and no more: <b>a window's title bar</b>, <b>the
+  gap between two windows</b>, and <b>the ghost and the preview</b> that exist
+  only while a window is being moved. Everything inside a window belongs to
+  whoever is using the library. The look is borrowed from <code>hl</code> to
+  have something to draw with — it is a role in
+  <code>design/theme.css</code> away from being something else.
+</p>
+
+<nav class="toc">
+  <a href="#idle">idle</a>
+  <a href="#resize">resize</a>
+  <a href="#drops">where a drop lands</a>
+  <a href="#edge">edge</a>
+  <a href="#between">gap</a>
+  <a href="#outer">outer edge</a>
+  <a href="#nowhere">nowhere</a>
+  <a href="#alone">alone, and empty</a>
+</nav>
+
+<!-- ---------------------------------------------------------------- idle -->
+<section class="sheet" id="idle">
+  <div class="name"><h2>Idle</h2><code>#idle</code></div>
+  <p class="note">
+    Three windows, no overlap, and a gap between every pair. The tree is a
+    <b>row</b> holding a <b>column</b> and the inspector; the column holds the
+    canvas and the timeline. The axis alternates with depth, so nothing in the
+    middle is a wrapper that exists only to turn a corner.
+  </p>
+  <p class="note">
+    Two of these windows are <b>flex</b> and two are <b>fixed</b>. The canvas
+    and the column take what is left over; the inspector claims 300px and the
+    timeline claims 120px, and resizing the browser window does not change
+    either of those numbers. That is the whole reason fixed exists — a column
+    of readouts wants to be the width it needs, not a share of whatever the
+    screen happens to be.
+  </p>
+  <div class="frame">
+    <div class="app">
+      <div class="hostbar"><b>ui-lib</b> <span>three windows</span></div>
+      <div class="dock row" style="grid-template-columns: 1fr var(--gap) 300px">
+        <div class="col" style="grid-template-rows: 1fr var(--gap) 120px">
+          <div class="win">
+            <div class="win-tab">
+              <button class="grip" title="Drag to move this window"><svg viewBox="0 0 10 16" width="10" height="16" aria-hidden="true"><circle cx="3" cy="4" r="1.1"/><circle cx="7" cy="4" r="1.1"/><circle cx="3" cy="8" r="1.1"/><circle cx="7" cy="8" r="1.1"/><circle cx="3" cy="12" r="1.1"/><circle cx="7" cy="12" r="1.1"/></svg></button>
+              <h3>Canvas</h3>
+              <span class="slot"><button class="slotbtn" title="The host's one control"><svg width="13" height="13" viewBox="0 0 13 13" aria-hidden="true"><circle cx="2.5" cy="6.5" r="1.1" fill="currentColor"/><circle cx="6.5" cy="6.5" r="1.1" fill="currentColor"/><circle cx="10.5" cy="6.5" r="1.1" fill="currentColor"/></svg></button></span>
+            </div>
+            <div class="win-body"><div class="fill">the host's</div></div>
+          </div>
+          <div class="gap gap-h"></div>
+          <div class="win">
+            <div class="win-tab">
+              <button class="grip"><svg viewBox="0 0 10 16" width="10" height="16" aria-hidden="true"><circle cx="3" cy="4" r="1.1"/><circle cx="7" cy="4" r="1.1"/><circle cx="3" cy="8" r="1.1"/><circle cx="7" cy="8" r="1.1"/><circle cx="3" cy="12" r="1.1"/><circle cx="7" cy="12" r="1.1"/></svg></button>
+              <h3>Timeline</h3>
+            </div>
+            <div class="win-body"><div class="fill lines"></div></div>
+          </div>
+        </div>
+        <div class="gap gap-v"></div>
+        <div class="win">
+          <div class="win-tab">
+            <button class="grip"><svg viewBox="0 0 10 16" width="10" height="16" aria-hidden="true"><circle cx="3" cy="4" r="1.1"/><circle cx="7" cy="4" r="1.1"/><circle cx="3" cy="8" r="1.1"/><circle cx="7" cy="8" r="1.1"/><circle cx="3" cy="12" r="1.1"/><circle cx="7" cy="12" r="1.1"/></svg></button>
+            <h3>Inspector</h3>
+          </div>
+          <div class="win-body"><div class="fill lines"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p class="note">
+    The grip is <b>always drawn</b>, dim until the pointer is on the title bar.
+    A handle that appears only once you are already over it is a handle nobody
+    finds, and where a window sits is the user's arrangement rather than the
+    program's opinion.
+  </p>
+</section>
+
+<!-- -------------------------------------------------------------- resize -->
+<section class="sheet" id="resize">
+  <div class="name"><h2>Resizing</h2><code>#resize</code></div>
+  <p class="note">
+    <b>The gap is the control.</b> There is no separate handle and no hit area
+    wider than what you can see: five pixels of the ground showing through,
+    with a hairline down the middle that goes black while you are on it.
+  </p>
+  <div class="frame two">
+    <figure>
+      <div class="app short">
+        <div class="hostbar"><b>ui-lib</b> <span>a gap held</span></div>
+        <div class="dock row" style="grid-template-columns: 1fr var(--gap) 300px">
+          <div class="win">
+            <div class="win-tab"><button class="grip"><svg viewBox="0 0 10 16" width="10" height="16" aria-hidden="true"><circle cx="3" cy="4" r="1.1"/><circle cx="7" cy="4" r="1.1"/><circle cx="3" cy="8" r="1.1"/><circle cx="7" cy="8" r="1.1"/><circle cx="3" cy="12" r="1.1"/><circle cx="7" cy="12" r="1.1"/></svg></button><h3>Canvas</h3></div>
+            <div class="win-body"><div class="fill">flex</div></div>
+          </div>
+          <div class="gap gap-v held"></div>
+          <div class="win">
+            <div class="win-tab"><button class="grip"><svg viewBox="0 0 10 16" width="10" height="16" aria-hidden="true"><circle cx="3" cy="4" r="1.1"/><circle cx="7" cy="4" r="1.1"/><circle cx="3" cy="8" r="1.1"/><circle cx="7" cy="8" r="1.1"/><circle cx="3" cy="12" r="1.1"/><circle cx="7" cy="12" r="1.1"/></svg></button><h3>Inspector</h3></div>
+            <div class="win-body"><div class="fill">300px</div></div>
+          </div>
+        </div>
+        <div class="cursor" style="left: calc(100% - 303px); top: 180px">
+          <svg width="22" height="14" viewBox="0 0 22 14" aria-hidden="true"><path d="M6 3 L1 7 L6 11 M16 3 L21 7 L16 11 M1 7 L21 7" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round"/><path d="M6 3 L1 7 L6 11 M16 3 L21 7 L16 11 M1 7 L21 7" fill="none" stroke="#0a0a0a" stroke-width="1.4" stroke-linecap="round"/></svg>
+        </div>
+      </div>
+      <figcaption>
+        <b>Between a flex child and a fixed one</b>, dragging rewrites the fixed
+        child's pixels. The inspector is 300px because somebody dragged it
+        there, and it stays 300px until somebody drags it again.
+      </figcaption>
+    </figure>
+    <figure>
+      <div class="app short">
+        <div class="hostbar"><b>ui-lib</b> <span>a gap held</span></div>
+        <div class="dock col" style="grid-template-rows: 1fr var(--gap) 1fr">
+          <div class="win">
+            <div class="win-tab"><button class="grip"><svg viewBox="0 0 10 16" width="10" height="16" aria-hidden="true"><circle cx="3" cy="4" r="1.1"/><circle cx="7" cy="4" r="1.1"/><circle cx="3" cy="8" r="1.1"/><circle cx="7" cy="8" r="1.1"/><circle cx="3" cy="12" r="1.1"/><circle cx="7" cy="12" r="1.1"/></svg></button><h3>Canvas</h3></div>
+            <div class="win-body"><div class="fill">flex 1</div></div>
+          </div>
+          <div class="gap gap-h held"></div>
+          <div class="win">
+            <div class="win-tab"><button class="grip"><svg viewBox="0 0 10 16" width="10" height="16" aria-hidden="true"><circle cx="3" cy="4" r="1.1"/><circle cx="7" cy="4" r="1.1"/><circle cx="3" cy="8" r="1.1"/><circle cx="7" cy="8" r="1.1"/><circle cx="3" cy="12" r="1.1"/><circle cx="7" cy="12" r="1.1"/></svg></button><h3>Timeline</h3></div>
+            <div class="win-body"><div class="fill">flex 1</div></div>
+          </div>
+        </div>
+        <div class="cursor" style="left: 44%; top: calc(50% + 14px)">
+          <svg width="14" height="22" viewBox="0 0 14 22" aria-hidden="true"><path d="M3 6 L7 1 L11 6 M3 16 L7 21 L11 16 M7 1 L7 21" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round"/><path d="M3 6 L7 1 L11 6 M3 16 L7 21 L11 16 M7 1 L7 21" fill="none" stroke="#0a0a0a" stroke-width="1.4" stroke-linecap="round"/></svg>
+        </div>
+      </div>
+      <figcaption>
+        <b>Between two flex children</b>, dragging moves weight from one to the
+        other. Their total is untouched, so nothing outside the pair moves.
+      </figcaption>
+    </figure>
+  </div>
+  <p class="note">
+    Every window carries a <b>minimum</b> in logical pixels, and a drag stops
+    when it reaches one rather than pushing the next window along. Dragging the
+    gap never changes which windows exist or where they sit in the tree —
+    that is the other gesture, and keeping them apart is why the grip is not
+    on the gap.
+  </p>
+  <div class="gap-note">
+    <b>Not decided:</b> what the dock does when the surface is smaller than the
+    sum of the minimums. The assumption drawn into these pictures is that the
+    minimums win and the dock overflows, because the alternative is windows
+    crushed to a title bar and a hairline, which looks like a bug.
+  </div>
+</section>
+
+<!-- --------------------------------------------------------------- drops -->
+<section class="sheet" id="drops">
+  <div class="name"><h2>Where a drop lands</h2><code>#drops</code></div>
+  <p class="note">
+    A window being moved has to land <b>somewhere definite</b>, and the user has
+    to be able to tell where that is before letting go. So a window's own area
+    is cut by its two diagonals into four wedges, and <b>the nearest edge
+    wins</b>. Comparing distances along the diagonals is the same as comparing
+    them as fractions of the width and the height, which is what makes a wide,
+    short window behave like a tall, narrow one.
+  </p>
+  <div class="frame two">
+    <figure>
+      <div class="wedges">
+        <svg viewBox="0 0 400 230" preserveAspectRatio="none" aria-hidden="true">
+          <path d="M0 0 L400 230 M400 0 L0 230" stroke="#d4d4d4" stroke-width="1" vector-effect="non-scaling-stroke" fill="none" stroke-dasharray="4 3"/>
+        </svg>
+        <span class="lbl" style="left: 14px; top: 50%; transform: translateY(-50%)">split left</span>
+        <span class="lbl" style="right: 14px; top: 50%; transform: translateY(-50%)">split right</span>
+        <span class="lbl" style="left: 50%; top: 12px; transform: translateX(-50%)">split up</span>
+        <span class="lbl" style="left: 50%; bottom: 12px; transform: translateX(-50%)">split down</span>
+      </div>
+      <figcaption>
+        <b>Four wedges, no dead centre.</b> Wherever the pointer is over a
+        window, there is an answer, and it is the one the picture says.
+      </figcaption>
+    </figure>
+    <figure>
+      <div class="wedges">
+        <svg viewBox="0 0 400 230" preserveAspectRatio="none" aria-hidden="true">
+          <path d="M0 0 L400 230 M400 0 L0 230" stroke="#ededed" stroke-width="1" vector-effect="non-scaling-stroke" fill="none" stroke-dasharray="4 3"/>
+          <rect x="100" y="57" width="200" height="116" fill="none" stroke="#d4d4d4" stroke-width="1" vector-effect="non-scaling-stroke" stroke-dasharray="4 3"/>
+        </svg>
+        <span class="lbl" style="left: 50%; top: 50%; transform: translate(-50%,-50%)">a tab, later</span>
+      </div>
+      <figcaption>
+        <b>What the centre is being kept for.</b> Tabs are out of the first
+        version, so nothing claims the middle yet. When they arrive the wedges
+        become a band around the edge and the centre means "put it in this
+        window's stack" — the vocabulary grows without any of it changing
+        meaning.
+      </figcaption>
+    </figure>
+  </div>
+  <p class="note">
+    There are two more targets, and neither is a window's wedge: <b>a gap</b>
+    (<a href="#between">#between</a>) and <b>the dock's outer edge</b>
+    (<a href="#outer">#outer</a>). Three kinds of target in total, which is as
+    many as can be told apart without a legend.
+  </p>
+</section>
+
+<!-- ---------------------------------------------------------------- edge -->
+<section class="sheet" id="edge">
+  <div class="name"><h2>Moving — over a window's edge</h2><code>#edge</code></div>
+  <p class="note">
+    The inspector has been picked up by its grip and the pointer is in the
+    canvas's left wedge. The <b>preview</b> is the slot it would take: the left
+    half of the canvas, and only the canvas — the timeline underneath is not
+    involved, because the canvas is what is being split.
+  </p>
+  <div class="frame">
+    <div class="app">
+      <div class="hostbar"><b>ui-lib</b> <span>moving — inspector into the canvas</span></div>
+      <div class="dock row" style="grid-template-columns: 1fr var(--gap) 300px">
+        <div class="col" style="grid-template-rows: 1fr var(--gap) 120px">
+          <div class="win">
+            <div class="win-tab"><button class="grip"><svg viewBox="0 0 10 16" width="10" height="16" aria-hidden="true"><circle cx="3" cy="4" r="1.1"/><circle cx="7" cy="4" r="1.1"/><circle cx="3" cy="8" r="1.1"/><circle cx="7" cy="8" r="1.1"/><circle cx="3" cy="12" r="1.1"/><circle cx="7" cy="12" r="1.1"/></svg></button><h3>Canvas</h3></div>
+            <div class="win-body"><div class="fill">the host's</div></div>
+          </div>
+          <div class="gap gap-h"></div>
+          <div class="win">
+            <div class="win-tab"><button class="grip"><svg viewBox="0 0 10 16" width="10" height="16" aria-hidden="true"><circle cx="3" cy="4" r="1.1"/><circle cx="7" cy="4" r="1.1"/><circle cx="3" cy="8" r="1.1"/><circle cx="7" cy="8" r="1.1"/><circle cx="3" cy="12" r="1.1"/><circle cx="7" cy="12" r="1.1"/></svg></button><h3>Timeline</h3></div>
+            <div class="win-body"><div class="fill lines"></div></div>
+          </div>
+        </div>
+        <div class="gap gap-v"></div>
+        <div class="win lifted">
+          <div class="win-tab"><button class="grip"><svg viewBox="0 0 10 16" width="10" height="16" aria-hidden="true"><circle cx="3" cy="4" r="1.1"/><circle cx="7" cy="4" r="1.1"/><circle cx="3" cy="8" r="1.1"/><circle cx="7" cy="8" r="1.1"/><circle cx="3" cy="12" r="1.1"/><circle cx="7" cy="12" r="1.1"/></svg></button><h3>Inspector</h3></div>
+          <div class="win-body"><div class="fill lines"></div></div>
+        </div>
+
+        <div class="preview" style="left: 0; top: 0; width: calc((100% - 300px - var(--gap)) / 2); height: calc(100% - 120px - var(--gap))"></div>
+
+        <div class="ghost" style="left: 150px; top: 120px; width: 280px; height: 130px">
+          <div class="win-tab"><button class="grip"><svg viewBox="0 0 10 16" width="10" height="16" aria-hidden="true"><circle cx="3" cy="4" r="1.1"/><circle cx="7" cy="4" r="1.1"/><circle cx="3" cy="8" r="1.1"/><circle cx="7" cy="8" r="1.1"/><circle cx="3" cy="12" r="1.1"/><circle cx="7" cy="12" r="1.1"/></svg></button><h3>Inspector</h3></div>
+          <div class="win-body"><div class="fill lines"></div></div>
+        </div>
+        <div class="cursor" style="left: 188px; top: 133px">
+          <svg width="14" height="20" viewBox="0 0 14 20" aria-hidden="true"><path d="M1.2 1.2 L1.2 15.2 L5.2 11.4 L7.8 18 L10.4 17 L7.9 10.5 L12.4 10.5 Z" fill="#0a0a0a" stroke="#fff" stroke-width="1.3"/></svg>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p class="note">
+    Three decisions are drawn here.
+  </p>
+  <p class="note">
+    <b>The window being moved stays where it is, dimmed.</b> It does not vanish
+    and the layout does not close up behind it. A dock that reflows the moment
+    you pick something up moves the target you were aiming at out from under
+    your cursor.
+  </p>
+  <p class="note">
+    <b>The preview is the share the window will actually get</b>, not a stripe
+    standing in for a direction. Landing in a group of two gives it a third of
+    that group; splitting one window gives it half. One rule — an equal share
+    of the group it lands in — and the picture is the rule, so the drop cannot
+    surprise you.
+  </p>
+  <p class="note">
+    <b>A press is not yet a move.</b> The grip has to travel a few pixels before
+    anything lifts, so a click on it is still a click and a twitch does not
+    rearrange the screen. The threshold is a distance and not a duration, which
+    is why nothing in the library reads a clock.
+  </p>
+</section>
+
+<!-- ------------------------------------------------------------- between -->
+<section class="sheet" id="between">
+  <div class="name"><h2>Moving — over a gap</h2><code>#between</code></div>
+  <p class="note">
+    The pointer is on the gap between the column and the inspector, so the
+    window lands <b>between them</b>: the row gets a third child and all three
+    share the width.
+  </p>
+  <p class="note">
+    This is not a fourth kind of operation. Dropping on the right edge of the
+    column would nest a row inside a row, and a group whose axis matches its
+    parent's is <b>flattened into it</b> — so that drop and this one produce the
+    same tree. The gap is offered as a target because it is the one place where
+    "which side of this line am I on" has no answer, and asking the user to
+    guess at a boundary is how a drop lands somewhere they did not intend.
+  </p>
+  <div class="frame">
+    <div class="app">
+      <div class="hostbar"><b>ui-lib</b> <span>moving — timeline between the column and the inspector</span></div>
+      <div class="dock row" style="grid-template-columns: 1fr var(--gap) 300px">
+        <div class="col" style="grid-template-rows: 1fr var(--gap) 120px">
+          <div class="win">
+            <div class="win-tab"><button class="grip"><svg viewBox="0 0 10 16" width="10" height="16" aria-hidden="true"><circle cx="3" cy="4" r="1.1"/><circle cx="7" cy="4" r="1.1"/><circle cx="3" cy="8" r="1.1"/><circle cx="7" cy="8" r="1.1"/><circle cx="3" cy="12" r="1.1"/><circle cx="7" cy="12" r="1.1"/></svg></button><h3>Canvas</h3></div>
+            <div class="win-body"><div class="fill">the host's</div></div>
+          </div>
+          <div class="gap gap-h"></div>
+          <div class="win lifted">
+            <div class="win-tab"><button class="grip"><svg viewBox="0 0 10 16" width="10" height="16" aria-hidden="true"><circle cx="3" cy="4" r="1.1"/><circle cx="7" cy="4" r="1.1"/><circle cx="3" cy="8" r="1.1"/><circle cx="7" cy="8" r="1.1"/><circle cx="3" cy="12" r="1.1"/><circle cx="7" cy="12" r="1.1"/></svg></button><h3>Timeline</h3></div>
+            <div class="win-body"><div class="fill lines"></div></div>
+          </div>
+        </div>
+        <div class="gap gap-v"></div>
+        <div class="win">
+          <div class="win-tab"><button class="grip"><svg viewBox="0 0 10 16" width="10" height="16" aria-hidden="true"><circle cx="3" cy="4" r="1.1"/><circle cx="7" cy="4" r="1.1"/><circle cx="3" cy="8" r="1.1"/><circle cx="7" cy="8" r="1.1"/><circle cx="3" cy="12" r="1.1"/><circle cx="7" cy="12" r="1.1"/></svg></button><h3>Inspector</h3></div>
+          <div class="win-body"><div class="fill lines"></div></div>
+        </div>
+
+        <div class="preview" style="left: calc(100% - 462px); top: 0; width: 320px; height: 100%"></div>
+
+        <div class="ghost" style="left: calc(100% - 430px); top: 150px; width: 260px; height: 120px">
+          <div class="win-tab"><button class="grip"><svg viewBox="0 0 10 16" width="10" height="16" aria-hidden="true"><circle cx="3" cy="4" r="1.1"/><circle cx="7" cy="4" r="1.1"/><circle cx="3" cy="8" r="1.1"/><circle cx="7" cy="8" r="1.1"/><circle cx="3" cy="12" r="1.1"/><circle cx="7" cy="12" r="1.1"/></svg></button><h3>Timeline</h3></div>
+          <div class="win-body"><div class="fill lines"></div></div>
+        </div>
+        <div class="cursor" style="left: calc(100% - 303px); top: 163px">
+          <svg width="14" height="20" viewBox="0 0 14 20" aria-hidden="true"><path d="M1.2 1.2 L1.2 15.2 L5.2 11.4 L7.8 18 L10.4 17 L7.9 10.5 L12.4 10.5 Z" fill="#0a0a0a" stroke="#fff" stroke-width="1.3"/></svg>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p class="note">
+    The column is left holding one window, so <b>it collapses into that
+    window</b>: a group with one child is not a group. Without that rule a
+    week of dragging leaves a tree of wrappers nobody can see and every
+    resize has to walk through.
+  </p>
+  <div class="gap-note">
+    <b>Not decided:</b> whether the preview should straddle the gap like this.
+    It is the truth — the window really will take a share from both
+    neighbours — but a wash lying across half the inspector can read as
+    <i>replace the inspector</i>. The alternative is a slab filling the gap
+    itself, which cannot be misread and says nothing about the width.
+  </div>
+</section>
+
+<!-- --------------------------------------------------------------- outer -->
+<section class="sheet" id="outer">
+  <div class="name"><h2>Moving — over the dock's outer edge</h2><code>#outer</code></div>
+  <p class="note">
+    The pointer is in the strip along the dock's left edge, outside every
+    window, so the window lands at the <b>root</b>: a full-height column down
+    the left of everything.
+  </p>
+  <p class="note">
+    This target has to exist, because it is the only way to get back a window
+    that spans the whole height. Dropping on the canvas's left edge would put
+    the window beside the canvas and above the timeline; nothing you can do
+    inside a window gives you the outer column.
+  </p>
+  <div class="frame">
+    <div class="app">
+      <div class="hostbar"><b>ui-lib</b> <span>moving — inspector to the root</span></div>
+      <div class="dock row" style="grid-template-columns: 1fr var(--gap) 300px">
+        <div class="col" style="grid-template-rows: 1fr var(--gap) 120px">
+          <div class="win">
+            <div class="win-tab"><button class="grip"><svg viewBox="0 0 10 16" width="10" height="16" aria-hidden="true"><circle cx="3" cy="4" r="1.1"/><circle cx="7" cy="4" r="1.1"/><circle cx="3" cy="8" r="1.1"/><circle cx="7" cy="8" r="1.1"/><circle cx="3" cy="12" r="1.1"/><circle cx="7" cy="12" r="1.1"/></svg></button><h3>Canvas</h3></div>
+            <div class="win-body"><div class="fill">the host's</div></div>
+          </div>
+          <div class="gap gap-h"></div>
+          <div class="win">
+            <div class="win-tab"><button class="grip"><svg viewBox="0 0 10 16" width="10" height="16" aria-hidden="true"><circle cx="3" cy="4" r="1.1"/><circle cx="7" cy="4" r="1.1"/><circle cx="3" cy="8" r="1.1"/><circle cx="7" cy="8" r="1.1"/><circle cx="3" cy="12" r="1.1"/><circle cx="7" cy="12" r="1.1"/></svg></button><h3>Timeline</h3></div>
+            <div class="win-body"><div class="fill lines"></div></div>
+          </div>
+        </div>
+        <div class="gap gap-v"></div>
+        <div class="win lifted">
+          <div class="win-tab"><button class="grip"><svg viewBox="0 0 10 16" width="10" height="16" aria-hidden="true"><circle cx="3" cy="4" r="1.1"/><circle cx="7" cy="4" r="1.1"/><circle cx="3" cy="8" r="1.1"/><circle cx="7" cy="8" r="1.1"/><circle cx="3" cy="12" r="1.1"/><circle cx="7" cy="12" r="1.1"/></svg></button><h3>Inspector</h3></div>
+          <div class="win-body"><div class="fill lines"></div></div>
+        </div>
+
+        <div class="preview" style="left: 0; top: 0; width: 320px; height: 100%"></div>
+
+        <div class="ghost" style="left: 24px; top: 140px; width: 260px; height: 120px">
+          <div class="win-tab"><button class="grip"><svg viewBox="0 0 10 16" width="10" height="16" aria-hidden="true"><circle cx="3" cy="4" r="1.1"/><circle cx="7" cy="4" r="1.1"/><circle cx="3" cy="8" r="1.1"/><circle cx="7" cy="8" r="1.1"/><circle cx="3" cy="12" r="1.1"/><circle cx="7" cy="12" r="1.1"/></svg></button><h3>Inspector</h3></div>
+          <div class="win-body"><div class="fill lines"></div></div>
+        </div>
+        <div class="cursor" style="left: 7px; top: 152px">
+          <svg width="14" height="20" viewBox="0 0 14 20" aria-hidden="true"><path d="M1.2 1.2 L1.2 15.2 L5.2 11.4 L7.8 18 L10.4 17 L7.9 10.5 L12.4 10.5 Z" fill="#0a0a0a" stroke="#fff" stroke-width="1.3"/></svg>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="gap-note">
+    <b>Not decided:</b> how wide the outer strip is. It has to be reachable
+    without leaving the dock and narrow enough that a drop meant for the window
+    beside it does not land at the root. Drawn here at 16px, which is a guess
+    until it has been used.
+  </div>
+</section>
+
+<!-- ------------------------------------------------------------- nowhere -->
+<section class="sheet" id="nowhere">
+  <div class="name"><h2>A drop that lands nowhere</h2><code>#nowhere</code></div>
+  <p class="note">
+    The pointer has left the dock. There is <b>no preview</b>, and that is the
+    whole message: let go here and nothing happens — the window goes back to
+    the slot it was lifted from, which it never actually left.
+  </p>
+  <p class="note">
+    The same picture covers a window dropped on its own slot, and
+    <code>escape</code>, and the browser taking the pointer away mid-drag. All
+    four are one event — <b>the gesture ends having decided nothing</b> — so
+    there is no fifth case where a window is in the air with nowhere to be.
+  </p>
+  <div class="frame">
+    <div class="app">
+      <div class="hostbar"><b>ui-lib</b> <span>moving — nowhere</span></div>
+      <div class="dock row" style="grid-template-columns: 1fr var(--gap) 300px">
+        <div class="col" style="grid-template-rows: 1fr var(--gap) 120px">
+          <div class="win">
+            <div class="win-tab"><button class="grip"><svg viewBox="0 0 10 16" width="10" height="16" aria-hidden="true"><circle cx="3" cy="4" r="1.1"/><circle cx="7" cy="4" r="1.1"/><circle cx="3" cy="8" r="1.1"/><circle cx="7" cy="8" r="1.1"/><circle cx="3" cy="12" r="1.1"/><circle cx="7" cy="12" r="1.1"/></svg></button><h3>Canvas</h3></div>
+            <div class="win-body"><div class="fill">the host's</div></div>
+          </div>
+          <div class="gap gap-h"></div>
+          <div class="win">
+            <div class="win-tab"><button class="grip"><svg viewBox="0 0 10 16" width="10" height="16" aria-hidden="true"><circle cx="3" cy="4" r="1.1"/><circle cx="7" cy="4" r="1.1"/><circle cx="3" cy="8" r="1.1"/><circle cx="7" cy="8" r="1.1"/><circle cx="3" cy="12" r="1.1"/><circle cx="7" cy="12" r="1.1"/></svg></button><h3>Timeline</h3></div>
+            <div class="win-body"><div class="fill lines"></div></div>
+          </div>
+        </div>
+        <div class="gap gap-v"></div>
+        <div class="win lifted">
+          <div class="win-tab"><button class="grip"><svg viewBox="0 0 10 16" width="10" height="16" aria-hidden="true"><circle cx="3" cy="4" r="1.1"/><circle cx="7" cy="4" r="1.1"/><circle cx="3" cy="8" r="1.1"/><circle cx="7" cy="8" r="1.1"/><circle cx="3" cy="12" r="1.1"/><circle cx="7" cy="12" r="1.1"/></svg></button><h3>Inspector</h3></div>
+          <div class="win-body"><div class="fill lines"></div></div>
+        </div>
+
+        <div class="ghost" style="left: 50%; top: -22px; width: 260px; height: 120px">
+          <div class="win-tab"><button class="grip"><svg viewBox="0 0 10 16" width="10" height="16" aria-hidden="true"><circle cx="3" cy="4" r="1.1"/><circle cx="7" cy="4" r="1.1"/><circle cx="3" cy="8" r="1.1"/><circle cx="7" cy="8" r="1.1"/><circle cx="3" cy="12" r="1.1"/><circle cx="7" cy="12" r="1.1"/></svg></button><h3>Inspector</h3></div>
+          <div class="win-body"><div class="fill lines"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p class="note">
+    The ghost is clipped by the dock rather than drawn over the host's own
+    chrome. The library was given a surface and does not draw outside it —
+    which is also what makes a window leaving the surface a different feature
+    (the native backend tears it out into an OS window) rather than a bigger
+    ghost.
+  </p>
+</section>
+
+<!-- --------------------------------------------------------------- alone -->
+<section class="sheet" id="alone">
+  <div class="name"><h2>Alone, and empty</h2><code>#alone</code></div>
+  <p class="note">
+    One window has <b>no gaps</b>, because a gap is a thing between two windows
+    and not a border. It keeps its title bar: the grip is how it will be moved
+    once there is somewhere to move it to, and a bar that comes and goes with
+    the window count is a bar whose height nobody can lay anything out against.
+  </p>
+  <div class="frame two">
+    <figure>
+      <div class="app short">
+        <div class="hostbar"><b>ui-lib</b> <span>one window</span></div>
+        <div class="dock">
+          <div class="win">
+            <div class="win-tab"><button class="grip"><svg viewBox="0 0 10 16" width="10" height="16" aria-hidden="true"><circle cx="3" cy="4" r="1.1"/><circle cx="7" cy="4" r="1.1"/><circle cx="3" cy="8" r="1.1"/><circle cx="7" cy="8" r="1.1"/><circle cx="3" cy="12" r="1.1"/><circle cx="7" cy="12" r="1.1"/></svg></button><h3>Canvas</h3></div>
+            <div class="win-body"><div class="fill">the host's</div></div>
+          </div>
+        </div>
+      </div>
+      <figcaption>One window, filling the surface it was given.</figcaption>
+    </figure>
+    <figure>
+      <div class="app short">
+        <div class="hostbar"><b>ui-lib</b> <span>nothing open</span></div>
+        <div class="dock"></div>
+      </div>
+      <figcaption>
+        <b>Nothing open is the bare ground</b> and no message. What to say when
+        there are no windows is the host's to say — it is the one who knows
+        whether that is a fresh start or everything closed.
+      </figcaption>
+    </figure>
+  </div>
+</section>
+
+</div>
+</body>
+</html>
