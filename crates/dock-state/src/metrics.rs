@@ -12,8 +12,11 @@ pub struct Metrics {
     /// needs, so the rest of the strip is left empty rather than one tab
     /// being stretched across a whole slot.
     pub tab_width: f32,
-    /// The gap between two windows, which is the resize control.
+    /// The gap between two windows, which is the line between them.
     pub gap: f32,
+    /// How far either side of that line still counts as being on it. The line
+    /// is a line; what you take hold of is wider than what you see.
+    pub grab: f32,
     /// The strip along the dock's edge that drops at the root.
     pub edge: f32,
     /// How much of a window's width and height each drop band takes, so a
@@ -37,7 +40,8 @@ impl Default for Metrics {
         Self {
             tab: 27.0,
             tab_width: 160.0,
-            gap: 5.0,
+            gap: 1.0,
+            grab: 3.0,
             edge: 16.0,
             band: 0.1,
             threshold: 4.0,

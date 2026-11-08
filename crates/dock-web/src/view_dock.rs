@@ -95,7 +95,10 @@ pub fn DockView(
         <div
             node_ref=node
             class=move || format!("dock {}{}{}", cursor(), settling(), moving())
-            style=format!("--tab: {}px; --gap: {}px", metrics.tab, metrics.gap)
+            style=format!(
+                "--tab: {}px; --gap: {}px; --grab: {}px",
+                metrics.tab, metrics.gap, metrics.grab,
+            )
             on:pointerdown=move |event: ev::PointerEvent| {
                 let at = dock.point(node, event.client_x() as f32, event.client_y() as f32);
                 dock.send(Event::FromPointer(EventPointer::Down { at }));
@@ -160,6 +163,7 @@ fn Tab(
     };
 
     let only = move || dock.frame().panes.get(pane).is_some_and(|pane| pane.tabs.len() == 1);
+    let first = tab == 0;
 
     let class = move || {
         let Some((_, tab)) = drawn() else {
@@ -170,6 +174,10 @@ fn Tab(
 
         if tab.showing {
             class.push_str(" is-showing");
+        }
+
+        if first {
+            class.push_str(" is-first");
         }
 
         if tab.lifted {
@@ -247,7 +255,16 @@ fn Gap(dock: Dock, index: usize) -> impl IntoView {
         None => "gap",
     };
 
-    view! { <div class=class style=move || drawn().map(|gap| place(gap.rect)).unwrap_or_default()></div> }
+    // Drawn wider than it is, by as much as the machine counts as being on
+    // it, so that the pointer meets the cursor and the line at the same time.
+    let grab = dock.metrics().grab;
+
+    view! {
+        <div
+            class=class
+            style=move || drawn().map(|gap| place(gap.rect.grown(grab))).unwrap_or_default()
+        ></div>
+    }
 }
 
 /// Every region on offer, one element each.

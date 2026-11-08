@@ -166,7 +166,7 @@ impl StateDock {
         let hit = solved
             .gaps
             .iter()
-            .find(|gap| gap.rect.grown(2.0).contains(at));
+            .find(|gap| gap.rect.grown(self.metrics.grab).contains(at));
 
         if let Some(gap) = hit {
             let Some((a, b)) = self.shares(&gap.group, gap.index) else {

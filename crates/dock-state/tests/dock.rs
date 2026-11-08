@@ -22,8 +22,8 @@ const A: WindowId = WindowId(1);
 const B: WindowId = WindowId(2);
 const C: WindowId = WindowId(3);
 
-/// 800 by 600, and the metrics the library ships with: a 5px gap, so two
-/// windows side by side are 397.5 each.
+/// 800 by 600, and the metrics the library ships with: a 1px gap, so two
+/// windows side by side are 399.5 each.
 fn dock() -> StateDock {
     let mut dock = StateDock::default();
 
@@ -144,9 +144,9 @@ fn opening_windows_divides_the_surface() {
         "one between the columns, one in the second"
     );
 
-    near(rect(&dock, A).w, 397.5, "a half, less half a gap");
-    near(rect(&dock, B).h, 297.5, "a half of the column");
-    near(rect(&dock, C).y, 302.5, "under B and its gap");
+    near(rect(&dock, A).w, 399.5, "a half, less half a gap");
+    near(rect(&dock, B).h, 299.5, "a half of the column");
+    near(rect(&dock, C).y, 300.5, "under B and its gap");
 }
 
 #[test]
@@ -157,7 +157,7 @@ fn a_press_on_a_tab_is_not_a_move() {
     eval!(&mut dock, < up(10.0, 10.0));
 
     assert!(dock.frame().ghost.is_none());
-    near(rect(&dock, A).w, 397.5, "nothing moved");
+    near(rect(&dock, A).w, 399.5, "nothing moved");
 }
 
 #[test]
@@ -330,8 +330,8 @@ fn a_drop_into_a_row_takes_a_third_of_the_row() {
     assert_eq!(frame.windows.len(), 3);
     assert_eq!(frame.gaps.len(), 2, "one row, two gaps, no column left");
 
-    near(rect(&dock, C).w, 263.3, "a third of the row");
-    near(rect(&dock, C).x, 268.3, "between A and B");
+    near(rect(&dock, C).w, 266.0, "a third of the row");
+    near(rect(&dock, C).x, 267.0, "between A and B");
     near(rect(&dock, C).h, 600.0, "the whole height");
 }
 
@@ -347,7 +347,7 @@ fn a_drop_outside_the_dock_changes_nothing() {
 
     eval!(&mut dock, < up(-50.0, 300.0));
 
-    near(rect(&dock, A).w, 397.5, "back where it was");
+    near(rect(&dock, A).w, 399.5, "back where it was");
     near(rect(&dock, A).x, 0.0, "back where it was");
 }
 
@@ -360,8 +360,8 @@ fn dragging_a_gap_moves_weight_between_two_windows() {
     eval!(&mut dock, < moved(500.0, 300.0));
     eval!(&mut dock, < up(500.0, 300.0));
 
-    near(rect(&dock, A).w, 497.5, "a hundred pixels wider");
-    near(rect(&dock, B).w, 297.5, "and the other a hundred narrower");
+    near(rect(&dock, A).w, 499.5, "a hundred pixels wider");
+    near(rect(&dock, B).w, 299.5, "and the other a hundred narrower");
 }
 
 #[test]
@@ -384,7 +384,7 @@ fn escape_puts_a_resize_back() {
     eval!(&mut dock, < moved(500.0, 300.0));
     eval!(&mut dock, < cancelled());
 
-    near(rect(&dock, A).w, 397.5, "half again");
+    near(rect(&dock, A).w, 399.5, "half again");
 }
 
 #[test]
@@ -414,7 +414,7 @@ fn a_fixed_window_keeps_its_size_when_it_is_moved() {
     eval!(&mut dock, < opened(B, beside(A, Side::Right), Share::Fixed(300.0)));
 
     near(rect(&dock, B).w, 300.0, "as asked");
-    near(rect(&dock, A).w, 495.0, "and A takes the rest");
+    near(rect(&dock, A).w, 499.0, "and A takes the rest");
 
     eval!(&mut dock, < down(505.0, 10.0));
     eval!(&mut dock, < moved(30.0, 300.0));

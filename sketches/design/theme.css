@@ -68,5 +68,6 @@
   --row:    26px;
   --row-sm: 21px;
   --tab:    27px;   /* a window's title bar */
-  --gap:    5px;    /* the gap between two windows, which is the resize control */
+  --gap:    1px;    /* the line between two windows */
+  --grab:   3px;    /* how far either side of it still counts as being on it */
 }

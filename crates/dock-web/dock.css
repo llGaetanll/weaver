@@ -44,29 +44,31 @@ body {
 
 /* --- The gap ------------------------------------------------------------ */
 
-/* The gap is the resize control. Five pixels, with a hairline down the middle
-   and the windows' own ground either side of it, so that what it looks like
-   is an ordinary line between two windows and what it is is something you can
-   put a pointer on.
+/* The gap is the resize control, and it is a line: one pixel of border
+   between two windows, with nothing either side of it, because anything else
+   there reads as a band rather than as an edge.
 
-   Under the pointer the line thickens rather than darkening: it is a thing to
-   take hold of, not a thing that is on. */
-.gap { position: relative; background: var(--panel); }
-.gap-v { width: var(--gap); cursor: col-resize; }
-.gap-h { height: var(--gap); cursor: row-resize; }
+   What you take hold of is wider than what you see — the element reaches a
+   few pixels into both windows, which is also how far the machine counts a
+   press as being on the line. Under the pointer the line thickens and nothing
+   else happens: it is a thing to take hold of, not a thing that is on, and
+   black is what on means everywhere else here. */
+.gap { position: relative; }
+.gap-v { cursor: col-resize; }
+.gap-h { cursor: row-resize; }
 
 .gap::after {
   content: "";
   position: absolute;
   background: var(--border);
-  transition: inset var(--fade) ease, background var(--fade) ease;
+  transition: inset var(--fade) ease;
 }
 
-.gap-v::after { inset: 0 2px; }
-.gap-h::after { inset: 2px 0; }
+.gap-v::after { inset: 0 var(--grab); }
+.gap-h::after { inset: var(--grab) 0; }
 
-.gap-v:hover::after { inset: 0 1px; background: var(--border-firm); }
-.gap-h:hover::after { inset: 1px 0; background: var(--border-firm); }
+.gap-v:hover::after { inset: 0 calc(var(--grab) - 1px); }
+.gap-h:hover::after { inset: calc(var(--grab) - 1px) 0; }
 
 /* --- A slot ------------------------------------------------------------- */
 
@@ -139,7 +141,9 @@ body {
 }
 
 /* The showing tab covers the line under it with the window's own ground and
-   carries it up its sides instead. It has no line along its top: the slot
+   carries it up its sides instead — except on the left when it is the first
+   tab, where the slot's own edge is already a line and a second one beside it
+   is a seam. It has no line along its top: the slot
    above it already drew one there, and two lines a pixel apart is a seam
    rather than an edge. */
 .tab.is-showing {
@@ -149,6 +153,8 @@ body {
     inset 1px 0 0 var(--border),
     inset -1px 0 0 var(--border);
 }
+
+.tab.is-showing.is-first { box-shadow: inset -1px 0 0 var(--border); }
 
 .tab.is-showing .tab-icon { color: var(--text-muted); }
 /* A window alone in its slot has a title bar rather than a tab. It is still
