@@ -105,7 +105,13 @@ fn walk(node: &Node, area: Rect, metrics: &Metrics, path: &mut Path, out: &mut S
         }
 
         path.push(i);
-        walk(&child.node, area.slice(axis, at, *extent), metrics, path, out);
+        walk(
+            &child.node,
+            area.slice(axis, at, *extent),
+            metrics,
+            path,
+            out,
+        );
         let _ = path.pop();
 
         at += extent;

@@ -23,15 +23,15 @@ pub struct WindowFrame {
     pub lifted: bool,
 }
 
-/// One tab: the grip and the name of a window sharing a slot.
+/// One tab: the name of a window sharing a slot, and whatever the host draws
+/// beside it. The whole of it is the handle the window is moved by, which is
+/// also the whole of what picks it — one target, so there is nothing to aim
+/// at inside a tab.
 #[derive(Clone, Debug, PartialEq)]
 pub struct TabFrame {
     pub window: WindowId,
     pub title: String,
     pub rect: Rect,
-    /// The grip, which is the part of a tab a window is moved by. Everything
-    /// else in it picks the tab instead.
-    pub grip: Rect,
     pub showing: bool,
     pub lifted: bool,
 }

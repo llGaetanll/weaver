@@ -1,9 +1,8 @@
-//! A tiled dock: windows on a surface, moved by their grips and resized by
+//! A tiled dock: windows on a surface, moved by their tabs and resized by
 //! the gaps between them.
 //!
-//! The library decides where rectangles go and draws a window's title bar,
-//! the gaps, and the two things that exist only while a window is being
-//! moved. What is inside a window belongs to whoever is using it.
+//! The library decides where rectangles go and draws a window's tab, the
+//! gaps, and the two things that exist only while a window is being moved. What is inside a window belongs to whoever is using it.
 //!
 //! It is a state machine. Events go in with [`StateDock::handle_events`],
 //! actions come back from [`StateDock::emit_actions`] once the whole batch has
@@ -33,15 +32,15 @@ pub use frame::Frame;
 pub use frame::GapFrame;
 pub use frame::PaneFrame;
 pub use frame::TabFrame;
-pub use frame::Zone;
-pub use state_dock::REGIONS;
 pub use frame::WindowFrame;
+pub use frame::Zone;
 pub use geometry::Axis;
 pub use geometry::Point;
 pub use geometry::Rect;
 pub use geometry::Side;
 pub use geometry::Size;
 pub use metrics::Metrics;
+pub use state_dock::REGIONS;
 pub use state_dock::StateDock;
 pub use tree::Share;
 pub use tree::Slot;

@@ -43,7 +43,7 @@ struct Window {
 /// is not a state the dock can be in.
 #[derive(Clone, Debug)]
 enum Gesture {
-    /// A grip is held but has not travelled far enough to be a move.
+    /// A tab is held but has not travelled far enough to be a move.
     Pressed { window: WindowId, origin: Point },
 
     Moving {
@@ -154,10 +154,10 @@ impl StateDock {
         }
     }
 
-    /// A press lands on a gap, a grip, or nothing at all. A gap starts
-    /// resizing at once — there is nothing else it could mean — while a grip
-    /// waits to see whether the pointer travels, so that a click stays a
-    /// click.
+    /// A press lands on a gap, a tab, or nothing at all. A gap starts
+    /// resizing at once — there is nothing else it could mean — while a tab
+    /// waits to see whether the pointer travels, so that a press which goes
+    /// nowhere has only brought a window forward.
     fn press(&mut self, at: Point) {
         let Some(solved) = self.solved() else {
             return;
@@ -188,23 +188,19 @@ impl StateDock {
             return;
         };
 
-        let Some((tab, rect)) = self.tab_at(pane, at) else {
+        let Some((tab, _)) = self.tab_at(pane, at) else {
             return;
         };
 
-        // The grip is the handle; the rest of a tab picks it. Keeping them
-        // apart is what lets a stack be leafed through without anything being
-        // picked up by accident.
-        if Rect::new(rect.x, rect.y, self.metrics.grip, rect.h).contains(at) {
-            self.gesture = Some(Gesture::Pressed {
-                window: tab,
-                origin: at,
-            });
-
-            return;
-        }
-
+        // A tab is picked by pressing it and moved by dragging it, and both
+        // are the same press: picking happens at once, and whether it was
+        // also a drag is answered by whether the pointer goes anywhere.
         self.show(tab);
+
+        self.gesture = Some(Gesture::Pressed {
+            window: tab,
+            origin: at,
+        });
     }
 
     /// Bring a window to the front of its stack.
@@ -462,7 +458,6 @@ impl StateDock {
                         window,
                         title: self.title(window),
                         rect,
-                        grip: Rect::new(rect.x, rect.y, self.metrics.grip, rect.h),
                         showing: window == pane.showing,
                         lifted: moving == Some(window),
                     })
@@ -562,8 +557,8 @@ impl StateDock {
     }
 
     /// Where the cursor sits inside the ghost: the same place it had on the
-    /// window, in proportion, so a window picked up by its grip is still held
-    /// by its grip.
+    /// window, in proportion, so a window picked up by its tab is still held
+    /// by its tab.
     fn grab(&self, at: Point, rect: Rect) -> Point {
         let size = self.capped(rect.size());
 

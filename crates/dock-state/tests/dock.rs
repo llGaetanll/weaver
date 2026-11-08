@@ -138,7 +138,11 @@ fn opening_windows_divides_the_surface() {
     let frame = dock.frame();
 
     assert_eq!(frame.windows.len(), 3);
-    assert_eq!(frame.gaps.len(), 2, "one between the columns, one in the second");
+    assert_eq!(
+        frame.gaps.len(),
+        2,
+        "one between the columns, one in the second"
+    );
 
     near(rect(&dock, A).w, 397.5, "a half, less half a gap");
     near(rect(&dock, B).h, 297.5, "a half of the column");
@@ -146,7 +150,7 @@ fn opening_windows_divides_the_surface() {
 }
 
 #[test]
-fn a_click_on_a_grip_is_not_a_move() {
+fn a_press_on_a_tab_is_not_a_move() {
     let mut dock = three();
 
     eval!(&mut dock, < down(10.0, 10.0));
@@ -174,7 +178,10 @@ fn a_press_that_travels_lifts_the_window() {
 
     assert!(frame.ghost.is_some(), "now it is a move");
     assert!(
-        frame.windows.iter().any(|drawn| drawn.window == A && drawn.lifted),
+        frame
+            .windows
+            .iter()
+            .any(|drawn| drawn.window == A && drawn.lifted),
         "the window stays where it is, dimmed",
     );
 }
@@ -192,7 +199,11 @@ fn a_drop_lands_on_the_side_its_band_was_on() {
 
     let frame = dock.frame();
 
-    assert_eq!(frame.regions.len(), 5, "four bands and the middle, all drawn");
+    assert_eq!(
+        frame.regions.len(),
+        5,
+        "four bands and the middle, all drawn"
+    );
     assert_eq!(
         frame.regions.iter().filter(|region| region.chosen).count(),
         1,
@@ -202,7 +213,10 @@ fn a_drop_lands_on_the_side_its_band_was_on() {
     let zone = chosen(&dock).expect("in B's left band");
     let against = zone.points.iter().filter(|point| point.x < 403.0).count();
 
-    assert_eq!(against, 2, "a trapezium with its long side on B's left edge");
+    assert_eq!(
+        against, 2,
+        "a trapezium with its long side on B's left edge"
+    );
 
     eval!(&mut dock, < up(420.0, 100.0));
 
@@ -221,13 +235,23 @@ fn the_middle_of_a_window_is_its_stack() {
     eval!(&mut dock, < moved(600.0, 150.0));
 
     assert_eq!(dock.frame().regions.len(), 5, "four bands and the middle");
-    assert!(chosen(&dock).is_some(), "and the middle is one of the answers");
+    assert!(
+        chosen(&dock).is_some(),
+        "and the middle is one of the answers"
+    );
 
     eval!(&mut dock, < up(600.0, 150.0));
 
     assert_eq!(dock.frame().panes.len(), 2, "three windows in two slots");
-    assert_eq!(tabs(&dock, A), vec![B, A], "A joined B, behind it in the order");
-    assert!(showing(&dock, A), "and it is the one showing, since it was just put there");
+    assert_eq!(
+        tabs(&dock, A),
+        vec![B, A],
+        "A joined B, behind it in the order"
+    );
+    assert!(
+        showing(&dock, A),
+        "and it is the one showing, since it was just put there"
+    );
     assert!(!showing(&dock, B), "which means B is not");
 }
 
@@ -241,7 +265,10 @@ fn a_window_over_its_own_slot_proposes_nothing() {
     eval!(&mut dock, < moved(200.0, 300.0));
 
     assert!(dock.frame().ghost.is_some(), "still being carried");
-    assert!(dock.frame().regions.is_empty(), "but its own slot is not a target");
+    assert!(
+        dock.frame().regions.is_empty(),
+        "but its own slot is not a target"
+    );
 }
 
 /// A tab is picked by pressing it, and a window behind one keeps its place.
@@ -255,12 +282,15 @@ fn pressing_a_tab_brings_its_window_forward() {
 
     assert!(showing(&dock, A), "A is in front");
 
-    // B's own tab is the first of the two, pressed past its grip so that this
-    // is a press and not a drag.
+    // B's own tab is the first of the two.
     eval!(&mut dock, < down(80.0, 13.0));
 
     assert!(showing(&dock, B), "and now B is");
-    assert_eq!(tabs(&dock, A), vec![B, A], "with neither of them having moved");
+    assert_eq!(
+        tabs(&dock, A),
+        vec![B, A],
+        "with neither of them having moved"
+    );
 }
 
 /// Leaving a stack is an ordinary move: the slot stays, holding what is left.
@@ -274,8 +304,8 @@ fn a_window_can_be_taken_back_out_of_a_stack() {
 
     assert_eq!(dock.frame().panes.len(), 2);
 
-    // A's tab is the second of the two; drag it by its grip onto the top band
-    // of the slot below.
+    // A's tab is the second of the two; drag it onto the top band of the slot
+    // below.
     eval!(&mut dock, < down(168.0, 13.0));
     eval!(&mut dock, < moved(400.0, 320.0));
     eval!(&mut dock, < up(400.0, 320.0));
@@ -366,7 +396,11 @@ fn closing_a_window_dissolves_its_group() {
     let frame = dock.frame();
 
     assert_eq!(frame.windows.len(), 2);
-    assert_eq!(frame.gaps.len(), 1, "the column is gone, not left holding one");
+    assert_eq!(
+        frame.gaps.len(),
+        1,
+        "the column is gone, not left holding one"
+    );
 
     near(rect(&dock, B).h, 600.0, "B has the whole height back");
 }
@@ -410,7 +444,10 @@ fn a_drop_settles_and_a_drag_does_not() {
 
     eval!(&mut dock, < resized(900.0, 600.0));
 
-    assert!(!dock.frame().settling, "the browser's edge is under one too");
+    assert!(
+        !dock.frame().settling,
+        "the browser's edge is under one too"
+    );
 }
 
 /// Only what changes the layout says how the layout came about. A pointer

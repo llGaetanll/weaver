@@ -8,7 +8,9 @@ use crate::tree::WindowId;
 #[derive(Clone, Debug)]
 pub enum EventHost {
     /// The surface the dock has to fill.
-    Resized { size: Size },
+    Resized {
+        size: Size,
+    },
 
     /// A window to arrange, where to put it, and how much of whatever group
     /// it lands in it takes. The slot is ignored when the dock is empty,
@@ -20,5 +22,7 @@ pub enum EventHost {
         share: Share,
     },
 
-    Closed { window: WindowId },
+    Closed {
+        window: WindowId,
+    },
 }

@@ -77,7 +77,12 @@ impl Rect {
     /// Grown by `by` on every side. What makes a five pixel gap something a
     /// drag can actually land on.
     pub fn grown(self, by: f32) -> Self {
-        Self::new(self.x - by, self.y - by, self.w + by * 2.0, self.h + by * 2.0)
+        Self::new(
+            self.x - by,
+            self.y - by,
+            self.w + by * 2.0,
+            self.h + by * 2.0,
+        )
     }
 
     pub fn extent(self, axis: Axis) -> f32 {
