@@ -69,8 +69,10 @@ pub struct StateDock {
     root: Option<Node>,
     windows: Vec<Window>,
     gesture: Option<Gesture>,
-    /// Whether the last thing that happened was something the layout should
-    /// be moved into rather than snapped to. A drop settles; a drag does not.
+    /// Whether the layout the dock is in now is one the windows should be
+    /// moved into rather than snapped to. Only the events that change the
+    /// layout touch it: a pointer moving over a dock that has just settled
+    /// must not cut the settling short.
     settling: bool,
 }
 
@@ -141,9 +143,6 @@ impl StateDock {
     }
 
     fn handle_event_pointer(&mut self, event: &EventPointer) {
-        // Everything under the pointer is continuous until it is let go of.
-        self.settling = matches!(event, EventPointer::Up { .. } | EventPointer::Cancelled);
-
         match event {
             EventPointer::Down { at } => self.press(*at),
             EventPointer::Moved { at } => self.drag(*at),
@@ -217,7 +216,12 @@ impl StateDock {
                 origin,
                 before,
                 extent,
-            }) => self.resize(&group, index, at, origin, before, extent),
+            }) => {
+                // A window under the pointer keeps up with it.
+                self.settling = false;
+
+                self.resize(&group, index, at, origin, before, extent);
+            }
 
             None => {}
         }
@@ -228,6 +232,7 @@ impl StateDock {
             && let (_, Some(slot)) = self.targets(window, at)
         {
             self.root = self.dropped(window, slot);
+            self.settling = true;
         }
 
         self.gesture = None;
@@ -244,6 +249,7 @@ impl StateDock {
         }) = self.gesture.clone()
         {
             self.write(&group, index, before.0, before.1);
+            self.settling = true;
         }
 
         self.gesture = None;

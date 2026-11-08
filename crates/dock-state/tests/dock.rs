@@ -334,9 +334,28 @@ fn a_drop_settles_and_a_drag_does_not() {
 
     eval!(&mut dock, < up(500.0, 300.0));
 
-    assert!(dock.frame().settling, "and now it is not");
+    assert!(!dock.frame().settling, "and letting go of it moved nothing");
 
     eval!(&mut dock, < resized(900.0, 600.0));
 
     assert!(!dock.frame().settling, "the browser's edge is under one too");
+}
+
+/// Only what changes the layout says how the layout came about. A pointer
+/// moving across a dock that has just been dropped into must not cut the
+/// settling short — which is exactly what happens if every event answers the
+/// question.
+#[test]
+fn a_pointer_moving_afterwards_does_not_cut_a_settle_short() {
+    let mut dock = three();
+
+    eval!(&mut dock, < down(10.0, 10.0));
+    eval!(&mut dock, < moved(420.0, 100.0));
+    eval!(&mut dock, < up(420.0, 100.0));
+
+    assert!(dock.frame().settling, "dropped");
+
+    eval!(&mut dock, < moved(600.0, 400.0));
+
+    assert!(dock.frame().settling, "and still settling into it");
 }
