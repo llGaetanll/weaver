@@ -21,6 +21,9 @@ pub struct Gap {
     pub index: usize,
     pub axis: Axis,
     pub rect: Rect,
+    /// The slot this gap comes after, which is what names it: a gap is not a
+    /// thing in the tree, so it is known by what is on one side of it.
+    pub after: WindowId,
     /// What the two children either side of it measure right now, which is
     /// where a resize starts counting from.
     pub pair: (f32, f32),
@@ -38,6 +41,18 @@ pub struct Pane {
 impl Pane {
     pub fn holds(&self, window: WindowId) -> bool {
         self.windows.contains(&window)
+    }
+
+    /// A name for this slot that does not change when its windows are
+    /// reordered or leafed through, so that whoever draws it can tell it from
+    /// the slot that was in the same place a frame ago. Slots have no names
+    /// of their own, so the smallest window in one stands for it.
+    pub fn key(&self) -> WindowId {
+        self.windows
+            .iter()
+            .copied()
+            .min_by_key(|window| window.0)
+            .unwrap_or(self.showing)
     }
 }
 
@@ -89,12 +104,19 @@ fn walk(node: &Node, area: Rect, metrics: &Metrics, path: &mut Path, out: &mut S
 
     for (i, (child, extent)) in children.iter().zip(&extents).enumerate() {
         if i > 0 {
+            // Whatever was laid out last is the slot on this gap's near side.
+            let after = match out.panes.last() {
+                Some(pane) => pane.key(),
+                None => unreachable!("a gap always follows a slot"),
+            };
+
             out.gaps.push(Gap {
                 group: path.clone(),
                 index: i - 1,
                 axis,
                 rect: area.slice(axis, at, metrics.gap),
                 pair: (extents[i - 1], *extent),
+                after,
             });
 
             at += metrics.gap;

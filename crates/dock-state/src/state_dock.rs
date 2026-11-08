@@ -572,6 +572,7 @@ impl StateDock {
             .panes
             .iter()
             .map(|pane| PaneFrame {
+                key: pane.key(),
                 rect: pane.rect,
                 tabs: tabs(&self.order(pane, moving, aim), pane.rect, &self.metrics)
                     .into_iter()
@@ -605,6 +606,7 @@ impl StateDock {
             .map(|gap| GapFrame {
                 rect: gap.rect,
                 axis: gap.axis,
+                after: gap.after,
             })
             .collect();
 

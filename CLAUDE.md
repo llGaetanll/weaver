@@ -121,6 +121,31 @@ workspace for two targets at once: trunk builds `web-main` alone, for
 cd crates/web-main && trunk serve      # http://127.0.0.1:7150
 ```
 
+## Watching it move
+
+`tools/trace.sh` makes the page perform a gesture and writes down where every
+slot, tab and gap was **on each animation frame**, and `tools/read-trace.py`
+says what moved, when, and along what curve. Use it before arguing about how
+something feels: a settle is almost impossible to judge a frame at a time by
+eye, and the questions are usually about timing.
+
+```
+cd crates/web-main && trunk serve
+tools/trace.sh "down:1120,13|move:1000,100|move:40,200|up:40,200" > /tmp/t.json
+python3 tools/read-trace.py /tmp/t.json
+```
+
+Two things to know before trusting a headless browser here. A screenshot taken
+under `--virtual-time-budget` cannot be pinned to a moment, because virtual
+time stops while the wasm is fetched and the budget is spent before the page
+is alive. And under virtual time `requestAnimationFrame` barely runs, so the
+frame loop this library is built on hardly turns — which is why the trace runs
+the page in real time and has it post what it saw.
+
+Aim with measured numbers rather than assumed ones: the dock is not as tall as
+the window, and a drop a few pixels out lands somewhere else entirely. Run a
+gesture that does nothing (`down:5,5|up:5,5`) to read the layout first.
+
 ## Commits
 
 A commit is small and does one thing. Its description is at most three

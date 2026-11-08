@@ -63,8 +63,25 @@ pub fn DockView(
             .collect::<Vec<_>>()
     });
 
-    let gaps = Memo::new(move |_| dock.frame().gaps.len());
-    let panes = Memo::new(move |_| dock.frame().panes.len());
+    // Both lists are keyed by what the thing *is* rather than where it is.
+    // An element has to follow its own slot across a rearrangement, or it
+    // takes on another one's rectangle and eases between two places that have
+    // nothing to do with each other.
+    let panes = Memo::new(move |_| {
+        dock.frame()
+            .panes
+            .iter()
+            .map(|pane| pane.key)
+            .collect::<Vec<_>>()
+    });
+
+    let gaps = Memo::new(move |_| {
+        dock.frame()
+            .gaps
+            .iter()
+            .map(|gap| gap.after)
+            .collect::<Vec<_>>()
+    });
 
     let settling = move || {
         if dock.frame().settling {
@@ -105,16 +122,16 @@ pub fn DockView(
                 dock.send(Event::FromPointer(EventPointer::Down { at }));
             }
         >
-            <For each=move || 0..panes.get() key=|index| *index let:index>
-                <PaneView dock=dock index=index icon=icon />
+            <For each=move || panes.get() key=|pane| *pane let:pane>
+                <PaneView dock=dock pane=pane icon=icon />
             </For>
 
             <For each=move || windows.get() key=|window| *window let:window>
                 <Window dock=dock window=window content=content />
             </For>
 
-            <For each=move || 0..gaps.get() key=|index| *index let:index>
-                <Gap dock=dock index=index />
+            <For each=move || gaps.get() key=|gap| *gap let:gap>
+                <Gap dock=dock after=gap />
             </For>
 
             <Regions dock=dock />
@@ -128,8 +145,15 @@ pub fn DockView(
 /// belong to the slot — a slot with one window in it has one tab, and that is
 /// the title bar.
 #[component]
-fn PaneView(dock: Dock, index: usize, icon: Option<Callback<WindowId, AnyView>>) -> impl IntoView {
-    let pane = move || dock.frame().panes.get(index).cloned();
+fn PaneView(dock: Dock, pane: WindowId, icon: Option<Callback<WindowId, AnyView>>) -> impl IntoView {
+    let key = pane;
+    let pane = move || {
+        dock.frame()
+            .panes
+            .iter()
+            .find(|pane| pane.key == key)
+            .cloned()
+    };
     let tabs = Memo::new(move |_| pane().map(|pane| pane.tabs.len()).unwrap_or_default());
 
     // Keyed by window rather than by place: an element has to follow its own
@@ -150,7 +174,7 @@ fn PaneView(dock: Dock, index: usize, icon: Option<Callback<WindowId, AnyView>>)
         <div class="pane" style=move || pane().map(|pane| place(pane.rect)).unwrap_or_default()>
             <div class=strip></div>
             <For each=move || windows.get() key=|window| *window let:window>
-                <Tab dock=dock pane=index window=window icon=icon />
+                <Tab dock=dock pane=key window=window icon=icon />
             </For>
         </div>
     }
@@ -161,13 +185,13 @@ fn PaneView(dock: Dock, index: usize, icon: Option<Callback<WindowId, AnyView>>)
 #[component]
 fn Tab(
     dock: Dock,
-    pane: usize,
+    pane: WindowId,
     window: WindowId,
     icon: Option<Callback<WindowId, AnyView>>,
 ) -> impl IntoView {
     let drawn = move || {
         let frame = dock.frame();
-        let pane = frame.panes.get(pane)?;
+        let pane = frame.panes.iter().find(|held| held.key == pane)?;
         let at = pane.tabs.iter().position(|tab| tab.window == window)?;
 
         Some((pane.rect, pane.tabs.get(at)?.clone(), at, pane.tabs.len()))
@@ -250,8 +274,14 @@ fn Window(dock: Dock, window: WindowId, content: Callback<WindowId, AnyView>) ->
 /// The gap is the resize control, so the only thing it draws is the cursor
 /// that says so.
 #[component]
-fn Gap(dock: Dock, index: usize) -> impl IntoView {
-    let drawn = move || dock.frame().gaps.get(index).copied();
+fn Gap(dock: Dock, after: WindowId) -> impl IntoView {
+    let drawn = move || {
+        dock.frame()
+            .gaps
+            .iter()
+            .find(|gap| gap.after == after)
+            .copied()
+    };
 
     let class = move || match drawn().map(|gap| gap.axis) {
         Some(dock_state::Axis::Row) => "gap gap-v",

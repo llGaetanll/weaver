@@ -40,6 +40,10 @@ pub struct TabFrame {
 /// it. A slot with one window in it has one tab, which is the title bar.
 #[derive(Clone, Debug, PartialEq)]
 pub struct PaneFrame {
+    /// What to call this slot from one frame to the next. It is not the
+    /// window showing in it and not its place on screen — both of those
+    /// change while the slot stays the same thing.
+    pub key: WindowId,
     pub rect: Rect,
     pub tabs: Vec<TabFrame>,
 }
@@ -48,6 +52,9 @@ pub struct PaneFrame {
 pub struct GapFrame {
     pub rect: Rect,
     pub axis: Axis,
+    /// The slot it comes after. A gap has no name of its own, and whoever
+    /// draws one needs to know it is the same gap it drew last time.
+    pub after: WindowId,
 }
 
 /// A region a drop can be aimed at, as the four corners of a quadrilateral.
