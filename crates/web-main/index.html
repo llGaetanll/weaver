@@ -18,4 +18,84 @@
     />
   </head>
   <body></body>
+
+  <!-- A gesture the page can be asked to make, and a trace of where
+       everything was while it settled, so that what the dock does over time
+       can be read rather than guessed at. See tools/trace.sh. Nothing here
+       runs unless the query string asks for it. -->
+  <script>
+    addEventListener("load", () => {
+      const query = new URLSearchParams(location.search);
+      const script = query.get("gesture");
+      if (!script) return;
+
+      const steps = script.split("|").map((step) => {
+        const [what, where] = step.split(":");
+        const [x, y] = where.split(",").map(Number);
+        return { what, x, y };
+      });
+
+      // Looked up when the step runs, not now: the page is loaded well
+      // before the program in it has mounted anything.
+      const send = (what, x, y) => {
+        const dock = document.querySelector(".dock");
+        const box = dock.getBoundingClientRect();
+        const event = new PointerEvent(what, {
+          clientX: box.left + x, clientY: box.top + y, bubbles: true,
+        });
+
+        (what === "pointerdown" ? dock : window).dispatchEvent(event);
+      };
+
+      steps.forEach((step, i) => {
+        setTimeout(() => send("pointer" + step.what, step.x, step.y), 1000 + i * 100);
+      });
+
+      const trace = Number(query.get("trace") || 0);
+      if (!trace) return;
+
+      // Every frame from just before the gesture until `trace` ms later:
+      // what is on screen, where, and whether it is the same element it was
+      // a frame ago.
+      setTimeout(() => {
+        const start = performance.now();
+        const rows = [];
+
+        const tick = () => {
+          const at = performance.now() - start;
+          const seen = [...document.querySelectorAll(".dock, .pane, .tab, .gap, .ghost")];
+
+          rows.push([
+            Math.round(at),
+            seen.map((node) => {
+              const box = node.getBoundingClientRect();
+              // Stamped the first time it is seen, so an element that was
+              // thrown away and built again says so.
+              node.dataset.born ??= Math.round(performance.now() - start);
+
+              const name = node.className + (node.querySelector("h3")?.textContent || "")
+                + "|born " + node.dataset.born;
+              return [name, Math.round(box.x), Math.round(box.y),
+                      Math.round(box.width), Math.round(box.height)];
+            }),
+          ]);
+
+          if (at < trace) {
+            requestAnimationFrame(tick);
+
+            return;
+          }
+
+          // Posted rather than left on the page: a browser with no window
+          // hands nothing back to whoever started it.
+          fetch("http://127.0.0.1:" + (query.get("to") || 7151) + "/trace", {
+            method: "POST",
+            body: JSON.stringify(rows),
+          });
+        };
+
+        requestAnimationFrame(tick);
+      }, 900);
+    });
+  </script>
 </html>
