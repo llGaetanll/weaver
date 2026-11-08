@@ -102,15 +102,28 @@ fn files() -> impl IntoView {
     let rows = [
         (0, "crates", true, false),
         (1, "dock-state", true, false),
-        (2, "tree.rs", false, false),
+        (2, "event_host.rs", false, false),
+        (2, "event_pointer.rs", false, false),
+        (2, "frame.rs", false, false),
+        (2, "geometry.rs", false, false),
+        (2, "metrics.rs", false, false),
         (2, "solve.rs", false, false),
         (2, "state_dock.rs", false, true),
+        (2, "tree.rs", false, false),
         (1, "dock-web", true, false),
+        (2, "runtime_web.rs", false, false),
         (2, "view_dock.rs", false, false),
         (2, "dock.css", false, false),
+        (1, "util-eval", true, false),
         (1, "web-main", true, false),
         (0, "sketches", true, false),
+        (1, "design", true, false),
+        (1, "dock", true, false),
+        (0, "tools", true, false),
+        (1, "trace.sh", false, false),
+        (1, "read-trace.py", false, false),
         (0, "CLAUDE.md", false, false),
+        (0, "Cargo.toml", false, false),
     ];
 
     view! {
@@ -135,33 +148,61 @@ fn files() -> impl IntoView {
 
 fn editor() -> impl IntoView {
     let lines = [
-        ("1", "/// Where a window is, as a path from the root.", true),
-        ("2", "pub fn find(&self, window: WindowId) -> Option<Path> {", false),
-        ("3", "    let mut path = Path::new();", false),
-        ("4", "", false),
-        ("5", "    self.find_into(window, &mut path).then_some(path)", false),
-        ("6", "}", false),
-        ("7", "", false),
-        ("8", "/// The two rules that keep a tree canonical.", true),
-        ("9", "pub fn normalize(node: &mut Node) {", false),
-        ("10", "    let Node::Group { axis, children } = node else {", false),
-        ("11", "        return;", false),
-        ("12", "    };", false),
-        ("13", "", false),
-        ("14", "    for child in children.iter_mut() {", false),
-        ("15", "        normalize(&mut child.node);", false),
-        ("16", "    }", false),
-        ("17", "}", false),
+        ("/// Where a window is, as a path from the root.", true),
+        ("pub fn find(&self, window: WindowId) -> Option<Path> {", false),
+        ("    let mut path = Path::new();", false),
+        ("", false),
+        ("    self.find_into(window, &mut path).then_some(path)", false),
+        ("}", false),
+        ("", false),
+        ("/// The two rules that keep a tree canonical, applied bottom up.", true),
+        ("pub fn normalize(node: &mut Node) {", false),
+        ("    let Node::Group { axis, children } = node else {", false),
+        ("        return;", false),
+        ("    };", false),
+        ("", false),
+        ("    for child in children.iter_mut() {", false),
+        ("        normalize(&mut child.node);", false),
+        ("    }", false),
+        ("", false),
+        ("    let axis = *axis;", false),
+        ("    let mut folded: Vec<Child> = Vec::with_capacity(children.len());", false),
+        ("", false),
+        ("    for child in children.drain(..) {", false),
+        ("        match child.node {", false),
+        ("            Node::Group {", false),
+        ("                axis: inner,", false),
+        ("                children: grandchildren,", false),
+        ("            } if inner == axis => folded.extend(rescale(grandchildren, child.share)),", false),
+        ("            node => folded.push(Child {", false),
+        ("                share: child.share,", false),
+        ("                node,", false),
+        ("            }),", false),
+        ("        }", false),
+        ("    }", false),
+        ("", false),
+        ("    *children = folded;", false),
+        ("", false),
+        ("    if children.len() == 1 {", false),
+        ("        let Some(only) = children.pop() else {", false),
+        ("            unreachable!(\"just checked the length\");", false),
+        ("        };", false),
+        ("", false),
+        ("        // The share belongs to the slot, and the slot is the parent's.", true),
+        ("        *node = only.node;", false),
+        ("    }", false),
+        ("}", false),
     ];
 
     view! {
         <div class="code">
             {lines
                 .into_iter()
-                .map(|(number, text, note)| {
+                .enumerate()
+                .map(|(at, (text, note))| {
                     view! {
                         <div class="line">
-                            <span class="number">{number}</span>
+                            <span class="number">{at + 1}</span>
                             <span class=if note { "note" } else { "" }>{text}</span>
                         </div>
                     }
@@ -207,8 +248,11 @@ fn terminal() -> impl IntoView {
             <div class="dim">"   Compiling dock-state v0.1.0"</div>
             <div class="dim">"   Compiling dock-web v0.1.0"</div>
             <div class="dim">"    Finished `test` profile in 2.41s"</div>
+            <div class="dim">"     Running tests/dock.rs"</div>
+            <div class="dim">"test result: ok. 19 passed; 0 failed"</div>
             <div><span class="prompt">"$"</span>" tools/trace.sh \"down:1120,13|up:40,200\""</div>
-            <div class="dim">"157 frames over 2616ms, 17ms apart"</div>
+            <div class="dim">"157 frames over 2616ms, 8-18ms apart (median 17)"</div>
+            <div class="dim">"paneCanvas  x: 0 -> 450, moving 434-2333ms"</div>
             <div><span class="prompt">"$"</span><span class="caret"></span></div>
         </div>
     }
@@ -216,16 +260,31 @@ fn terminal() -> impl IntoView {
 
 fn outline() -> impl IntoView {
     let rows = [
+        (0, "WindowId", "struct"),
+        (0, "Share", "enum"),
+        (1, "Flex", ""),
+        (1, "Fixed", ""),
         (0, "Stack", "struct"),
+        (1, "windows", "fn"),
         (1, "showing", "fn"),
+        (1, "holds", "fn"),
+        (1, "other", "fn"),
+        (1, "show", "fn"),
         (1, "take", "fn"),
         (1, "drop", "fn"),
         (0, "Node", "enum"),
         (1, "find", "fn"),
+        (1, "at_mut", "fn"),
+        (1, "stack_mut", "fn"),
         (1, "last", "fn"),
+        (0, "Slot", "enum"),
+        (1, "Beside", ""),
+        (1, "Edge", ""),
+        (1, "With", ""),
         (0, "place", "fn"),
         (0, "remove", "fn"),
         (0, "normalize", "fn"),
+        (0, "rescale", "fn"),
     ];
 
     view! {
