@@ -39,6 +39,27 @@ revisited, but none of them is a gap to be helpfully filled in:
   replace. What is drawn now is borrowed from `hl`: black on white, black as
   the accent.
 
+## The workspace
+
+One crate per concern, named `<group>-<thing>`. Dependencies only ever point
+down this list.
+
+```
+util-eval    the eval! macro every state machine test is written through
+dock-state   the dock: the tree, the solve, the gestures. No IO, no browser
+dock-web     the dock in a browser: a frame loop, one pointer listener
+main-web     a page with four windows in it, to drag around
+```
+
+`dock-state` is the whole library. `dock-web` decides nothing — it forwards
+pointer positions and moves elements to the rectangles the frame names, and
+`dock-gpui` will be the same file against a different screen.
+
+`crates/dock-web/dock.css` is everything the library draws. The sketches wear
+that file rather than a copy, so a change to one is a change to both. The
+theme it names roles from is `sketches/design/theme.css`, which is the host's
+to replace.
+
 ## The design
 
 **Read `sketches/dock/index.html` before changing anything about how the dock
@@ -81,6 +102,19 @@ driven by `eval!`. Unit tests — arithmetic, a wedge, a solve — stay inline.
 Every cargo command covers the whole workspace. Never narrow one with `-p`:
 cargo resolves features from the crates it was asked to build, so `-p` builds a
 second copy of half the tree.
+
+```
+cargo clippy --workspace --all-targets
+cargo test --workspace
+```
+
+The browser build is the exception, and only because cargo cannot build a
+workspace for two targets at once: trunk builds `main-web` alone, for
+`wasm32-unknown-unknown`.
+
+```
+cd crates/main-web && trunk serve      # http://127.0.0.1:7150
+```
 
 ## Commits
 
