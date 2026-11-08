@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ui-lib</title>
+
+    
+<script type="module">
+import init, * as bindings from '/main-web-ee08597bb72266bd.js';
+const wasm = await init({ module_or_path: '/main-web-ee08597bb72266bd_bg.wasm' });
+
+
+window.wasmBindings = bindings;
+
+
+dispatchEvent(new CustomEvent("TrunkApplicationStarted", {detail: {wasm}}));
+
+</script>
+    <link rel="stylesheet" href="/theme-a75148842b06c017.css" integrity="sha384-T8fkeSI1/GkYkucYpj9FVBwyu8544jsrHAFQUMJyBMankXJ97KQMUjib/F7M9Ry6"/>
+    <link rel="stylesheet" href="/dock-31afa5716eadc4ce.css" integrity="sha384-iYGSdOK3wUSaF/MOW7PxjHOR1MBkGftG50J9fAOUsKL8F0ziMVQa3O87z1Paf7X6"/>
+    <link rel="stylesheet" href="/demo-54323b79c2a8088b.css" integrity="sha384-R9yahOiPTnThZz+pRWbKtj8ksJKrJolHN3QPnDavlYRVpBFiVF4qDrzrcxNO+1sk"/>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+  <link rel="modulepreload" href="/main-web-ee08597bb72266bd.js" crossorigin="anonymous" integrity="sha384-ZhI37e8WvSasTZlPJY2L4t5a4aiCUoUGrdNb5nRIuovR+7fX4DWJZojAWQ50UKXD"><link rel="preload" href="/main-web-ee08597bb72266bd_bg.wasm" crossorigin="anonymous" integrity="sha384-h5LiHzVjshRG9mXwWQnOI7D7dV5zGw8dlwkCAMESmNAuq126sgIt8D97km6c6AtN" as="fetch" type="application/wasm"></head>
+  <body></body>
+</html>

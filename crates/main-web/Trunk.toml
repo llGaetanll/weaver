@@ -1,0 +1,8 @@
+[build]
+target = "index.html"
+
+[watch]
+watch = ["src", "index.html", "demo.css", "../dock-web", "../dock-state", "../../sketches/design"]
+
+[serve]
+port = 7150

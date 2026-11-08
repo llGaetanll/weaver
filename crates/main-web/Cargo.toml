@@ -1,0 +1,13 @@
+[package]
+name = "main-web"
+version.workspace = true
+edition.workspace = true
+
+[[bin]]
+name = "dock-demo"
+path = "src/main.rs"
+
+[dependencies]
+dock-state = { workspace = true }
+dock-web = { workspace = true }
+leptos = { workspace = true }
