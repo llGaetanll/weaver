@@ -1,5 +1,5 @@
 [package]
-name = "main-web"
+name = "web-main"
 version.workspace = true
 edition.workspace = true
 

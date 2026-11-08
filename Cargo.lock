@@ -840,15 +840,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "47d9d19d1d6efa0109d2f65ff4c85cddd50bd572e5a00127ab10987290bcefae"
 
 [[package]]
-name = "main-web"
-version = "0.1.0"
-dependencies = [
- "dock-state",
- "dock-web",
- "leptos",
-]
-
-[[package]]
 name = "manyhow"
 version = "0.14.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1704,6 +1695,15 @@ dependencies = [
  "quote",
  "sha2",
  "syn 2.0.119",
+]
+
+[[package]]
+name = "web-main"
+version = "0.1.0"
+dependencies = [
+ "dock-state",
+ "dock-web",
+ "leptos",
 ]
 
 [[package]]

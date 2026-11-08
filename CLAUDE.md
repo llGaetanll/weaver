@@ -52,7 +52,7 @@ down this list.
 util-eval    the eval! macro every state machine test is written through
 dock-state   the dock: the tree, the solve, the gestures. No IO, no browser
 dock-web     the dock in a browser: a frame loop, one pointer listener
-main-web     a page with four windows in it, to drag around
+web-main     a page with four windows in it, to drag around
 ```
 
 `dock-state` is the whole library. `dock-web` decides nothing — it forwards
@@ -113,11 +113,11 @@ cargo test --workspace
 ```
 
 The browser build is the exception, and only because cargo cannot build a
-workspace for two targets at once: trunk builds `main-web` alone, for
+workspace for two targets at once: trunk builds `web-main` alone, for
 `wasm32-unknown-unknown`.
 
 ```
-cd crates/main-web && trunk serve      # http://127.0.0.1:7150
+cd crates/web-main && trunk serve      # http://127.0.0.1:7150
 ```
 
 ## Commits
