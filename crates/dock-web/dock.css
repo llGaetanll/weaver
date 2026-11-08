@@ -73,16 +73,22 @@ body {
   border-bottom: 1px solid var(--border);
 }
 
-/* A tab: the grip, and the name. A slot with one window in it has one tab,
-   and that tab is the title bar — there is no second way of drawing a window
-   that happens to be alone. */
+/* A tab: whatever the host draws for the window, and its name. The whole of
+   it is the handle, so there is nothing to aim at inside one — dragging a tab
+   and picking a tab are the same press.
+
+   Which one is showing is said by the line, and only by the line: it runs the
+   whole width of the slot where the tabs meet the window, and goes around the
+   showing tab rather than under it. A tab is a piece of the window it belongs
+   to, folded up. */
 .tab {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 0 8px 0 4px;
+  padding: 0 9px;
   color: var(--text-faint);
   overflow: hidden;
+  cursor: grab;
 }
 
 .tab > h3 {
@@ -96,10 +102,27 @@ body {
   white-space: nowrap;
 }
 
-/* The one showing is the one on the panel: the others are on the ground
-   behind it, which is the same ground a gap shows. */
-.tab:not(.is-showing) { background: var(--sunken); box-shadow: inset -1px 0 0 var(--border); }
-.tab.is-showing { color: var(--text-muted); }
+.tab-icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  color: var(--text-faint);
+}
+.tab-icon:empty { display: none; }
+.tab-icon > svg { display: block; }
+
+/* The showing tab covers the line under it with the window's own ground, and
+   carries it up its sides and across its top instead. */
+.tab.is-showing {
+  color: var(--text-muted);
+  background: var(--panel);
+  box-shadow:
+    inset 1px 0 0 var(--border),
+    inset -1px 0 0 var(--border),
+    inset 0 1px 0 var(--border);
+}
+
+.tab.is-showing .tab-icon { color: var(--text-muted); }
 .tab.is-lifted { opacity: .4; }
 
 /* What the host put in a window. */
@@ -112,25 +135,6 @@ body {
 
 .win.is-hidden { display: none; }
 .win.is-lifted { opacity: .4; }
-
-/* Six dots, left of the name: the handle the window is moved by, and the only
-   thing in a tab that is not the name. Always drawn, never on hover — a
-   control that appears when you are already over it is a control nobody
-   finds. */
-.grip {
-  display: grid;
-  place-items: center;
-  width: 14px;
-  height: var(--row-sm);
-  flex: none;
-  border: 0;
-  border-radius: var(--radius-sm);
-  background: transparent;
-  color: var(--text-faint);
-  cursor: grab;
-}
-.grip:hover { background: var(--raised); color: var(--text); }
-.grip > svg { fill: currentColor; }
 
 /* --- Moving a window ---------------------------------------------------- */
 

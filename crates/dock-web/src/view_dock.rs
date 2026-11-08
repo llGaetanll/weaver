@@ -16,13 +16,18 @@ use crate::runtime_web::Dock;
 
 /// The surface every window lives on.
 ///
-/// One pointer listener, on the surface, because which grip or gap a press
+/// One pointer listener, on the surface, because which tab or gap a press
 /// landed on is the machine's question to answer — it owns the rectangles.
 #[component]
 pub fn DockView(
     dock: Dock,
     /// What goes inside a window. Called once per window, not once per frame.
     content: Callback<WindowId, AnyView>,
+    /// What goes in a window's tab, before its name. The library has no
+    /// opinion about what a window is, so it draws whatever the host hands
+    /// back and nothing when there is none.
+    #[prop(optional)]
+    icon: Option<Callback<WindowId, AnyView>>,
 ) -> impl IntoView {
     let node: NodeRef<Div> = NodeRef::new();
     let metrics = dock.metrics();
@@ -61,11 +66,23 @@ pub fn DockView(
     let gaps = Memo::new(move |_| dock.frame().gaps.len());
     let panes = Memo::new(move |_| dock.frame().panes.len());
 
-    let settling = move || if dock.frame().settling { " settles" } else { "" };
+    let settling = move || {
+        if dock.frame().settling {
+            " settles"
+        } else {
+            ""
+        }
+    };
 
     // A region fades while a window is being carried and is simply gone once
     // it has been put down. The ghost is what says which of those is true.
-    let moving = move || if dock.frame().ghost.is_some() { " is-moving" } else { "" };
+    let moving = move || {
+        if dock.frame().ghost.is_some() {
+            " is-moving"
+        } else {
+            ""
+        }
+    };
 
     let cursor = move || match dock.frame().cursor {
         Cursor::Default => "",
@@ -85,7 +102,7 @@ pub fn DockView(
             }
         >
             <For each=move || 0..panes.get() key=|index| *index let:index>
-                <PaneView dock=dock index=index />
+                <PaneView dock=dock index=index icon=icon />
             </For>
 
             <For each=move || windows.get() key=|window| *window let:window>
@@ -107,7 +124,7 @@ pub fn DockView(
 /// belong to the slot — a slot with one window in it has one tab, and that is
 /// the title bar.
 #[component]
-fn PaneView(dock: Dock, index: usize) -> impl IntoView {
+fn PaneView(dock: Dock, index: usize, icon: Option<Callback<WindowId, AnyView>>) -> impl IntoView {
     let pane = move || dock.frame().panes.get(index).cloned();
     let tabs = Memo::new(move |_| pane().map(|pane| pane.tabs.len()).unwrap_or_default());
 
@@ -115,15 +132,21 @@ fn PaneView(dock: Dock, index: usize) -> impl IntoView {
         <div class="pane" style=move || pane().map(|pane| place(pane.rect)).unwrap_or_default()>
             <div class="pane-strip"></div>
             <For each=move || 0..tabs.get() key=|tab| *tab let:tab>
-                <Tab dock=dock pane=index tab=tab />
+                <Tab dock=dock pane=index tab=tab icon=icon />
             </For>
         </div>
     }
 }
 
-/// A tab: the grip a window is moved by, and its name.
+/// A tab: whatever the host draws for a window, and its name. The whole of
+/// it is the handle.
 #[component]
-fn Tab(dock: Dock, pane: usize, tab: usize) -> impl IntoView {
+fn Tab(
+    dock: Dock,
+    pane: usize,
+    tab: usize,
+    icon: Option<Callback<WindowId, AnyView>>,
+) -> impl IntoView {
     let drawn = move || {
         let frame = dock.frame();
         let pane = frame.panes.get(pane)?;
@@ -149,15 +172,15 @@ fn Tab(dock: Dock, pane: usize, tab: usize) -> impl IntoView {
         None => String::new(),
     };
 
+    let mark = move || {
+        let (_, tab) = drawn()?;
+
+        Some(icon?.run(tab.window))
+    };
+
     view! {
-        <div class=class style=style>
-            <span class="grip" title="Drag to move this window">
-                <svg viewBox="0 0 10 16" width="10" height="16" aria-hidden="true">
-                    <circle cx="3" cy="4" r="1.1" /><circle cx="7" cy="4" r="1.1" />
-                    <circle cx="3" cy="8" r="1.1" /><circle cx="7" cy="8" r="1.1" />
-                    <circle cx="3" cy="12" r="1.1" /><circle cx="7" cy="12" r="1.1" />
-                </svg>
-            </span>
+        <div class=class style=style title="Drag to move this window">
+            <span class="tab-icon">{mark}</span>
             <h3>{move || drawn().map(|(_, tab)| tab.title).unwrap_or_default()}</h3>
         </div>
     }
@@ -390,13 +413,6 @@ fn Ghost(dock: Dock) -> impl IntoView {
         <Show when=move || rect().is_some()>
             <div class="ghost" style=move || rect().map(place).unwrap_or_default()>
                 <div class="tab is-showing">
-                    <span class="grip">
-                        <svg viewBox="0 0 10 16" width="10" height="16" aria-hidden="true">
-                            <circle cx="3" cy="4" r="1.1" /><circle cx="7" cy="4" r="1.1" />
-                            <circle cx="3" cy="8" r="1.1" /><circle cx="7" cy="8" r="1.1" />
-                            <circle cx="3" cy="12" r="1.1" /><circle cx="7" cy="12" r="1.1" />
-                        </svg>
-                    </span>
                     <h3>{title}</h3>
                 </div>
             </div>

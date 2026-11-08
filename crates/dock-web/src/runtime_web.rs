@@ -16,8 +16,8 @@ use dock_state::Metrics;
 use dock_state::Point;
 use dock_state::Size;
 use dock_state::StateDock;
-use leptos::prelude::*;
 use leptos::html::Div;
+use leptos::prelude::*;
 
 /// A dock, as a page holds it: the machine, a queue, and a counter the view
 /// watches. The machine is stored rather than signalled — it owns a tree, and
@@ -70,7 +70,10 @@ impl Dock {
     /// One turn: every event that arrived since the last frame, then the
     /// actions they add up to.
     fn turn(&self) {
-        let events = self.queue.try_update_value(std::mem::take).unwrap_or_default();
+        let events = self
+            .queue
+            .try_update_value(std::mem::take)
+            .unwrap_or_default();
 
         if events.is_empty() {
             return;
