@@ -140,6 +140,11 @@ body {
   transition: opacity var(--fade) ease, background-color var(--fade) ease;
 }
 
+/* A region fades while a window is being carried, and is simply gone once it
+   has been put down: what it was for is over, and watching it dissolve over
+   the top of the answer is the slowest way to be told nothing. */
+.dock:not(.is-moving) .region { transition: none; }
+
 /* The window being moved stays where it is, dimmed, until the drop. A gap
    that opens as you drag moves everything else under your cursor. */
 .win.lifted { opacity: .4; }

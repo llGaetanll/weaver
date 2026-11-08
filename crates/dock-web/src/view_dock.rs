@@ -62,6 +62,10 @@ pub fn DockView(
 
     let settling = move || if dock.frame().settling { " settles" } else { "" };
 
+    // A region fades while a window is being carried and is simply gone once
+    // it has been put down. The ghost is what says which of those is true.
+    let moving = move || if dock.frame().ghost.is_some() { " is-moving" } else { "" };
+
     let cursor = move || match dock.frame().cursor {
         Cursor::Default => "",
         Cursor::ColResize => "is-col-resize",
@@ -72,7 +76,7 @@ pub fn DockView(
     view! {
         <div
             node_ref=node
-            class=move || format!("dock {}{}", cursor(), settling())
+            class=move || format!("dock {}{}{}", cursor(), settling(), moving())
             style=format!("--tab: {}px; --gap: {}px", metrics.tab, metrics.gap)
             on:pointerdown=move |event: ev::PointerEvent| {
                 let at = dock.point(node, event.client_x() as f32, event.client_y() as f32);
@@ -178,7 +182,7 @@ fn Region(dock: Dock, index: usize) -> impl IntoView {
 
     let style = move || {
         format!(
-            "opacity: {}; background: {}; clip-path: polygon({})",
+            "opacity: {}; background: {}; clip-path: path(\"{}\")",
             u8::from(zone().is_some()),
             fill.get(),
             shape.get(),
@@ -188,31 +192,100 @@ fn Region(dock: Dock, index: usize) -> impl IntoView {
     view! { <div class="region" style=style></div> }
 }
 
-/// A region, pulled in from its own edges so the regions do not touch. The
-/// seam is what makes five of them read as five rather than as one wash —
-/// the same answer the dock gives for two windows.
+/// A region, pulled in from its own edges so that neighbours do not touch,
+/// with its corners rounded.
+///
+/// The gutter is what makes five regions read as five rather than as one
+/// wash, now that they have no outline — the same answer the dock gives for
+/// two windows. Pulling every edge in by the same amount is the whole trick:
+/// moving each corner towards the middle instead leaves a wide gutter where
+/// two edges meet shallowly and a narrow one where they meet squarely, which
+/// is the uneven spacing that was there before.
 fn clip(zone: Zone) -> String {
-    const SEAM: f32 = 1.0;
+    const SEAM: f32 = 4.0;
+    const ROUND: f32 = 4.0;
 
-    let middle = Point::new(
-        zone.points.iter().map(|point| point.x).sum::<f32>() / 4.0,
-        zone.points.iter().map(|point| point.y).sum::<f32>() / 4.0,
-    );
+    let points = inset(zone.points, SEAM);
+    let mut path = String::new();
 
-    zone.points
-        .iter()
-        .map(|point| {
-            let away = point.distance(middle).max(1.0);
-            let pull = (away - SEAM) / away;
+    for i in 0..4 {
+        let previous = points[(i + 3) % 4];
+        let corner = points[i];
+        let next = points[(i + 1) % 4];
 
-            format!(
-                "{}px {}px",
-                middle.x + (point.x - middle.x) * pull,
-                middle.y + (point.y - middle.y) * pull,
-            )
-        })
-        .collect::<Vec<_>>()
-        .join(", ")
+        let back = corner.distance(previous);
+        let on = corner.distance(next);
+        let round = ROUND.min(back / 2.0).min(on / 2.0);
+
+        let before = towards(corner, previous, round);
+        let after = towards(corner, next, round);
+
+        if i == 0 {
+            path.push_str(&format!("M {} {} ", before.x, before.y));
+        } else {
+            path.push_str(&format!("L {} {} ", before.x, before.y));
+        }
+
+        path.push_str(&format!(
+            "Q {} {} {} {} ",
+            corner.x, corner.y, after.x, after.y
+        ));
+    }
+
+    path.push('Z');
+
+    path
+}
+
+/// Every edge of a convex quadrilateral moved inwards by the same distance,
+/// and the corners put back where the moved edges meet.
+fn inset(points: [Point; 4], by: f32) -> [Point; 4] {
+    let mut moved = points;
+
+    for i in 0..4 {
+        let before = edge(points[(i + 3) % 4], points[i], by);
+        let after = edge(points[i], points[(i + 1) % 4], by);
+
+        moved[i] = meet(before, after).unwrap_or(points[i]);
+    }
+
+    moved
+}
+
+/// One edge, moved inwards, as a point on it and the way it runs. The points
+/// of a zone always wind the same way, so the inward side is always the same
+/// turn from the edge.
+fn edge(from: Point, to: Point, by: f32) -> (Point, Point) {
+    let run = Point::new(to.x - from.x, to.y - from.y);
+    let length = (run.x * run.x + run.y * run.y).sqrt().max(0.001);
+    let inward = Point::new(-run.y / length * by, run.x / length * by);
+
+    (Point::new(from.x + inward.x, from.y + inward.y), run)
+}
+
+/// Where two lines cross, each given as a point and a direction.
+fn meet(a: (Point, Point), b: (Point, Point)) -> Option<Point> {
+    let (at, run) = a;
+    let (bt, other) = b;
+
+    let cross = run.x * other.y - run.y * other.x;
+
+    if cross.abs() < 0.001 {
+        return None;
+    }
+
+    let along = ((bt.x - at.x) * other.y - (bt.y - at.y) * other.x) / cross;
+
+    Some(Point::new(at.x + run.x * along, at.y + run.y * along))
+}
+
+fn towards(from: Point, to: Point, by: f32) -> Point {
+    let length = from.distance(to).max(0.001);
+
+    Point::new(
+        from.x + (to.x - from.x) / length * by,
+        from.y + (to.y - from.y) / length * by,
+    )
 }
 
 /// The window under the cursor. Its title and nothing else: the host's
