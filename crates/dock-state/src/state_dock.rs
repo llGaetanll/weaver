@@ -17,6 +17,7 @@ use crate::geometry::Rect;
 use crate::geometry::Side;
 use crate::geometry::Size;
 use crate::metrics::Metrics;
+use crate::solve::Gap;
 use crate::solve::Pane;
 use crate::solve::Solved;
 use crate::solve::solve;
@@ -53,16 +54,23 @@ enum Gesture {
         at: Point,
     },
 
-    Resizing {
-        group: Path,
-        index: usize,
-        /// Where along the axis the drag started, and what the pair measured
-        /// then. Counting from the start rather than from the last position
-        /// is what stops a drag past a minimum and back from drifting.
-        origin: f32,
-        before: (Share, Share),
-        extent: (f32, f32),
-    },
+    /// One gap held, or the two that meet at an intersection — never two
+    /// along the same axis, since a pointer is in one place.
+    Resizing { first: Held, second: Option<Held> },
+}
+
+/// A gap being dragged, and what it divided when the drag started.
+///
+/// Counting from the start rather than from the last position is what stops
+/// a drag past a minimum and back from drifting.
+#[derive(Clone, Debug)]
+struct Held {
+    group: Path,
+    index: usize,
+    axis: Axis,
+    origin: f32,
+    before: (Share, Share),
+    extent: (f32, f32),
 }
 
 #[derive(Clone, Debug, Default)]
@@ -163,22 +171,21 @@ impl StateDock {
             return;
         };
 
-        let hit = solved
+        // Both gaps that meet at an intersection are taken hold of, so that
+        // the corner where four windows meet moves as one thing.
+        let held: Vec<Held> = solved
             .gaps
             .iter()
-            .find(|gap| gap.rect.thickened(gap.axis, self.metrics.grab).contains(at));
+            .filter(|gap| gap.rect.thickened(gap.axis, self.metrics.grab).contains(at))
+            .filter_map(|gap| self.hold(gap, at))
+            .collect();
 
-        if let Some(gap) = hit {
-            let Some((a, b)) = self.shares(&gap.group, gap.index) else {
-                return;
-            };
+        if let Some(first) = held.first() {
+            let second = held.iter().find(|held| held.axis != first.axis);
 
             self.gesture = Some(Gesture::Resizing {
-                group: gap.group.clone(),
-                index: gap.index,
-                origin: at.along(gap.axis),
-                before: (a, b),
-                extent: gap.pair,
+                first: first.clone(),
+                second: second.cloned(),
             });
 
             return;
@@ -201,6 +208,20 @@ impl StateDock {
             window: tab,
             origin: at,
         });
+    }
+
+    /// What a gap divides, written down so a drag can be measured from it.
+    fn hold(&self, gap: &Gap, at: Point) -> Option<Held> {
+        let (a, b) = self.shares(&gap.group, gap.index)?;
+
+        Some(Held {
+            group: gap.group.clone(),
+            index: gap.index,
+            axis: gap.axis,
+            origin: at.along(gap.axis),
+            before: (a, b),
+            extent: gap.pair,
+        })
     }
 
     /// Bring a window to the front of its stack.
@@ -239,17 +260,15 @@ impl StateDock {
                 self.gesture = Some(Gesture::Moving { window, grab, at });
             }
 
-            Some(Gesture::Resizing {
-                group,
-                index,
-                origin,
-                before,
-                extent,
-            }) => {
+            Some(Gesture::Resizing { first, second }) => {
                 // A window under the pointer keeps up with it.
                 self.settling = false;
 
-                self.resize(&group, index, at, origin, before, extent);
+                self.resize(&first, at);
+
+                if let Some(second) = second {
+                    self.resize(&second, at);
+                }
             }
 
             None => {}
@@ -270,14 +289,13 @@ impl StateDock {
     /// Nothing decided. A resize is put back where it was, since half a drag
     /// is not a size anybody asked for.
     fn cancel(&mut self) {
-        if let Some(Gesture::Resizing {
-            group,
-            index,
-            before,
-            ..
-        }) = self.gesture.clone()
-        {
-            self.write(&group, index, before.0, before.1);
+        if let Some(Gesture::Resizing { first, second }) = self.gesture.clone() {
+            self.write(&first.group, first.index, first.before.0, first.before.1);
+
+            if let Some(second) = second {
+                self.write(&second.group, second.index, second.before.0, second.before.1);
+            }
+
             self.settling = true;
         }
 
@@ -288,20 +306,18 @@ impl StateDock {
     /// pixels and flexible ones in weight, so dragging a sidebar's edge
     /// changes its width and dragging between two flexible windows only
     /// changes how they share what they already had.
-    fn resize(
-        &mut self,
-        group: &Path,
-        index: usize,
-        at: Point,
-        origin: f32,
-        before: (Share, Share),
-        extent: (f32, f32),
-    ) {
-        let Some(axis) = self.axis(group) else {
-            return;
-        };
+    fn resize(&mut self, held: &Held, at: Point) {
+        let Held {
+            group,
+            index,
+            axis,
+            origin,
+            before,
+            extent,
+        } = held;
 
-        let (a0, b0) = extent;
+        let (axis, index, origin) = (*axis, *index, *origin);
+        let (a0, b0) = *extent;
         let total = a0 + b0;
         let min = self.metrics.min.along(axis);
 
@@ -312,7 +328,7 @@ impl StateDock {
         let a = (a0 + at.along(axis) - origin).clamp(min, total - min);
         let b = total - a;
 
-        let (next_a, next_b) = match before {
+        let (next_a, next_b) = match *before {
             (Share::Fixed(_), Share::Fixed(_)) => (Share::Fixed(a), Share::Fixed(b)),
             (Share::Fixed(_), flex) => (Share::Fixed(a), flex),
             (flex, Share::Fixed(_)) => (flex, Share::Fixed(b)),
@@ -362,6 +378,17 @@ impl StateDock {
         };
 
         let edge = self.metrics.edge;
+
+        // The tabs are where the order is decided, so a window carried over
+        // them lands between two of them rather than in the window under
+        // them. They are looked at before the dock's own edge, because a band
+        // nobody can see must not swallow a control everybody can.
+        if let Some(pane) = solved.at(at)
+            && at.y < pane.rect.y + self.metrics.tab
+        {
+            return self.ordering(pane, at, moving);
+        }
+
         let area = self.area();
 
         let outer = [
@@ -399,7 +426,7 @@ impl StateDock {
                 return nothing;
             }
 
-            let zone = Zone::rect(gap.rect.grown(edge / 2.0), true);
+            let zone = Zone::rect(gap.rect.thickened(gap.axis, edge), true);
 
             return (
                 vec![zone],
@@ -415,12 +442,13 @@ impl StateDock {
         };
 
         // A window alone in its own slot has nowhere to go in it. One of
-        // several does: leaving the stack to take a side of it is a move.
+        // several does: leaving the stack to take a side of it is a move, and
+        // so is going somewhere else in the order.
         let Some(anchor) = pane.windows.iter().copied().find(|held| *held != moving) else {
             return nothing;
         };
 
-        let rect = pane.rect;
+        let rect = self.body(pane.rect);
         let chosen = band(rect, at, self.metrics.band);
         let zones = regions(rect, self.metrics.band, chosen, !pane.holds(moving));
 
@@ -429,13 +457,73 @@ impl StateDock {
                 window: anchor,
                 side,
             }),
-            // The middle is the stack. Dropping a window into the stack it is
-            // already in would be nothing happening, so it is not offered.
-            None if !pane.holds(moving) => Some(Slot::With { window: anchor }),
+            // The middle is the stack, and a window joining one goes on the
+            // end of it: nothing was aimed at, so nothing is displaced.
+            None if !pane.holds(moving) => pane
+                .windows
+                .last()
+                .map(|last| Slot::With {
+                    window: *last,
+                    before: false,
+                }),
             None => None,
         };
 
         (zones, slot)
+    }
+
+    /// Where in a slot's order a window carried over its tabs would land: on
+    /// one side or the other of the tab under the pointer, drawn as the seam
+    /// it would be inserted at.
+    fn ordering(&self, pane: &Pane, at: Point, moving: WindowId) -> (Vec<Zone>, Option<Slot>) {
+        let mut found = None;
+
+        for (window, tab) in tabs(pane, &self.metrics) {
+            let before = at.x < tab.x + tab.w / 2.0;
+
+            found = Some((window, tab, before));
+
+            if before || at.x < tab.x + tab.w {
+                break;
+            }
+        }
+
+        let Some((window, tab, before)) = found else {
+            return (Vec::new(), None);
+        };
+
+        if window == moving {
+            return (Vec::new(), None);
+        }
+
+        // One tab is a title bar rather than an order, so a drop on it joins
+        // the stack instead of placing itself in one.
+        if pane.windows.len() == 1 {
+            let strip = Rect::new(pane.rect.x, pane.rect.y, pane.rect.w, self.metrics.tab);
+
+            return (
+                vec![Zone::rect(strip, true)],
+                Some(Slot::With {
+                    window,
+                    before: false,
+                }),
+            );
+        }
+
+        let seam = Rect::new(
+            if before { tab.x } else { tab.x + tab.w },
+            tab.y,
+            self.metrics.gap,
+            tab.h,
+        );
+
+        (
+            vec![Zone::rect(
+                seam.thickened(Axis::Row, self.metrics.grab),
+                true,
+            )],
+            Some(Slot::With { window, before }),
+        )
     }
 
     pub fn frame(&self) -> Frame {
@@ -512,10 +600,12 @@ impl StateDock {
     fn cursor(&self) -> Cursor {
         match &self.gesture {
             Some(Gesture::Moving { .. }) => Cursor::Grabbing,
-            Some(Gesture::Resizing { group, .. }) => match self.axis(group) {
-                Some(Axis::Row) => Cursor::ColResize,
-                Some(Axis::Col) => Cursor::RowResize,
-                None => Cursor::Default,
+            Some(Gesture::Resizing {
+                second: Some(_), ..
+            }) => Cursor::BothResize,
+            Some(Gesture::Resizing { first, .. }) => match first.axis {
+                Axis::Row => Cursor::ColResize,
+                Axis::Col => Cursor::RowResize,
             },
             _ => Cursor::Default,
         }
@@ -595,13 +685,6 @@ impl StateDock {
         }
 
         Some(node)
-    }
-
-    fn axis(&self, path: &Path) -> Option<Axis> {
-        match self.group(path)? {
-            Node::Group { axis, .. } => Some(*axis),
-            Node::Pane(_) => None,
-        }
     }
 
     fn shares(&self, path: &Path, index: usize) -> Option<(Share, Share)> {

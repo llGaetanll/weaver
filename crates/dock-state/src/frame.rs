@@ -84,6 +84,8 @@ pub enum Cursor {
     Default,
     ColResize,
     RowResize,
+    /// Both at once: the intersection where two gaps meet.
+    BothResize,
     Grabbing,
 }
 

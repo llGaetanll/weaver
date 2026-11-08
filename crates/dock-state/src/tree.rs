@@ -71,17 +71,24 @@ impl Stack {
         }
     }
 
-    /// Arriving in a stack means arriving in front: it was just dropped here,
-    /// so it is what the drop was for.
-    fn take(&mut self, window: WindowId) {
+    /// Arriving in a stack means arriving in front, beside the tab it was
+    /// dropped next to: it was just put there, so it is what the drop was
+    /// for and it is where it was aimed.
+    fn take(&mut self, window: WindowId, beside: WindowId, before: bool) {
         if self.holds(window) {
             self.show(window);
 
             return;
         }
 
-        self.windows.push(window);
-        self.showing = self.windows.len() - 1;
+        let at = match self.windows.iter().position(|held| *held == beside) {
+            Some(at) if before => at,
+            Some(at) => at + 1,
+            None => self.windows.len(),
+        };
+
+        self.windows.insert(at, window);
+        self.showing = at;
     }
 
     /// Whether the stack is left empty, in which case its slot goes with it.
@@ -124,7 +131,7 @@ pub type Path = Vec<usize>;
 pub enum Slot {
     Beside { window: WindowId, side: Side },
     Edge { side: Side },
-    With { window: WindowId },
+    With { window: WindowId, before: bool },
 }
 
 impl Node {
@@ -202,9 +209,12 @@ pub fn place(root: &mut Option<Node>, window: WindowId, slot: Slot, share: Share
             window: target,
             side,
         } => place_beside(node, window, target, side, share),
-        Slot::With { window: target } => {
+        Slot::With {
+            window: target,
+            before,
+        } => {
             if let Some(stack) = node.stack_mut(target) {
-                stack.take(window);
+                stack.take(window, target, before);
             }
         }
     }

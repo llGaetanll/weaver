@@ -305,10 +305,11 @@ fn a_window_can_be_taken_back_out_of_a_stack() {
     assert_eq!(dock.frame().panes.len(), 2);
 
     // A's tab is the second of the two; drag it onto the top band of the slot
-    // below.
+    // below — past its tabs, which are where the order is decided rather than
+    // where a window lands.
     eval!(&mut dock, < down(168.0, 13.0));
-    eval!(&mut dock, < moved(400.0, 320.0));
-    eval!(&mut dock, < up(400.0, 320.0));
+    eval!(&mut dock, < moved(400.0, 340.0));
+    eval!(&mut dock, < up(400.0, 340.0));
 
     assert_eq!(dock.frame().panes.len(), 3, "three slots again");
     assert_eq!(tabs(&dock, B), vec![B], "and B is alone in its own");
@@ -467,4 +468,47 @@ fn a_pointer_moving_afterwards_does_not_cut_a_settle_short() {
     eval!(&mut dock, < moved(600.0, 400.0));
 
     assert!(dock.frame().settling, "and still settling into it");
+}
+
+/// A tab carried over its own strip changes the order rather than landing in
+/// the window under it. It is the only thing a stack can be rearranged with,
+/// and it is why the strip is not a drop target for anything else.
+#[test]
+fn a_tab_dragged_along_its_strip_changes_the_order() {
+    let mut dock = three();
+
+    eval!(&mut dock, < down(10.0, 10.0));
+    eval!(&mut dock, < moved(600.0, 150.0));
+    eval!(&mut dock, < up(600.0, 150.0));
+
+    assert_eq!(tabs(&dock, A), vec![B, A], "A arrived behind B");
+
+    // A's tab is the second; carry it over the left half of B's.
+    eval!(&mut dock, < down(168.0, 13.0));
+    eval!(&mut dock, < moved(40.0, 13.0));
+
+    assert_eq!(dock.frame().regions.len(), 1, "a seam, not a window's bands");
+
+    eval!(&mut dock, < up(40.0, 13.0));
+
+    assert_eq!(tabs(&dock, A), vec![A, B], "and now it is in front of it");
+    assert_eq!(dock.frame().panes.len(), 2, "without having left the slot");
+}
+
+/// Where two gaps meet, both are taken hold of: the corner four windows share
+/// moves as one thing rather than as two drags that have to be done in turn.
+#[test]
+fn the_corner_where_two_gaps_meet_moves_both() {
+    let mut dock = three();
+
+    eval!(&mut dock, < down(401.0, 300.0));
+    eval!(&mut dock, < moved(450.0, 350.0));
+
+    near(rect(&dock, A).w, 448.5, "the row's gap went with it");
+    near(rect(&dock, B).h, 349.5, "and so did the column's");
+
+    eval!(&mut dock, < cancelled());
+
+    near(rect(&dock, A).w, 399.5, "and escape puts both back");
+    near(rect(&dock, B).h, 299.5, "and escape puts both back");
 }
