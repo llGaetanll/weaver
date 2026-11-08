@@ -180,10 +180,10 @@
   <div class="name"><h2>Where a drop lands</h2><code>#drops</code></div>
   <p class="note">
     A window being moved has to land <b>somewhere definite</b>, and the user has
-    to be able to tell where that is before letting go. So a window is cut into
-    four bands and a middle: the bands are where the nearest edge wins, and the
-    middle is where the window <b>joins the stack</b> rather than taking a side
-    of it. A tenth off each side
+    to be able to tell where that is before letting go. So <b>the body of a
+    window</b> is cut into four bands and a middle: the bands are where the
+    nearest edge wins, and the middle is where the window <b>joins the
+    stack</b> rather than taking a side of it. A tenth off each side
     leaves four fifths of the window in the middle, which is as it should be:
     sharing a slot is the ordinary thing to want, and taking a side of one is
     the aimed-at thing.
@@ -244,9 +244,20 @@
     </figure>
   </div>
   <p class="note">
+    The bands stop at the body, because <b>a window's tabs are its order</b>:
+    a window carried over them lands between two of them rather than in the
+    window under them, which is the only way a stack can be rearranged. A slot
+    with one tab has no order to change, so a drop on its title bar joins it.
+  </p>
+  <p class="note">
+    The tabs are looked at before the dock's own edge, which means the edge
+    cannot be reached along the top of a slot. A band nobody can see must not
+    swallow a control everybody can.
+  </p>
+  <p class="note">
     There are two more targets, and neither is a window's band: <b>a gap</b>
     (<a href="#between">#between</a>) and <b>the dock's outer edge</b>
-    (<a href="#outer">#outer</a>). Three kinds of target in total, which is as
+    (<a href="#outer">#outer</a>). Four kinds of target in total, which is as
     many as can be told apart without a legend.
   </p>
 </section>

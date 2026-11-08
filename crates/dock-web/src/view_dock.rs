@@ -88,6 +88,7 @@ pub fn DockView(
         Cursor::Default => "",
         Cursor::ColResize => "is-col-resize",
         Cursor::RowResize => "is-row-resize",
+        Cursor::BothResize => "is-both-resize",
         Cursor::Grabbing => "is-grabbing",
     };
 

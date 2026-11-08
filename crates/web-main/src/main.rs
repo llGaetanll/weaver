@@ -47,7 +47,7 @@ fn main() {
         dock,
         NOTES,
         "Notes",
-        Slot::With { window: INSPECTOR },
+        Slot::With { window: INSPECTOR, before: false },
         Share::Flex(1.0),
     );
 
