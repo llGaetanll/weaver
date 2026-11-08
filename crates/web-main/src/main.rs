@@ -25,7 +25,7 @@ fn main() {
     open(dock, CANVAS, "Canvas", Slot::Edge { side: Side::Right }, Share::Flex(1.0));
     open(dock, TIMELINE, "Timeline", beside(CANVAS, Side::Down), Share::Fixed(140.0));
     open(dock, INSPECTOR, "Inspector", Slot::Edge { side: Side::Right }, Share::Fixed(300.0));
-    open(dock, NOTES, "Notes", beside(INSPECTOR, Side::Down), Share::Flex(1.0));
+    open(dock, NOTES, "Notes", Slot::With { window: INSPECTOR }, Share::Flex(1.0));
 
     mount_to_body(move || view! { <Page dock=dock /> });
 }
@@ -38,7 +38,7 @@ fn Page(dock: Dock) -> impl IntoView {
         <div class="page">
             <div class="hostbar">
                 <b>ui-lib</b>
-                <span>"drag a grip to move a window, a gap to resize one"</span>
+                <span>"drag a grip to move a window, a gap to resize one, a tab to leaf through a stack"</span>
             </div>
 
             <DockView dock=dock content=content />

@@ -54,47 +54,75 @@ body {
 .gap-h::after { content: ""; position: absolute; inset: 2px 0; background: var(--border); }
 .gap:hover::after, .gap.held::after { background: var(--accent); }
 
-/* --- A window ----------------------------------------------------------- */
+/* --- A slot ------------------------------------------------------------- */
 
-.win {
-  display: grid;
-  grid-template-rows: var(--tab) 1fr;
+/* The box a stack of windows shares. Everything in it is placed by the
+   machine, so there is no layout here beyond a background and a strip along
+   the top for the tabs to sit in. */
+.pane {
   min-width: 0;
   min-height: 0;
   background: var(--panel);
   overflow: hidden;
 }
 
-/* The title bar: the grip, the name, and one slot the host may put a control
-   in. A title bar with a toolbar in it is a window that wants to be two. */
-.win-tab {
+.pane-strip {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: var(--tab);
+  border-bottom: 1px solid var(--border);
+}
+
+/* A tab: the grip, and the name. A slot with one window in it has one tab,
+   and that tab is the title bar — there is no second way of drawing a window
+   that happens to be alone. */
+.tab {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 0 4px 0 7px;
-  border-bottom: 1px solid var(--border);
-  background: var(--panel);
+  padding: 0 8px 0 4px;
+  color: var(--text-faint);
+  overflow: hidden;
 }
-.win-tab > h3 {
+
+.tab > h3 {
   margin: 0;
   font-size: 10px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: .07em;
-  color: var(--text-faint);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
-.win-tab > .slot { margin-left: auto; }
-.win-body { overflow: auto; min-height: 0; }
+
+/* The one showing is the one on the panel: the others are on the ground
+   behind it, which is the same ground a gap shows. */
+.tab:not(.is-showing) { background: var(--sunken); box-shadow: inset -1px 0 0 var(--border); }
+.tab.is-showing { color: var(--text-muted); }
+.tab.is-lifted { opacity: .4; }
+
+/* What the host put in a window. */
+.win {
+  min-width: 0;
+  min-height: 0;
+  background: var(--panel);
+  overflow: auto;
+}
+
+.win.is-hidden { display: none; }
+.win.is-lifted { opacity: .4; }
 
 /* Six dots, left of the name: the handle the window is moved by, and the only
-   thing on that side. Always drawn, never on hover — a control that appears
-   when you are already on it is a control nobody finds. */
+   thing in a tab that is not the name. Always drawn, never on hover — a
+   control that appears when you are already over it is a control nobody
+   finds. */
 .grip {
   display: grid;
   place-items: center;
   width: 14px;
   height: var(--row-sm);
-  padding: 0;
+  flex: none;
   border: 0;
   border-radius: var(--radius-sm);
   background: transparent;
@@ -112,7 +140,6 @@ body {
   position: absolute;
   z-index: 2;
   display: grid;
-  grid-template-rows: var(--tab) 1fr;
   border: 1px solid var(--accent);
   border-radius: var(--radius);
   background: var(--panel);
@@ -120,7 +147,7 @@ body {
   overflow: hidden;
   pointer-events: none;
 }
-.ghost .win-tab { border-bottom-color: var(--border); }
+.ghost .tab { height: var(--tab); background: var(--panel); }
 
 /* Every region a drop could aim at, where the pointer is: the five a window
    is divided into, or the one a gap or the dock's edge makes. They are the
@@ -145,15 +172,11 @@ body {
    the top of the answer is the slowest way to be told nothing. */
 .dock:not(.is-moving) .region { transition: none; }
 
-/* The window being moved stays where it is, dimmed, until the drop. A gap
-   that opens as you drag moves everything else under your cursor. */
-.win.lifted { opacity: .4; }
-
 /* Once the pointer has let go, the windows move to where they now belong
    rather than appearing there. While it has not — a gap being dragged, the
    browser window being resized — they keep up instead, because anything else
    is lag. */
-.dock.settles .win, .dock.settles .gap {
+.dock.settles .pane, .dock.settles .win, .dock.settles .gap {
   transition:
     left var(--settle) ease,
     top var(--settle) ease,

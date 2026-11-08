@@ -59,6 +59,7 @@ pub fn DockView(
     });
 
     let gaps = Memo::new(move |_| dock.frame().gaps.len());
+    let panes = Memo::new(move |_| dock.frame().panes.len());
 
     let settling = move || if dock.frame().settling { " settles" } else { "" };
 
@@ -83,6 +84,10 @@ pub fn DockView(
                 dock.send(Event::FromPointer(EventPointer::Down { at }));
             }
         >
+            <For each=move || 0..panes.get() key=|index| *index let:index>
+                <PaneView dock=dock index=index />
+            </For>
+
             <For each=move || windows.get() key=|window| *window let:window>
                 <Window dock=dock window=window content=content />
             </For>
@@ -97,6 +102,70 @@ pub fn DockView(
     }
 }
 
+/// One slot: the box a stack of windows shares, and the tabs along the top
+/// of it. The tabs are drawn here rather than beside the windows because they
+/// belong to the slot — a slot with one window in it has one tab, and that is
+/// the title bar.
+#[component]
+fn PaneView(dock: Dock, index: usize) -> impl IntoView {
+    let pane = move || dock.frame().panes.get(index).cloned();
+    let tabs = Memo::new(move |_| pane().map(|pane| pane.tabs.len()).unwrap_or_default());
+
+    view! {
+        <div class="pane" style=move || pane().map(|pane| place(pane.rect)).unwrap_or_default()>
+            <div class="pane-strip"></div>
+            <For each=move || 0..tabs.get() key=|tab| *tab let:tab>
+                <Tab dock=dock pane=index tab=tab />
+            </For>
+        </div>
+    }
+}
+
+/// A tab: the grip a window is moved by, and its name.
+#[component]
+fn Tab(dock: Dock, pane: usize, tab: usize) -> impl IntoView {
+    let drawn = move || {
+        let frame = dock.frame();
+        let pane = frame.panes.get(pane)?;
+
+        Some((pane.rect, pane.tabs.get(tab)?.clone()))
+    };
+
+    let class = move || match drawn() {
+        Some((_, tab)) if tab.lifted => "tab is-lifted",
+        Some((_, tab)) if tab.showing => "tab is-showing",
+        _ => "tab",
+    };
+
+    // A tab is placed inside its own slot, so its rectangle is given from the
+    // slot's corner rather than the dock's.
+    let style = move || match drawn() {
+        Some((pane, tab)) => place(Rect::new(
+            tab.rect.x - pane.x,
+            tab.rect.y - pane.y,
+            tab.rect.w,
+            tab.rect.h,
+        )),
+        None => String::new(),
+    };
+
+    view! {
+        <div class=class style=style>
+            <span class="grip" title="Drag to move this window">
+                <svg viewBox="0 0 10 16" width="10" height="16" aria-hidden="true">
+                    <circle cx="3" cy="4" r="1.1" /><circle cx="7" cy="4" r="1.1" />
+                    <circle cx="3" cy="8" r="1.1" /><circle cx="7" cy="8" r="1.1" />
+                    <circle cx="3" cy="12" r="1.1" /><circle cx="7" cy="12" r="1.1" />
+                </svg>
+            </span>
+            <h3>{move || drawn().map(|(_, tab)| tab.title).unwrap_or_default()}</h3>
+        </div>
+    }
+}
+
+/// What the host put in a window. A window behind a tab keeps its contents
+/// and its place — it is hidden rather than taken down, so leafing through a
+/// stack costs the host nothing.
 #[component]
 fn Window(dock: Dock, window: WindowId, content: Callback<WindowId, AnyView>) -> impl IntoView {
     let drawn = move || {
@@ -107,23 +176,15 @@ fn Window(dock: Dock, window: WindowId, content: Callback<WindowId, AnyView>) ->
             .cloned()
     };
 
-    let title = move || drawn().map(|drawn| drawn.title).unwrap_or_default();
-    let lifted = move || drawn().is_some_and(|drawn| drawn.lifted);
-    let style = move || drawn().map(|drawn| place(drawn.rect)).unwrap_or_default();
+    let class = move || match drawn() {
+        Some(drawn) if !drawn.showing => "win is-hidden",
+        Some(drawn) if drawn.lifted => "win is-lifted",
+        _ => "win",
+    };
 
     view! {
-        <div class=move || if lifted() { "win lifted" } else { "win" } style=style>
-            <div class="win-tab">
-                <span class="grip" title="Drag to move this window">
-                    <svg viewBox="0 0 10 16" width="10" height="16" aria-hidden="true">
-                        <circle cx="3" cy="4" r="1.1" /><circle cx="7" cy="4" r="1.1" />
-                        <circle cx="3" cy="8" r="1.1" /><circle cx="7" cy="8" r="1.1" />
-                        <circle cx="3" cy="12" r="1.1" /><circle cx="7" cy="12" r="1.1" />
-                    </svg>
-                </span>
-                <h3>{title}</h3>
-            </div>
-            <div class="win-body">{content.run(window)}</div>
+        <div class=class style=move || drawn().map(|drawn| place(drawn.rect)).unwrap_or_default()>
+            {content.run(window)}
         </div>
     }
 }
@@ -215,10 +276,17 @@ fn clip(zone: Zone) -> String {
 
         let back = corner.distance(previous);
         let on = corner.distance(next);
-        let round = ROUND.min(back / 2.0).min(on / 2.0);
 
-        let before = towards(corner, previous, round);
-        let after = towards(corner, next, round);
+        // How far back a corner has to be cut to curve by the same radius
+        // depends on how sharp it is: the sharper the corner, the further.
+        // Cutting every corner back by the same distance instead is what made
+        // the thin regions look pointed.
+        let trim = (ROUND / half_angle(previous, corner, next))
+            .min(back / 2.0)
+            .min(on / 2.0);
+
+        let before = towards(corner, previous, trim);
+        let after = towards(corner, next, trim);
 
         if i == 0 {
             path.push_str(&format!("M {} {} ", before.x, before.y));
@@ -279,6 +347,20 @@ fn meet(a: (Point, Point), b: (Point, Point)) -> Option<Point> {
     Some(Point::new(at.x + run.x * along, at.y + run.y * along))
 }
 
+/// The tangent of half the angle a corner turns through, which is what the
+/// radius is divided by to get how far back to cut it. Clamped so that a
+/// corner close to straight does not ask for an unbounded cut.
+fn half_angle(previous: Point, corner: Point, next: Point) -> f32 {
+    let back = towards(corner, previous, 1.0);
+    let on = towards(corner, next, 1.0);
+
+    let cos = ((back.x - corner.x) * (on.x - corner.x) + (back.y - corner.y) * (on.y - corner.y))
+        .clamp(-1.0, 1.0);
+    let angle = cos.acos();
+
+    (angle / 2.0).tan().max(0.2)
+}
+
 fn towards(from: Point, to: Point, by: f32) -> Point {
     let length = from.distance(to).max(0.001);
 
@@ -296,17 +378,18 @@ fn Ghost(dock: Dock) -> impl IntoView {
 
     let title = move || {
         dock.frame()
-            .windows
+            .panes
             .iter()
-            .find(|window| window.lifted)
-            .map(|window| window.title.clone())
+            .flat_map(|pane| pane.tabs.clone())
+            .find(|tab| tab.lifted)
+            .map(|tab| tab.title)
             .unwrap_or_default()
     };
 
     view! {
         <Show when=move || rect().is_some()>
             <div class="ghost" style=move || rect().map(place).unwrap_or_default()>
-                <div class="win-tab">
+                <div class="tab is-showing">
                     <span class="grip">
                         <svg viewBox="0 0 10 16" width="10" height="16" aria-hidden="true">
                             <circle cx="3" cy="4" r="1.1" /><circle cx="7" cy="4" r="1.1" />
@@ -316,7 +399,6 @@ fn Ghost(dock: Dock) -> impl IntoView {
                     </span>
                     <h3>{title}</h3>
                 </div>
-                <div class="win-body"></div>
             </div>
         </Show>
     }
