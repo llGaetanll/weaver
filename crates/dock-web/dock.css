@@ -122,25 +122,23 @@ body {
 }
 .ghost .win-tab { border-bottom-color: var(--border); }
 
-/* The region you have to be in for the drop to be the one you want: a band
-   of a window, a gap, or the strip along the dock's edge. It is the shape
-   rather than the slot the window would get, because what the pointer has to
-   do is the thing that is hard to guess.
+/* Every region a drop could aim at, where the pointer is: the five a window
+   is divided into, or the one a gap or the dock's edge makes. They are the
+   shapes you have to be inside rather than the slots a window would get —
+   what is hard to guess is how far the pointer has to move for the answer to
+   change, and that is what a shape with an edge answers.
 
-   It fades, and it is the only thing in the library that does: it appears and
-   disappears under a pointer that is already moving, and the fade is what
-   keeps that from reading as a flicker. */
-.preview {
+   The one under the pointer is darker. The others are there so that what the
+   window is divided into can be seen rather than learned. */
+.regions { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+
+.region {
   position: absolute;
   inset: 0;
-  z-index: 1;
-  pointer-events: none;
   opacity: 0;
-  transition: opacity .2s ease;
+  background: var(--drop);
+  transition: opacity var(--fade) ease, background-color var(--fade) ease;
 }
-.preview.is-on { opacity: 1; }
-.preview svg { display: block; width: 100%; height: 100%; }
-.preview polygon { fill: var(--drop); stroke: var(--drop-edge); stroke-width: 1px; }
 
 /* The window being moved stays where it is, dimmed, until the drop. A gap
    that opens as you drag moves everything else under your cursor. */
@@ -151,7 +149,11 @@ body {
    browser window being resized — they keep up instead, because anything else
    is lag. */
 .dock.settles .win, .dock.settles .gap {
-  transition: left .2s ease, top .2s ease, width .2s ease, height .2s ease;
+  transition:
+    left var(--settle) ease,
+    top var(--settle) ease,
+    width var(--settle) ease,
+    height var(--settle) ease;
 }
 
 /* The cursor, drawn so a picture can show where the pointer is. Not the

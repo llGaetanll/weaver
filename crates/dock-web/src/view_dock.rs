@@ -4,6 +4,7 @@
 use dock_state::Cursor;
 use dock_state::Event;
 use dock_state::EventPointer;
+use dock_state::Point;
 use dock_state::Rect;
 use dock_state::WindowId;
 use dock_state::Zone;
@@ -86,7 +87,7 @@ pub fn DockView(
                 <Gap dock=dock index=index />
             </For>
 
-            <Preview dock=dock />
+            <Regions dock=dock />
             <Ghost dock=dock />
         </div>
     }
@@ -138,31 +139,80 @@ fn Gap(dock: Dock, index: usize) -> impl IntoView {
     view! { <div class=class style=move || drawn().map(|gap| place(gap.rect)).unwrap_or_default()></div> }
 }
 
-/// The region the pointer is in. It is kept on the page while it fades out,
-/// which is the only reason the last shape is held onto.
+/// Every region on offer, one element each.
 ///
-/// The shape is handed over as markup rather than built as elements: an SVG
-/// attribute set through the view is set as a property, and `points` on a
-/// polygon is one of the properties that cannot be written.
+/// They are drawn as clipped boxes rather than as an SVG because they have to
+/// *change* — the one under the pointer darkens as the pointer moves between
+/// them, and a shape rebuilt from markup has no previous value to ease from.
 #[component]
-fn Preview(dock: Dock) -> impl IntoView {
-    let zone = move || dock.frame().preview;
+fn Regions(dock: Dock) -> impl IntoView {
+    view! {
+        <div class="regions">
+            <For each=move || 0..dock_state::REGIONS key=|index| *index let:index>
+                <Region dock=dock index=index />
+            </For>
+        </div>
+    }
+}
+
+#[component]
+fn Region(dock: Dock, index: usize) -> impl IntoView {
+    let zone = move || dock.frame().regions.get(index).copied();
+
+    // The shape a region had is kept while it fades out. Dropping the clip
+    // with the region would leave the whole surface washed for as long as the
+    // fade lasts.
     let shape = RwSignal::new(String::new());
+    let fill = RwSignal::new("var(--drop)");
 
     Effect::new(move |_| {
         if let Some(zone) = zone() {
-            shape.set(points(zone));
+            shape.set(clip(zone));
+            fill.set(if zone.chosen {
+                "var(--drop-chosen)"
+            } else {
+                "var(--drop)"
+            });
         }
     });
 
-    let markup = move || format!("<svg><polygon points=\"{}\" /></svg>", shape.get());
+    let style = move || {
+        format!(
+            "opacity: {}; background: {}; clip-path: polygon({})",
+            u8::from(zone().is_some()),
+            fill.get(),
+            shape.get(),
+        )
+    };
 
-    view! {
-        <div
-            class=move || if zone().is_some() { "preview is-on" } else { "preview" }
-            inner_html=markup
-        ></div>
-    }
+    view! { <div class="region" style=style></div> }
+}
+
+/// A region, pulled in from its own edges so the regions do not touch. The
+/// seam is what makes five of them read as five rather than as one wash —
+/// the same answer the dock gives for two windows.
+fn clip(zone: Zone) -> String {
+    const SEAM: f32 = 1.0;
+
+    let middle = Point::new(
+        zone.points.iter().map(|point| point.x).sum::<f32>() / 4.0,
+        zone.points.iter().map(|point| point.y).sum::<f32>() / 4.0,
+    );
+
+    zone.points
+        .iter()
+        .map(|point| {
+            let away = point.distance(middle).max(1.0);
+            let pull = (away - SEAM) / away;
+
+            format!(
+                "{}px {}px",
+                middle.x + (point.x - middle.x) * pull,
+                middle.y + (point.y - middle.y) * pull,
+            )
+        })
+        .collect::<Vec<_>>()
+        .join(", ")
 }
 
 /// The window under the cursor. Its title and nothing else: the host's
@@ -197,14 +247,6 @@ fn Ghost(dock: Dock) -> impl IntoView {
             </div>
         </Show>
     }
-}
-
-fn points(zone: Zone) -> String {
-    zone.points
-        .iter()
-        .map(|point| format!("{},{}", point.x, point.y))
-        .collect::<Vec<_>>()
-        .join(" ")
 }
 
 fn place(rect: Rect) -> String {
