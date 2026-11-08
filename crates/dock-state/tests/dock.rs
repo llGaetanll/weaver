@@ -15,6 +15,7 @@ use dock_state::Size;
 use dock_state::Slot;
 use dock_state::StateDock;
 use dock_state::WindowId;
+use dock_state::Zone;
 use util_eval::eval;
 
 const A: WindowId = WindowId(1);
@@ -100,6 +101,13 @@ fn rect(dock: &StateDock, window: WindowId) -> Rect {
         .expect("the window is in the dock")
 }
 
+fn chosen(dock: &StateDock) -> Option<Zone> {
+    dock.frame()
+        .regions
+        .into_iter()
+        .find(|region| region.chosen)
+}
+
 #[track_caller]
 fn near(a: f32, b: f32, what: &str) {
     assert!((a - b).abs() < 0.5, "{what}: {a} is not {b}");
@@ -161,14 +169,23 @@ fn a_drop_lands_on_the_side_its_band_was_on() {
     let mut dock = three();
 
     eval!(&mut dock, < down(10.0, 10.0));
-    eval!(&mut dock, < moved(500.0, 100.0));
+    eval!(&mut dock, < moved(420.0, 100.0));
 
-    let zone = dock.frame().preview.expect("in B's left band");
+    let frame = dock.frame();
+
+    assert_eq!(frame.regions.len(), 5, "four bands and the middle, all drawn");
+    assert_eq!(
+        frame.regions.iter().filter(|region| region.chosen).count(),
+        1,
+        "and exactly one of them under the pointer",
+    );
+
+    let zone = chosen(&dock).expect("in B's left band");
     let against = zone.points.iter().filter(|point| point.x < 403.0).count();
 
     assert_eq!(against, 2, "a trapezium with its long side on B's left edge");
 
-    eval!(&mut dock, < up(500.0, 100.0));
+    eval!(&mut dock, < up(420.0, 100.0));
 
     assert!(rect(&dock, A).x < rect(&dock, B).x, "A went to B's left");
     near(rect(&dock, A).h, rect(&dock, B).h, "and shares its height");
@@ -187,7 +204,8 @@ fn the_middle_of_a_window_proposes_nothing() {
     eval!(&mut dock, < moved(600.0, 150.0));
 
     assert!(dock.frame().ghost.is_some(), "still being carried");
-    assert!(dock.frame().preview.is_none(), "but nowhere to put it");
+    assert_eq!(dock.frame().regions.len(), 5, "the window is still a target");
+    assert!(chosen(&dock).is_none(), "but nothing in it is chosen");
 
     eval!(&mut dock, < up(600.0, 150.0));
 
@@ -202,8 +220,8 @@ fn a_drop_into_a_row_takes_a_third_of_the_row() {
     let mut dock = three();
 
     eval!(&mut dock, < down(410.0, 310.0));
-    eval!(&mut dock, < moved(300.0, 300.0));
-    eval!(&mut dock, < up(300.0, 300.0));
+    eval!(&mut dock, < moved(370.0, 300.0));
+    eval!(&mut dock, < up(370.0, 300.0));
 
     let frame = dock.frame();
 
@@ -220,10 +238,10 @@ fn a_drop_outside_the_dock_changes_nothing() {
     let mut dock = three();
 
     eval!(&mut dock, < down(10.0, 10.0));
-    eval!(&mut dock, < moved(500.0, 100.0));
+    eval!(&mut dock, < moved(420.0, 100.0));
     eval!(&mut dock, < moved(-50.0, 300.0));
 
-    assert!(dock.frame().preview.is_none(), "nowhere to land");
+    assert!(dock.frame().regions.is_empty(), "nowhere to land");
 
     eval!(&mut dock, < up(-50.0, 300.0));
 
@@ -293,8 +311,8 @@ fn a_fixed_window_keeps_its_size_when_it_is_moved() {
     near(rect(&dock, A).w, 495.0, "and A takes the rest");
 
     eval!(&mut dock, < down(505.0, 10.0));
-    eval!(&mut dock, < moved(100.0, 300.0));
-    eval!(&mut dock, < up(100.0, 300.0));
+    eval!(&mut dock, < moved(30.0, 300.0));
+    eval!(&mut dock, < up(30.0, 300.0));
 
     near(rect(&dock, B).x, 0.0, "now on the left");
     near(rect(&dock, B).w, 300.0, "and still 300");

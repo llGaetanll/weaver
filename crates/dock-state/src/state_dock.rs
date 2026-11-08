@@ -25,6 +25,10 @@ use crate::tree::WindowId;
 use crate::tree::place;
 use crate::tree::remove;
 
+/// The most regions that can be on offer at once: the four bands of a window
+/// and its middle.
+pub const REGIONS: usize = 5;
+
 /// A window the host has opened, and the name the dock writes on it.
 #[derive(Clone, Debug)]
 struct Window {
@@ -221,7 +225,7 @@ impl StateDock {
 
     fn release(&mut self, at: Point) {
         if let Some(Gesture::Moving { window, .. }) = self.gesture.clone()
-            && let Some((slot, _)) = self.slot(window, at)
+            && let (_, Some(slot)) = self.targets(window, at)
         {
             self.root = self.dropped(window, slot);
         }
@@ -304,19 +308,24 @@ impl StateDock {
         root
     }
 
-    /// Where a window being moved would land, and the region the pointer is
-    /// in to land it there. The two are worked out together and handed back
-    /// together, so the shape drawn and the drop carried out cannot be about
-    /// different things.
+    /// Where a window being moved would land, and every region on offer where
+    /// the pointer is.
     ///
-    /// The three targets the board draws, in the order they take precedence:
-    /// the dock's edge, a gap, then the window under the pointer.
-    fn slot(&self, moving: WindowId, at: Point) -> Option<(Slot, Zone)> {
+    /// The two are worked out together and handed back together, so the shape
+    /// drawn and the drop carried out cannot be about different things. The
+    /// three targets the board draws, in the order they take precedence: the
+    /// dock's edge, a gap, then the window under the pointer.
+    fn targets(&self, moving: WindowId, at: Point) -> (Vec<Zone>, Option<Slot>) {
+        let nothing = (Vec::new(), None);
+
         if !self.area().contains(at) {
-            return None;
+            return nothing;
         }
 
-        let solved = self.solved()?;
+        let Some(solved) = self.solved() else {
+            return nothing;
+        };
+
         let edge = self.metrics.edge;
         let area = self.area();
 
@@ -331,7 +340,9 @@ impl StateDock {
         .min_by(|(a, _), (b, _)| a.total_cmp(b));
 
         if let Some((_, side)) = outer {
-            return Some((Slot::Edge { side }, Zone::from(strip(area, side, edge))));
+            let zone = Zone::rect(strip(area, side, edge), true);
+
+            return (vec![zone], Some(Slot::Edge { side }));
         }
 
         let gap = solved
@@ -339,40 +350,45 @@ impl StateDock {
             .iter()
             .find(|gap| gap.rect.grown(edge / 2.0).contains(at));
 
-        let found = match gap {
-            Some(gap) => {
-                let before = self.leaf(&gap.group, gap.index)?;
-                let side = match gap.axis {
-                    Axis::Row => Side::Right,
-                    Axis::Col => Side::Down,
-                };
+        if let Some(gap) = gap {
+            let Some(before) = self.leaf(&gap.group, gap.index) else {
+                return nothing;
+            };
 
-                (
-                    Slot::Beside {
-                        window: before,
-                        side,
-                    },
-                    Zone::from(gap.rect.grown(edge / 2.0)),
-                )
+            let side = match gap.axis {
+                Axis::Row => Side::Right,
+                Axis::Col => Side::Down,
+            };
+
+            if before == moving {
+                return nothing;
             }
 
-            None => {
-                let (window, rect) = solved.at(at)?;
-                let side = band(rect, at, self.metrics.band)?;
+            let zone = Zone::rect(gap.rect.grown(edge / 2.0), true);
 
-                (
-                    Slot::Beside { window, side },
-                    trapezium(rect, side, self.metrics.band),
-                )
-            }
+            return (
+                vec![zone],
+                Some(Slot::Beside {
+                    window: before,
+                    side,
+                }),
+            );
+        }
+
+        let Some((window, rect)) = solved.at(at) else {
+            return nothing;
         };
 
-        // Dropping a window beside itself is not a move, and a drop that does
-        // nothing is not drawn.
-        match found {
-            (Slot::Beside { window, .. }, _) if window == moving => None,
-            found => Some(found),
+        // Dropping a window beside itself is not a move, so its own regions
+        // are not on offer.
+        if window == moving {
+            return nothing;
         }
+
+        let chosen = band(rect, at, self.metrics.band);
+        let zones = regions(rect, self.metrics.band, chosen);
+
+        (zones, chosen.map(|side| Slot::Beside { window, side }))
     }
 
     pub fn frame(&self) -> Frame {
@@ -405,24 +421,22 @@ impl StateDock {
             })
             .collect();
 
-        let (ghost, preview) = match &self.gesture {
+        let (ghost, regions) = match &self.gesture {
             Some(Gesture::Moving { window, grab, at }) => {
                 let size = self.ghost(*window, &solved);
                 let ghost = Rect::new(at.x - grab.x, at.y - grab.y, size.w, size.h);
 
-                let preview = self.slot(*window, *at).map(|(_, zone)| zone);
-
-                (Some(ghost), preview)
+                (Some(ghost), self.targets(*window, *at).0)
             }
 
-            _ => (None, None),
+            _ => (None, Vec::new()),
         };
 
         Frame {
             windows,
             gaps,
             ghost,
-            preview,
+            regions,
             cursor: self.cursor(),
             settling: self.settling,
         }
@@ -600,9 +614,34 @@ fn band(rect: Rect, at: Point, band: f32) -> Option<Side> {
     (near < band).then_some(side)
 }
 
+/// Everything a window is divided into: the four bands and the middle, in a
+/// fixed order so that a region keeps its place in the list while the pointer
+/// moves between them.
+fn regions(rect: Rect, band: f32, chosen: Option<Side>) -> Vec<Zone> {
+    let sides = [Side::Left, Side::Up, Side::Right, Side::Down];
+
+    let mut zones: Vec<Zone> = sides
+        .into_iter()
+        .map(|side| trapezium(rect, side, band, chosen == Some(side)))
+        .collect();
+
+    let middle = Rect::new(
+        rect.x + rect.w * band,
+        rect.y + rect.h * band,
+        rect.w * (1.0 - band * 2.0),
+        rect.h * (1.0 - band * 2.0),
+    );
+
+    // Never chosen: it is the room tabs will want, and until they have it
+    // being there means no drop.
+    zones.push(Zone::rect(middle, false));
+
+    zones
+}
+
 /// The band itself: the wedge between two diagonals with the middle taken
 /// out, which is a trapezium with its short side against the middle.
-fn trapezium(rect: Rect, side: Side, band: f32) -> Zone {
+fn trapezium(rect: Rect, side: Side, band: f32, chosen: bool) -> Zone {
     let x = rect.w * band;
     let y = rect.h * band;
 
@@ -636,7 +675,7 @@ fn trapezium(rect: Rect, side: Side, band: f32) -> Zone {
         ],
     };
 
-    Zone { points }
+    Zone { points, chosen }
 }
 
 /// The strip along one side of the dock.

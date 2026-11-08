@@ -32,6 +32,7 @@ pub use frame::Cursor;
 pub use frame::Frame;
 pub use frame::GapFrame;
 pub use frame::Zone;
+pub use state_dock::REGIONS;
 pub use frame::WindowFrame;
 pub use geometry::Axis;
 pub use geometry::Point;
