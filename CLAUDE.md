@@ -6,6 +6,10 @@
 - **Never ask the user anything through a form.** No option pickers, no
   multiple choice, no `AskUserQuestion`. When you have a question, write it in
   plaintext in your reply and let the user answer in their own words.
+- **Never leave anything running.** Start a server, a browser or a watcher to
+  check your own work if you need one, and stop it before you answer. The user
+  runs the app themselves, and a port already taken by a process they did not
+  start is a confusing thing to walk into.
 - Keep comments sparse. A comment explains why something is the way it is; it
   does not restate the line below it. Never write a comment that is a row of
   dashes.
