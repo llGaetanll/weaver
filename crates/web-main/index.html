@@ -29,6 +29,14 @@
       const script = query.get("gesture");
       if (!script) return;
 
+      // Nothing moves, so a still can be taken of any moment. A browser with
+      // no window will not hand back a frame of an animation, and a picture
+      // of one caught half way is a picture of nothing in particular.
+      if (query.has("still")) {
+        document.documentElement.style.setProperty("--fade", "0s");
+        document.documentElement.style.setProperty("--settle", "0s");
+      }
+
       const steps = script.split("|").map((step) => {
         const [what, where] = step.split(":");
         const [x, y] = where.split(",").map(Number);

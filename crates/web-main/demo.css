@@ -1,4 +1,7 @@
-/* The page the dock is put in, which is the demo's and not the library's. */
+/* The page the dock is put in, and what this page puts in its windows. None
+   of it is the library's: a dock decides where the rectangles go and draws
+   the tabs and the lines, and everything below here is what a program might
+   choose to fill one with. */
 
 html, body { height: 100%; }
 body { overflow: hidden; }
@@ -23,15 +26,65 @@ body { overflow: hidden; }
 
 .hostbar b { color: var(--text); font-weight: 500; }
 
-/* Stand-ins for whatever a program would put in a window. */
-.filler { padding: 10px 12px; font-size: 12px; color: var(--text-muted); }
-.filler p { margin: 0 0 8px; max-width: 46ch; }
-.filler .num { font-family: var(--mono); font-variant-numeric: tabular-nums; color: var(--text); }
-.filler dl { display: grid; gap: 4px; margin: 0; }
-.filler dl > div { display: grid; grid-template-columns: 1fr auto; gap: 10px; }
-.filler dd { margin: 0; font-family: var(--mono); color: var(--text); }
+/* --- A list of names, indented ----------------------------------------- */
 
-.lines {
-  height: 100%;
-  background-image: repeating-linear-gradient(var(--n-50) 0 13px, var(--n-0) 13px 26px);
+.tree { padding: 6px 0; font-size: 12px; }
+
+.tree .row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 21px;
+  padding-right: 10px;
+  color: var(--text-muted);
+  white-space: nowrap;
 }
+
+.tree .row.is-here { background: var(--raised); color: var(--text); }
+.tree .dot { width: 7px; color: var(--text-faint); font-size: 9px; }
+.tree .kind { margin-left: auto; font-family: var(--mono); font-size: 10px; color: var(--text-faint); }
+
+/* --- Code --------------------------------------------------------------- */
+
+.code {
+  padding: 8px 0;
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 19px;
+  white-space: pre;
+}
+
+.code .line { display: flex; gap: 14px; padding: 0 12px; }
+.code .number { width: 18px; text-align: right; color: var(--text-faint); user-select: none; }
+.code .note { color: var(--text-muted); }
+
+/* --- A test run --------------------------------------------------------- */
+
+.runs { padding: 9px 12px; font-family: var(--mono); font-size: 12px; line-height: 20px; }
+.runs .run { display: flex; gap: 10px; }
+.runs .ok { width: 48px; color: var(--text-faint); }
+.runs .no { width: 48px; color: var(--danger); }
+.runs .what { color: var(--text-muted); }
+.runs .summary { margin-top: 9px; color: var(--text-faint); }
+
+/* --- A shell ------------------------------------------------------------ */
+
+.shell { padding: 9px 12px; font-family: var(--mono); font-size: 12px; line-height: 20px; }
+.shell .prompt { margin-right: 7px; color: var(--text-faint); }
+.shell .dim { color: var(--text-muted); }
+.shell .caret {
+  display: inline-block;
+  width: 7px;
+  height: 14px;
+  vertical-align: -3px;
+  background: var(--text);
+}
+
+/* --- Words -------------------------------------------------------------- */
+
+.prose { padding: 11px 13px; font-size: 12px; color: var(--text-muted); }
+.prose p { margin: 0 0 9px; max-width: 42ch; }
+
+.prose dl { display: grid; gap: 4px; margin: 14px 0 0; padding-top: 11px; border-top: 1px solid var(--border); }
+.prose dl > div { display: grid; grid-template-columns: 1fr auto; gap: 10px; }
+.prose dd { margin: 0; font-family: var(--mono); color: var(--text); }
