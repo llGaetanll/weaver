@@ -112,8 +112,12 @@ body {
 .tab-icon > svg { display: block; }
 
 /* A tab that is not showing sits on the ground a gap shows, which is where
-   anything not in front belongs. */
-.tab:not(.is-showing) { background: var(--sunken); }
+   anything not in front belongs — and carries the line along its own bottom,
+   since its ground covers the one the strip drew there. */
+.tab:not(.is-showing) {
+  background: var(--sunken);
+  box-shadow: inset 0 -1px 0 var(--border);
+}
 
 /* The showing tab covers the line under it with the window's own ground and
    carries it up its sides instead. It has no line along its top: the slot
