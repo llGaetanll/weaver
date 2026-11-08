@@ -122,19 +122,37 @@ body {
 }
 .ghost .win-tab { border-bottom-color: var(--border); }
 
-/* Where it would land. The wash is the whole point: it is the shape of the
-   slot, so the answer to "where does this go" is read rather than guessed. */
+/* The region you have to be in for the drop to be the one you want: a band
+   of a window, a gap, or the strip along the dock's edge. It is the shape
+   rather than the slot the window would get, because what the pointer has to
+   do is the thing that is hard to guess.
+
+   It fades, and it is the only thing in the library that does: it appears and
+   disappears under a pointer that is already moving, and the fade is what
+   keeps that from reading as a flicker. */
 .preview {
   position: absolute;
+  inset: 0;
   z-index: 1;
-  background: var(--accent-weak);
-  box-shadow: inset 0 0 0 1px var(--accent);
   pointer-events: none;
+  opacity: 0;
+  transition: opacity .2s ease;
 }
+.preview.is-on { opacity: 1; }
+.preview svg { display: block; width: 100%; height: 100%; }
+.preview polygon { fill: var(--drop); stroke: var(--drop-edge); stroke-width: 1px; }
 
 /* The window being moved stays where it is, dimmed, until the drop. A gap
    that opens as you drag moves everything else under your cursor. */
 .win.lifted { opacity: .4; }
+
+/* Once the pointer has let go, the windows move to where they now belong
+   rather than appearing there. While it has not — a gap being dragged, the
+   browser window being resized — they keep up instead, because anything else
+   is lag. */
+.dock.settles .win, .dock.settles .gap {
+  transition: left .2s ease, top .2s ease, width .2s ease, height .2s ease;
+}
 
 /* The cursor, drawn so a picture can show where the pointer is. Not the
    library's. */

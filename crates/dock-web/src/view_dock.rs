@@ -6,6 +6,7 @@ use dock_state::Event;
 use dock_state::EventPointer;
 use dock_state::Rect;
 use dock_state::WindowId;
+use dock_state::Zone;
 use leptos::ev;
 use leptos::html::Div;
 use leptos::prelude::*;
@@ -58,6 +59,8 @@ pub fn DockView(
 
     let gaps = Memo::new(move |_| dock.frame().gaps.len());
 
+    let settling = move || if dock.frame().settling { " settles" } else { "" };
+
     let cursor = move || match dock.frame().cursor {
         Cursor::Default => "",
         Cursor::ColResize => "is-col-resize",
@@ -68,7 +71,7 @@ pub fn DockView(
     view! {
         <div
             node_ref=node
-            class=move || format!("dock {}", cursor())
+            class=move || format!("dock {}{}", cursor(), settling())
             style=format!("--tab: {}px; --gap: {}px", metrics.tab, metrics.gap)
             on:pointerdown=move |event: ev::PointerEvent| {
                 let at = dock.point(node, event.client_x() as f32, event.client_y() as f32);
@@ -135,15 +138,30 @@ fn Gap(dock: Dock, index: usize) -> impl IntoView {
     view! { <div class=class style=move || drawn().map(|gap| place(gap.rect)).unwrap_or_default()></div> }
 }
 
-/// Where the window would land, solved from the tree the drop would produce.
+/// The region the pointer is in. It is kept on the page while it fades out,
+/// which is the only reason the last shape is held onto.
+///
+/// The shape is handed over as markup rather than built as elements: an SVG
+/// attribute set through the view is set as a property, and `points` on a
+/// polygon is one of the properties that cannot be written.
 #[component]
 fn Preview(dock: Dock) -> impl IntoView {
-    let rect = move || dock.frame().preview;
+    let zone = move || dock.frame().preview;
+    let shape = RwSignal::new(String::new());
+
+    Effect::new(move |_| {
+        if let Some(zone) = zone() {
+            shape.set(points(zone));
+        }
+    });
+
+    let markup = move || format!("<svg><polygon points=\"{}\" /></svg>", shape.get());
 
     view! {
-        <Show when=move || rect().is_some()>
-            <div class="preview" style=move || rect().map(place).unwrap_or_default()></div>
-        </Show>
+        <div
+            class=move || if zone().is_some() { "preview is-on" } else { "preview" }
+            inner_html=markup
+        ></div>
     }
 }
 
@@ -179,6 +197,14 @@ fn Ghost(dock: Dock) -> impl IntoView {
             </div>
         </Show>
     }
+}
+
+fn points(zone: Zone) -> String {
+    zone.points
+        .iter()
+        .map(|point| format!("{},{}", point.x, point.y))
+        .collect::<Vec<_>>()
+        .join(" ")
 }
 
 fn place(rect: Rect) -> String {
