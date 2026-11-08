@@ -487,7 +487,12 @@ fn a_tab_dragged_along_its_strip_changes_the_order() {
     eval!(&mut dock, < down(168.0, 13.0));
     eval!(&mut dock, < moved(40.0, 13.0));
 
-    assert_eq!(dock.frame().regions.len(), 1, "a seam, not a window's bands");
+    assert!(dock.frame().regions.is_empty(), "no wash: the hole says it");
+    assert_eq!(
+        tabs(&dock, B),
+        vec![A, B],
+        "and the tabs have already moved apart to leave it",
+    );
 
     eval!(&mut dock, < up(40.0, 13.0));
 
@@ -501,10 +506,12 @@ fn a_tab_dragged_along_its_strip_changes_the_order() {
 fn the_corner_where_two_gaps_meet_moves_both() {
     let mut dock = three();
 
-    eval!(&mut dock, < down(401.0, 300.0));
+    // Dead on the crossing, where the column's gap ends and the row's gap
+    // runs past: one of them has to be reached from its end.
+    eval!(&mut dock, < down(400.0, 300.0));
     eval!(&mut dock, < moved(450.0, 350.0));
 
-    near(rect(&dock, A).w, 448.5, "the row's gap went with it");
+    near(rect(&dock, A).w, 449.5, "the row's gap went with it");
     near(rect(&dock, B).h, 349.5, "and so did the column's");
 
     eval!(&mut dock, < cancelled());

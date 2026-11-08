@@ -30,9 +30,6 @@ pub struct Metrics {
     pub threshold: f32,
     /// How small a window may be made.
     pub min: Size,
-    /// The largest the thing under the cursor is drawn. A ghost the size of
-    /// the window would cover what you are aiming at.
-    pub ghost: Size,
 }
 
 impl Default for Metrics {
@@ -46,7 +43,6 @@ impl Default for Metrics {
             band: 0.1,
             threshold: 4.0,
             min: Size::new(120.0, 80.0),
-            ghost: Size::new(320.0, 180.0),
         }
     }
 }

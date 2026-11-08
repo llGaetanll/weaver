@@ -49,14 +49,18 @@ enum Gesture {
 
     Moving {
         window: WindowId,
-        /// Where in the ghost the cursor is holding it.
+        /// Where in the tab the cursor took hold of it, and how big that tab
+        /// was. What is carried is the tab: it is what was picked up, and it
+        /// is the shape of the hole it will go back into.
         grab: Point,
+        size: Size,
         at: Point,
     },
 
-    /// One gap held, or the two that meet at an intersection — never two
-    /// along the same axis, since a pointer is in one place.
-    Resizing { first: Held, second: Option<Held> },
+    /// Every gap under the pointer: one along a line, and at a crossing the
+    /// two or three that meet there. Never empty — a gesture with nothing
+    /// held is not started.
+    Resizing { held: Vec<Held> },
 }
 
 /// A gap being dragged, and what it divided when the drag started.
@@ -171,22 +175,20 @@ impl StateDock {
             return;
         };
 
-        // Both gaps that meet at an intersection are taken hold of, so that
-        // the corner where four windows meet moves as one thing.
+        // Every gap near the pointer is taken hold of, so the corner where
+        // four windows meet moves as one thing. A gap is grown in both
+        // directions to find it: a crossing is where one gap's end meets
+        // another's side, and the ends are exactly what thickening leaves
+        // alone.
         let held: Vec<Held> = solved
             .gaps
             .iter()
-            .filter(|gap| gap.rect.thickened(gap.axis, self.metrics.grab).contains(at))
+            .filter(|gap| gap.rect.grown(self.metrics.grab).contains(at))
             .filter_map(|gap| self.hold(gap, at))
             .collect();
 
-        if let Some(first) = held.first() {
-            let second = held.iter().find(|held| held.axis != first.axis);
-
-            self.gesture = Some(Gesture::Resizing {
-                first: first.clone(),
-                second: second.cloned(),
-            });
+        if !held.is_empty() {
+            self.gesture = Some(Gesture::Resizing { held });
 
             return;
         }
@@ -235,7 +237,9 @@ impl StateDock {
 
     /// Which tab a point is on, and where that tab is.
     fn tab_at(&self, pane: &Pane, at: Point) -> Option<(WindowId, Rect)> {
-        tabs(pane, &self.metrics).find(|(_, rect)| rect.contains(at))
+        tabs(&pane.windows, pane.rect, &self.metrics)
+            .into_iter()
+            .find(|(_, rect)| rect.contains(at))
     }
 
     fn drag(&mut self, at: Point) {
@@ -245,29 +249,35 @@ impl StateDock {
                     return;
                 }
 
-                let Some(rect) = self.solved().and_then(|solved| solved.rect(window)) else {
+                let Some(tab) = self.tab(window) else {
                     return;
                 };
 
                 self.gesture = Some(Gesture::Moving {
                     window,
-                    grab: self.grab(origin, rect),
+                    grab: Point::new(origin.x - tab.x, origin.y - tab.y),
+                    size: tab.size(),
                     at,
                 });
             }
 
-            Some(Gesture::Moving { window, grab, .. }) => {
-                self.gesture = Some(Gesture::Moving { window, grab, at });
+            Some(Gesture::Moving {
+                window, grab, size, ..
+            }) => {
+                self.gesture = Some(Gesture::Moving {
+                    window,
+                    grab,
+                    size,
+                    at,
+                });
             }
 
-            Some(Gesture::Resizing { first, second }) => {
+            Some(Gesture::Resizing { held }) => {
                 // A window under the pointer keeps up with it.
                 self.settling = false;
 
-                self.resize(&first, at);
-
-                if let Some(second) = second {
-                    self.resize(&second, at);
+                for held in &held {
+                    self.resize(held, at);
                 }
             }
 
@@ -289,11 +299,9 @@ impl StateDock {
     /// Nothing decided. A resize is put back where it was, since half a drag
     /// is not a size anybody asked for.
     fn cancel(&mut self) {
-        if let Some(Gesture::Resizing { first, second }) = self.gesture.clone() {
-            self.write(&first.group, first.index, first.before.0, first.before.1);
-
-            if let Some(second) = second {
-                self.write(&second.group, second.index, second.before.0, second.before.1);
+        if let Some(Gesture::Resizing { held }) = self.gesture.clone() {
+            for held in &held {
+                self.write(&held.group, held.index, held.before.0, held.before.1);
             }
 
             self.settling = true;
@@ -472,58 +480,67 @@ impl StateDock {
         (zones, slot)
     }
 
-    /// Where in a slot's order a window carried over its tabs would land: on
-    /// one side or the other of the tab under the pointer, drawn as the seam
-    /// it would be inserted at.
+    /// Where in a slot's order a window carried over its tabs would land.
+    ///
+    /// The place is worked out from where the pointer is and nothing else —
+    /// which tab is under it would do just as well until the tabs move to
+    /// make room, and then the two would chase each other round. Every tab in
+    /// a slot is the same width, so the pointer being a third of the way
+    /// along means the third place, whatever happens to be drawn there.
     fn ordering(&self, pane: &Pane, at: Point, moving: WindowId) -> (Vec<Zone>, Option<Slot>) {
-        let mut found = None;
+        let others: Vec<WindowId> = pane
+            .windows
+            .iter()
+            .copied()
+            .filter(|held| *held != moving)
+            .collect();
 
-        for (window, tab) in tabs(pane, &self.metrics) {
-            let before = at.x < tab.x + tab.w / 2.0;
-
-            found = Some((window, tab, before));
-
-            if before || at.x < tab.x + tab.w {
-                break;
-            }
-        }
-
-        let Some((window, tab, before)) = found else {
+        let Some(first) = others.first().copied() else {
             return (Vec::new(), None);
         };
 
-        if window == moving {
-            return (Vec::new(), None);
+        let width = (pane.rect.w / (others.len() + 1) as f32).min(self.metrics.tab_width);
+        let place = ((at.x - pane.rect.x) / width.max(1.0)).floor().max(0.0) as usize;
+
+        let slot = match place.min(others.len()) {
+            0 => Slot::With {
+                window: first,
+                before: true,
+            },
+            place => Slot::With {
+                window: others[place - 1],
+                before: false,
+            },
+        };
+
+        // Nothing is drawn: the tabs move apart to leave the hole it would go
+        // in, and the tab under the cursor is the other half of saying so.
+        (Vec::new(), Some(slot))
+    }
+
+    /// The order a slot's tabs are drawn in, which is the order they would be
+    /// in if the window being carried were let go of now. It leaves the slot
+    /// it came from and takes its place in the one it is over, so the hole is
+    /// always where the drop would land.
+    fn order(&self, pane: &Pane, moving: Option<WindowId>, aim: Option<Slot>) -> Vec<WindowId> {
+        let Some(moving) = moving else {
+            return pane.windows.clone();
+        };
+
+        let mut order: Vec<WindowId> = pane
+            .windows
+            .iter()
+            .copied()
+            .filter(|held| *held != moving)
+            .collect();
+
+        if let Some(Slot::With { window, before }) = aim
+            && let Some(at) = order.iter().position(|held| *held == window)
+        {
+            order.insert(if before { at } else { at + 1 }, moving);
         }
 
-        // One tab is a title bar rather than an order, so a drop on it joins
-        // the stack instead of placing itself in one.
-        if pane.windows.len() == 1 {
-            let strip = Rect::new(pane.rect.x, pane.rect.y, pane.rect.w, self.metrics.tab);
-
-            return (
-                vec![Zone::rect(strip, true)],
-                Some(Slot::With {
-                    window,
-                    before: false,
-                }),
-            );
-        }
-
-        let seam = Rect::new(
-            if before { tab.x } else { tab.x + tab.w },
-            tab.y,
-            self.metrics.gap,
-            tab.h,
-        );
-
-        (
-            vec![Zone::rect(
-                seam.thickened(Axis::Row, self.metrics.grab),
-                true,
-            )],
-            Some(Slot::With { window, before }),
-        )
+        order
     }
 
     pub fn frame(&self) -> Frame {
@@ -536,12 +553,32 @@ impl StateDock {
 
         let moving = self.moving();
 
+        let (ghost, regions, aim) = match &self.gesture {
+            Some(Gesture::Moving {
+                window,
+                grab,
+                size,
+                at,
+            }) => {
+                let (regions, aim) = self.targets(*window, *at);
+
+                (
+                    Some(Rect::new(at.x - grab.x, at.y - grab.y, size.w, size.h)),
+                    regions,
+                    aim,
+                )
+            }
+
+            _ => (None, Vec::new(), None),
+        };
+
         let panes = solved
             .panes
             .iter()
             .map(|pane| PaneFrame {
                 rect: pane.rect,
-                tabs: tabs(pane, &self.metrics)
+                tabs: tabs(&self.order(pane, moving, aim), pane.rect, &self.metrics)
+                    .into_iter()
                     .map(|(window, rect)| TabFrame {
                         window,
                         title: self.title(window),
@@ -575,17 +612,6 @@ impl StateDock {
             })
             .collect();
 
-        let (ghost, regions) = match &self.gesture {
-            Some(Gesture::Moving { window, grab, at }) => {
-                let size = self.ghost(*window, &solved);
-                let ghost = Rect::new(at.x - grab.x, at.y - grab.y, size.w, size.h);
-
-                (Some(ghost), self.targets(*window, *at).0)
-            }
-
-            _ => (None, Vec::new()),
-        };
-
         Frame {
             panes,
             windows,
@@ -600,12 +626,13 @@ impl StateDock {
     fn cursor(&self) -> Cursor {
         match &self.gesture {
             Some(Gesture::Moving { .. }) => Cursor::Grabbing,
-            Some(Gesture::Resizing {
-                second: Some(_), ..
-            }) => Cursor::BothResize,
-            Some(Gesture::Resizing { first, .. }) => match first.axis {
-                Axis::Row => Cursor::ColResize,
-                Axis::Col => Cursor::RowResize,
+            Some(Gesture::Resizing { held }) => match held.first().map(|held| held.axis) {
+                _ if held.iter().any(|one| Some(one.axis) != held.first().map(|f| f.axis)) => {
+                    Cursor::BothResize
+                }
+                Some(Axis::Row) => Cursor::ColResize,
+                Some(Axis::Col) => Cursor::RowResize,
+                None => Cursor::Default,
             },
             _ => Cursor::Default,
         }
@@ -646,31 +673,15 @@ impl StateDock {
         )
     }
 
-    /// Where the cursor sits inside the ghost: the same place it had on the
-    /// window, in proportion, so a window picked up by its tab is still held
-    /// by its tab.
-    fn grab(&self, at: Point, rect: Rect) -> Point {
-        let size = self.capped(rect.size());
+    /// Where a window's tab is right now.
+    fn tab(&self, window: WindowId) -> Option<Rect> {
+        let solved = self.solved()?;
+        let pane = solved.pane(window)?;
 
-        Point::new(
-            (at.x - rect.x) * size.w / rect.w.max(1.0),
-            (at.y - rect.y) * size.h / rect.h.max(1.0),
-        )
-    }
-
-    fn ghost(&self, window: WindowId, solved: &Solved) -> Size {
-        match solved.rect(window) {
-            Some(rect) => self.capped(rect.size()),
-            None => self.metrics.ghost,
-        }
-    }
-
-    fn capped(&self, size: Size) -> Size {
-        let scale = (self.metrics.ghost.w / size.w)
-            .min(self.metrics.ghost.h / size.h)
-            .min(1.0);
-
-        Size::new(size.w * scale, size.h * scale)
+        tabs(&pane.windows, pane.rect, &self.metrics)
+            .into_iter()
+            .find(|(held, _)| *held == window)
+            .map(|(_, rect)| rect)
     }
 
     fn group(&self, path: &Path) -> Option<&Node> {
@@ -838,22 +849,20 @@ fn strip(area: Rect, side: Side, edge: f32) -> Rect {
     }
 }
 
-/// Where a slot's tabs are. They divide the top of it, up to a width past
-/// which a tab is wider than its name needs.
-fn tabs(pane: &Pane, metrics: &Metrics) -> impl Iterator<Item = (WindowId, Rect)> {
-    let count = pane.windows.len().max(1) as f32;
-    let width = (pane.rect.w / count).min(metrics.tab_width);
-    let rect = pane.rect;
-    let tab = metrics.tab;
+/// Where a slot's tabs are, given the order they are in. They divide the top
+/// of it, up to a width past which a tab is wider than its name needs.
+fn tabs(windows: &[WindowId], rect: Rect, metrics: &Metrics) -> Vec<(WindowId, Rect)> {
+    let count = windows.len().max(1) as f32;
+    let width = (rect.w / count).min(metrics.tab_width);
 
-    pane.windows
-        .clone()
-        .into_iter()
+    windows
+        .iter()
         .enumerate()
-        .map(move |(i, window)| {
+        .map(|(i, window)| {
             (
-                window,
-                Rect::new(rect.x + width * i as f32, rect.y, width, tab),
+                *window,
+                Rect::new(rect.x + width * i as f32, rect.y, width, metrics.tab),
             )
         })
+        .collect()
 }

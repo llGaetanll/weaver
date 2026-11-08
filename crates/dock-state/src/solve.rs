@@ -53,10 +53,6 @@ impl Solved {
         self.panes.iter().find(|pane| pane.holds(window))
     }
 
-    pub fn rect(&self, window: WindowId) -> Option<Rect> {
-        self.pane(window).map(|pane| pane.rect)
-    }
-
     /// The slot under a point, if any.
     pub fn at(&self, p: crate::geometry::Point) -> Option<&Pane> {
         self.panes.iter().find(|pane| pane.rect.contains(p))
