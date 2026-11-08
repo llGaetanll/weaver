@@ -4,4 +4,4 @@ version.workspace = true
 edition.workspace = true
 
 [dev-dependencies]
-util-eval = { workspace = true }
+eval = { workspace = true }

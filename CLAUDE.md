@@ -98,28 +98,27 @@ touching the machine; what follows is only what is specific to this library.
 
 ## Tests
 
-**Harness tests live in the crate's `tests/` directory, never beside the
-machine.** A test is a slice of events in and a list of action patterns out,
-driven by `eval!`. Unit tests — arithmetic, a wedge, a solve — stay inline.
+**Read `references/testing.md` in the `state-machines` skill before writing
+one.** What follows is only what is specific here.
 
-## Building
+Every harness test lives in `crates/dock-state/tests/`, split by the flow it
+is about — `moving`, `resizing`, `tabs`, `opening`, `settling` — each opening
+with that flow's whole story and following it with the corners of it. The
+dock a test starts from and the questions it asks of a finished frame are in
+`tests/fixture/`; **nothing in there builds an event**, because an event
+belongs on the `<` line that sends it, written out in full where it can be
+read.
 
-Every cargo command covers the whole workspace. Never narrow one with `-p`:
-cargo resolves features from the crates it was asked to build, so `-p` builds a
-second copy of half the tree.
+**One `eval!` per test.** The dock has no actions yet, so every batch is
+silent and a test is one block of `<` lines followed by plain assertions on
+the frame. A claim that needs to be made part way through a gesture is its
+own test that stops there — what happens after the drop is the next test's
+claim.
 
-```
-cargo clippy --workspace --all-targets
-cargo test --workspace
-```
-
-The browser build is the exception, and only because cargo cannot build a
-workspace for two targets at once: trunk builds `web-main` alone, for
-`wasm32-unknown-unknown`.
-
-```
-cd crates/web-main && trunk serve      # http://127.0.0.1:7150
-```
+A coordinate in a test is a point on a measured layout, so the numbers are
+written out rather than computed: 800 by 600 with a 1px gap makes two windows
+399.5 wide, and when a metric changes those numbers change with it. That is
+the diff doing its job.
 
 ## Watching it move
 

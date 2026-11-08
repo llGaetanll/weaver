@@ -9,7 +9,10 @@ edition = "2024"
 [workspace.dependencies]
 dock-state = { path = "crates/dock-state" }
 dock-web = { path = "crates/dock-web" }
-util-eval = { path = "crates/util-eval" }
+# The one eval!, kept next door. This becomes
+# `{ git = "https://github.com/llGaetanll/eval" }` the day it is published,
+# and until then a clone of this repo alone cannot run its tests.
+eval = { path = "../eval" }
 
 leptos = { version = "0.8", features = ["csr"] }
 serde = { version = "1", features = ["derive"] }
