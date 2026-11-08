@@ -111,15 +111,20 @@ body {
 .tab-icon:empty { display: none; }
 .tab-icon > svg { display: block; }
 
-/* The showing tab covers the line under it with the window's own ground, and
-   carries it up its sides and across its top instead. */
+/* A tab that is not showing sits on the ground a gap shows, which is where
+   anything not in front belongs. */
+.tab:not(.is-showing) { background: var(--sunken); }
+
+/* The showing tab covers the line under it with the window's own ground and
+   carries it up its sides instead. It has no line along its top: the slot
+   above it already drew one there, and two lines a pixel apart is a seam
+   rather than an edge. */
 .tab.is-showing {
   color: var(--text-muted);
   background: var(--panel);
   box-shadow:
     inset 1px 0 0 var(--border),
-    inset -1px 0 0 var(--border),
-    inset 0 1px 0 var(--border);
+    inset -1px 0 0 var(--border);
 }
 
 .tab.is-showing .tab-icon { color: var(--text-muted); }
