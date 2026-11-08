@@ -5,7 +5,7 @@ use crate::geometry::Axis;
 use crate::geometry::Rect;
 use crate::tree::WindowId;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct WindowFrame {
     pub window: WindowId,
     pub title: String,
@@ -16,21 +16,22 @@ pub struct WindowFrame {
     pub lifted: bool,
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub struct GapFrame {
     pub rect: Rect,
     pub axis: Axis,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub enum Cursor {
+    #[default]
     Default,
     ColResize,
     RowResize,
     Grabbing,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct Frame {
     pub windows: Vec<WindowFrame>,
     pub gaps: Vec<GapFrame>,

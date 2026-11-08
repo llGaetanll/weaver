@@ -356,13 +356,7 @@ impl StateDock {
 
     pub fn frame(&self) -> Frame {
         let Some(solved) = self.solved() else {
-            return Frame {
-                windows: Vec::new(),
-                gaps: Vec::new(),
-                ghost: None,
-                preview: None,
-                cursor: Cursor::Default,
-            };
+            return Frame::default();
         };
 
         let moving = self.moving();
