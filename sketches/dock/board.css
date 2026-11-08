@@ -72,3 +72,11 @@ h1 { margin: 0; font-size: 24px; font-weight: 700; letter-spacing: -.03em; }
    them over the whole dock and clips them in pixels; a picture has no pixels
    to hand, so it puts them over one window and clips them in percentages. */
 .regions-at { position: absolute; }
+
+/* A slot, laid out by the board rather than by the machine. The library puts
+   a slot's tabs where it has worked out they go; a picture has no machine, so
+   it lets the browser stack them in a row. */
+.pane.sketch { position: relative; display: grid; grid-template-rows: var(--tab) 1fr; }
+.pane.sketch > .tab { width: 160px; }
+.ghost.sketch { display: grid; grid-template-rows: var(--tab) 1fr; }
+.ghost.sketch > .tab { width: 100%; }
