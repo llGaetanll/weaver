@@ -562,11 +562,7 @@ impl StateDock {
             }) => {
                 let (regions, aim) = self.targets(*window, *at);
 
-                (
-                    Some(Rect::new(at.x - grab.x, at.y - grab.y, size.w, size.h)),
-                    regions,
-                    aim,
-                )
+                (Some(self.carried(*at, *grab, *size, &solved)), regions, aim)
             }
 
             _ => (None, Vec::new(), None),
@@ -671,6 +667,29 @@ impl StateDock {
             rect.w,
             (rect.h - self.metrics.tab).max(0.0),
         )
+    }
+
+    /// Where the tab under the cursor is drawn.
+    ///
+    /// Over a slot's tabs it sticks to the strip: somebody putting a tab in
+    /// order is not also aiming it a few pixels up or down, and a tab that
+    /// wanders out of line while being put in line is a tab fighting what it
+    /// is being asked to do. Anywhere else it follows the pointer exactly,
+    /// which is what carrying one out of a slot needs.
+    fn carried(&self, at: Point, grab: Point, size: Size, solved: &Solved) -> Rect {
+        let loose = Rect::new(at.x - grab.x, at.y - grab.y, size.w, size.h);
+
+        let Some(pane) = solved.at(at) else {
+            return loose;
+        };
+
+        if at.y >= pane.rect.y + self.metrics.tab {
+            return loose;
+        }
+
+        let last = (pane.rect.right() - size.w).max(pane.rect.x);
+
+        Rect::new(loose.x.clamp(pane.rect.x, last), pane.rect.y, size.w, size.h)
     }
 
     /// Where a window's tab is right now.

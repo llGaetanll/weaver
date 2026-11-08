@@ -35,7 +35,7 @@ body {
    whatever the pointer happens to be over. */
 .dock.is-col-resize, .dock.is-col-resize * { cursor: col-resize; }
 .dock.is-row-resize, .dock.is-row-resize * { cursor: row-resize; }
-.dock.is-both-resize, .dock.is-both-resize * { cursor: move; }
+.dock.is-both-resize, .dock.is-both-resize * { cursor: all-scroll; }
 .dock.is-grabbing, .dock.is-grabbing * { cursor: grabbing; }
 
 /* A group: children along one axis, with a gap between each pair. The axis
