@@ -44,15 +44,29 @@ body {
 
 /* --- The gap ------------------------------------------------------------ */
 
-/* The gap is the resize control. Five pixels of the ground showing through,
-   a hairline down the middle, and the cursor is the only affordance it
-   needs. */
-.gap { position: relative; background: var(--sunken); }
+/* The gap is the resize control. Five pixels, with a hairline down the middle
+   and the windows' own ground either side of it, so that what it looks like
+   is an ordinary line between two windows and what it is is something you can
+   put a pointer on.
+
+   Under the pointer the line thickens rather than darkening: it is a thing to
+   take hold of, not a thing that is on. */
+.gap { position: relative; background: var(--panel); }
 .gap-v { width: var(--gap); cursor: col-resize; }
 .gap-h { height: var(--gap); cursor: row-resize; }
-.gap-v::after { content: ""; position: absolute; inset: 0 2px; background: var(--border); }
-.gap-h::after { content: ""; position: absolute; inset: 2px 0; background: var(--border); }
-.gap:hover::after, .gap.held::after { background: var(--accent); }
+
+.gap::after {
+  content: "";
+  position: absolute;
+  background: var(--border);
+  transition: inset var(--fade) ease, background var(--fade) ease;
+}
+
+.gap-v::after { inset: 0 2px; }
+.gap-h::after { inset: 2px 0; }
+
+.gap-v:hover::after { inset: 0 1px; background: var(--border-firm); }
+.gap-h:hover::after { inset: 1px 0; background: var(--border-firm); }
 
 /* --- A slot ------------------------------------------------------------- */
 
@@ -72,6 +86,11 @@ body {
   height: var(--tab);
   border-bottom: 1px solid var(--border);
 }
+
+/* Once there is more than one tab, what is left of the strip beside them is
+   ground rather than panel: the window is behind its tabs, not beside
+   them. */
+.pane-strip.is-stacked { background: var(--sunken); }
 
 /* A tab: whatever the host draws for the window, and its name. The whole of
    it is the handle, so there is nothing to aim at inside one — dragging a tab
@@ -132,6 +151,15 @@ body {
 }
 
 .tab.is-showing .tab-icon { color: var(--text-muted); }
+/* A window alone in its slot has a title bar rather than a tab. It is still
+   the same region and still the handle; there is just nothing for a box to
+   divide it from, and a line drawn around it would be a line around the whole
+   header. */
+.tab.is-only {
+  background: transparent;
+  box-shadow: none;
+}
+
 .tab.is-lifted { opacity: .4; }
 
 /* What the host put in a window. */

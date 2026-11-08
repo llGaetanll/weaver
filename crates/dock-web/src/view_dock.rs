@@ -128,9 +128,14 @@ fn PaneView(dock: Dock, index: usize, icon: Option<Callback<WindowId, AnyView>>)
     let pane = move || dock.frame().panes.get(index).cloned();
     let tabs = Memo::new(move |_| pane().map(|pane| pane.tabs.len()).unwrap_or_default());
 
+    let strip = move || match tabs.get() {
+        0 | 1 => "pane-strip",
+        _ => "pane-strip is-stacked",
+    };
+
     view! {
         <div class="pane" style=move || pane().map(|pane| place(pane.rect)).unwrap_or_default()>
-            <div class="pane-strip"></div>
+            <div class=strip></div>
             <For each=move || 0..tabs.get() key=|tab| *tab let:tab>
                 <Tab dock=dock pane=index tab=tab icon=icon />
             </For>
@@ -154,10 +159,28 @@ fn Tab(
         Some((pane.rect, pane.tabs.get(tab)?.clone()))
     };
 
-    let class = move || match drawn() {
-        Some((_, tab)) if tab.lifted => "tab is-lifted",
-        Some((_, tab)) if tab.showing => "tab is-showing",
-        _ => "tab",
+    let only = move || dock.frame().panes.get(pane).is_some_and(|pane| pane.tabs.len() == 1);
+
+    let class = move || {
+        let Some((_, tab)) = drawn() else {
+            return String::new();
+        };
+
+        let mut class = String::from("tab");
+
+        if tab.showing {
+            class.push_str(" is-showing");
+        }
+
+        if tab.lifted {
+            class.push_str(" is-lifted");
+        }
+
+        if only() {
+            class.push_str(" is-only");
+        }
+
+        class
     };
 
     // A tab is placed inside its own slot, so its rectangle is given from the
