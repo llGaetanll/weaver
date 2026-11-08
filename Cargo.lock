@@ -3,6 +3,13 @@
 version = 4
 
 [[package]]
+name = "dock-state"
+version = "0.1.0"
+dependencies = [
+ "util-eval",
+]
+
+[[package]]
 name = "proc-macro2"
 version = "1.0.107"
 source = "registry+https://github.com/rust-lang/crates.io-index"
