@@ -50,7 +50,6 @@ One crate per concern, named `<group>-<thing>`. Dependencies only ever point
 down this list.
 
 ```
-util-eval    the eval! macro every state machine test is written through
 dock-state   the dock: the tree, the solve, the gestures. No IO, no browser
 dock-web     the dock in a browser: a frame loop, one pointer listener
 web-main     a page with four windows in it, to drag around

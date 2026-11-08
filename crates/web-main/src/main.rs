@@ -114,7 +114,6 @@ fn files() -> impl IntoView {
         (2, "runtime_web.rs", false, false),
         (2, "view_dock.rs", false, false),
         (2, "dock.css", false, false),
-        (1, "util-eval", true, false),
         (1, "web-main", true, false),
         (0, "sketches", true, false),
         (1, "design", true, false),

@@ -110,7 +110,6 @@ things. Hit testing is the machine's too — which tab or line a press landed
 on is a question about rectangles, and the rectangles are its.
 
 ```
-util-eval    the eval! macro every state machine test is written through
 dock-state   the dock: the tree, the solve, the gestures. No IO, no browser
 dock-web     the dock in a browser: a frame loop, one pointer listener
 web-main     the page in the clip above
@@ -126,6 +125,13 @@ a different screen, and GPUI is the one intended for it.
 cargo test --workspace
 cd crates/web-main && trunk serve      # http://127.0.0.1:7150
 ```
+
+The tests are written through [`eval!`][eval], the macro every state machine
+here is tested with: a slice of events in, the actions they must produce out.
+It lives next door rather than in this repo, so a clone of this one alone
+cannot run them yet.
+
+[eval]: https://github.com/llGaetanll/eval
 
 `sketches/dock/index.html` draws every state the dock can be in, each with
 the argument for it and with what has not been decided marked as such. It is
