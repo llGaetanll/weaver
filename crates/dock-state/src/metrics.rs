@@ -6,8 +6,12 @@ use crate::geometry::Size;
 
 #[derive(Clone, Copy, Debug)]
 pub struct Metrics {
-    /// A window's title bar.
+    /// A window's title bar, which is also the height of a tab.
     pub tab: f32,
+    /// The widest a tab is drawn. Past it a tab is wider than the name in it
+    /// needs, so the rest of the strip is left empty rather than one tab
+    /// being stretched across a whole slot.
+    pub tab_width: f32,
     /// The gap between two windows, which is the resize control.
     pub gap: f32,
     /// How far from the left of a title bar the grip reaches.
@@ -34,6 +38,7 @@ impl Default for Metrics {
     fn default() -> Self {
         Self {
             tab: 27.0,
+            tab_width: 160.0,
             gap: 5.0,
             grip: 24.0,
             edge: 16.0,

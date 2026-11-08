@@ -7,6 +7,8 @@ use crate::event_pointer::EventPointer;
 use crate::frame::Cursor;
 use crate::frame::Frame;
 use crate::frame::GapFrame;
+use crate::frame::PaneFrame;
+use crate::frame::TabFrame;
 use crate::frame::WindowFrame;
 use crate::frame::Zone;
 use crate::geometry::Axis;
@@ -15,6 +17,7 @@ use crate::geometry::Rect;
 use crate::geometry::Side;
 use crate::geometry::Size;
 use crate::metrics::Metrics;
+use crate::solve::Pane;
 use crate::solve::Solved;
 use crate::solve::solve;
 use crate::tree::Node;
@@ -181,11 +184,41 @@ impl StateDock {
             return;
         }
 
-        if let Some((window, _)) = solved.at(at)
-            && self.on_grip(at, window, &solved)
-        {
-            self.gesture = Some(Gesture::Pressed { window, origin: at });
+        let Some(pane) = solved.at(at) else {
+            return;
+        };
+
+        let Some((tab, rect)) = self.tab_at(pane, at) else {
+            return;
+        };
+
+        // The grip is the handle; the rest of a tab picks it. Keeping them
+        // apart is what lets a stack be leafed through without anything being
+        // picked up by accident.
+        if Rect::new(rect.x, rect.y, self.metrics.grip, rect.h).contains(at) {
+            self.gesture = Some(Gesture::Pressed {
+                window: tab,
+                origin: at,
+            });
+
+            return;
         }
+
+        self.show(tab);
+    }
+
+    /// Bring a window to the front of its stack.
+    fn show(&mut self, window: WindowId) {
+        if let Some(root) = self.root.as_mut()
+            && let Some(stack) = root.stack_mut(window)
+        {
+            stack.show(window);
+        }
+    }
+
+    /// Which tab a point is on, and where that tab is.
+    fn tab_at(&self, pane: &Pane, at: Point) -> Option<(WindowId, Rect)> {
+        tabs(pane, &self.metrics).find(|(_, rect)| rect.contains(at))
     }
 
     fn drag(&mut self, at: Point) {
@@ -357,7 +390,7 @@ impl StateDock {
             .find(|gap| gap.rect.grown(edge / 2.0).contains(at));
 
         if let Some(gap) = gap {
-            let Some(before) = self.leaf(&gap.group, gap.index) else {
+            let Some(before) = self.leaf(&gap.group, gap.index, moving) else {
                 return nothing;
             };
 
@@ -381,20 +414,32 @@ impl StateDock {
             );
         }
 
-        let Some((window, rect)) = solved.at(at) else {
+        let Some(pane) = solved.at(at) else {
             return nothing;
         };
 
-        // Dropping a window beside itself is not a move, so its own regions
-        // are not on offer.
-        if window == moving {
+        // A window alone in its own slot has nowhere to go in it. One of
+        // several does: leaving the stack to take a side of it is a move.
+        let Some(anchor) = pane.windows.iter().copied().find(|held| *held != moving) else {
             return nothing;
-        }
+        };
 
+        let rect = pane.rect;
         let chosen = band(rect, at, self.metrics.band);
-        let zones = regions(rect, self.metrics.band, chosen);
+        let zones = regions(rect, self.metrics.band, chosen, !pane.holds(moving));
 
-        (zones, chosen.map(|side| Slot::Beside { window, side }))
+        let slot = match chosen {
+            Some(side) => Some(Slot::Beside {
+                window: anchor,
+                side,
+            }),
+            // The middle is the stack. Dropping a window into the stack it is
+            // already in would be nothing happening, so it is not offered.
+            None if !pane.holds(moving) => Some(Slot::With { window: anchor }),
+            None => None,
+        };
+
+        (zones, slot)
     }
 
     pub fn frame(&self) -> Frame {
@@ -407,14 +452,34 @@ impl StateDock {
 
         let moving = self.moving();
 
-        let windows = solved
-            .windows
+        let panes = solved
+            .panes
             .iter()
-            .map(|(id, rect)| WindowFrame {
-                window: *id,
-                title: self.title(*id),
-                rect: *rect,
-                lifted: moving == Some(*id),
+            .map(|pane| PaneFrame {
+                rect: pane.rect,
+                tabs: tabs(pane, &self.metrics)
+                    .map(|(window, rect)| TabFrame {
+                        window,
+                        title: self.title(window),
+                        rect,
+                        grip: Rect::new(rect.x, rect.y, self.metrics.grip, rect.h),
+                        showing: window == pane.showing,
+                        lifted: moving == Some(window),
+                    })
+                    .collect(),
+            })
+            .collect();
+
+        let windows = solved
+            .panes
+            .iter()
+            .flat_map(|pane| {
+                pane.windows.iter().map(|window| WindowFrame {
+                    window: *window,
+                    rect: self.body(pane.rect),
+                    showing: *window == pane.showing,
+                    lifted: moving == Some(*window),
+                })
             })
             .collect();
 
@@ -439,6 +504,7 @@ impl StateDock {
         };
 
         Frame {
+            panes,
             windows,
             gaps,
             ghost,
@@ -485,15 +551,14 @@ impl StateDock {
             .unwrap_or_default()
     }
 
-    /// Is a point on the grip, which is the left of a title bar?
-    fn on_grip(&self, at: Point, window: WindowId, solved: &Solved) -> bool {
-        let Some(rect) = solved.rect(window) else {
-            return false;
-        };
-
-        let grip = Rect::new(rect.x, rect.y, self.metrics.grip, self.metrics.tab);
-
-        grip.contains(at)
+    /// What is left of a slot under its tabs.
+    fn body(&self, rect: Rect) -> Rect {
+        Rect::new(
+            rect.x,
+            rect.y + self.metrics.tab,
+            rect.w,
+            (rect.h - self.metrics.tab).max(0.0),
+        )
     }
 
     /// Where the cursor sits inside the ghost: the same place it had on the
@@ -540,7 +605,7 @@ impl StateDock {
     fn axis(&self, path: &Path) -> Option<Axis> {
         match self.group(path)? {
             Node::Group { axis, .. } => Some(*axis),
-            Node::Window(_) => None,
+            Node::Pane(_) => None,
         }
     }
 
@@ -552,14 +617,15 @@ impl StateDock {
         Some((children.get(index)?.share, children.get(index + 1)?.share))
     }
 
-    /// The window a gap's left or upper side ends in, which is the neighbour
-    /// a drop on that gap lands beside.
-    fn leaf(&self, path: &Path, index: usize) -> Option<WindowId> {
+    /// A window in the pane a gap's left or upper side ends in, which is the
+    /// neighbour a drop on that gap lands beside. Never the window being
+    /// moved, since that one is about to be taken out of the tree.
+    fn leaf(&self, path: &Path, index: usize, moving: WindowId) -> Option<WindowId> {
         let Node::Group { children, .. } = self.group(path)? else {
             return None;
         };
 
-        Some(children.get(index)?.node.last())
+        children.get(index)?.node.last().other(moving)
     }
 
     fn write(&mut self, path: &Path, index: usize, a: Share, b: Share) {
@@ -623,7 +689,7 @@ fn band(rect: Rect, at: Point, band: f32) -> Option<Side> {
 /// Everything a window is divided into: the four bands and the middle, in a
 /// fixed order so that a region keeps its place in the list while the pointer
 /// moves between them.
-fn regions(rect: Rect, band: f32, chosen: Option<Side>) -> Vec<Zone> {
+fn regions(rect: Rect, band: f32, chosen: Option<Side>, stackable: bool) -> Vec<Zone> {
     let sides = [Side::Left, Side::Up, Side::Right, Side::Down];
 
     let mut zones: Vec<Zone> = sides
@@ -638,9 +704,9 @@ fn regions(rect: Rect, band: f32, chosen: Option<Side>) -> Vec<Zone> {
         rect.h * (1.0 - band * 2.0),
     );
 
-    // Never chosen: it is the room tabs will want, and until they have it
-    // being there means no drop.
-    zones.push(Zone::rect(middle, false));
+    // The middle is the stack: a window dropped there joins this one rather
+    // than taking a side of it.
+    zones.push(Zone::rect(middle, stackable && chosen.is_none()));
 
     zones
 }
@@ -692,4 +758,24 @@ fn strip(area: Rect, side: Side, edge: f32) -> Rect {
         Side::Up => Rect::new(area.x, area.y, area.w, edge),
         Side::Down => Rect::new(area.x, area.bottom() - edge, area.w, edge),
     }
+}
+
+/// Where a slot's tabs are. They divide the top of it, up to a width past
+/// which a tab is wider than its name needs.
+fn tabs(pane: &Pane, metrics: &Metrics) -> impl Iterator<Item = (WindowId, Rect)> {
+    let count = pane.windows.len().max(1) as f32;
+    let width = (pane.rect.w / count).min(metrics.tab_width);
+    let rect = pane.rect;
+    let tab = metrics.tab;
+
+    pane.windows
+        .clone()
+        .into_iter()
+        .enumerate()
+        .map(move |(i, window)| {
+            (
+                window,
+                Rect::new(rect.x + width * i as f32, rect.y, width, tab),
+            )
+        })
 }

@@ -31,6 +31,8 @@ pub use event_pointer::EventPointer;
 pub use frame::Cursor;
 pub use frame::Frame;
 pub use frame::GapFrame;
+pub use frame::PaneFrame;
+pub use frame::TabFrame;
 pub use frame::Zone;
 pub use state_dock::REGIONS;
 pub use frame::WindowFrame;

@@ -6,15 +6,42 @@ use crate::geometry::Point;
 use crate::geometry::Rect;
 use crate::tree::WindowId;
 
+/// One window's contents: where to draw them, and whether they are the ones
+/// showing in their slot.
+///
+/// There is one of these per window rather than per slot so that a window
+/// behind a tab keeps whatever the host has built in it. A hidden window is
+/// still here, with the rectangle it will have when its tab is picked.
 #[derive(Clone, Debug, PartialEq)]
 pub struct WindowFrame {
     pub window: WindowId,
-    pub title: String,
     pub rect: Rect,
+    pub showing: bool,
     /// Being moved. It stays where it is, dimmed: a dock that closed up the
     /// moment you picked something up would move the target out from under
     /// the cursor.
     pub lifted: bool,
+}
+
+/// One tab: the grip and the name of a window sharing a slot.
+#[derive(Clone, Debug, PartialEq)]
+pub struct TabFrame {
+    pub window: WindowId,
+    pub title: String,
+    pub rect: Rect,
+    /// The grip, which is the part of a tab a window is moved by. Everything
+    /// else in it picks the tab instead.
+    pub grip: Rect,
+    pub showing: bool,
+    pub lifted: bool,
+}
+
+/// One slot: the box a group of windows shares, and the tabs along the top of
+/// it. A slot with one window in it has one tab, which is the title bar.
+#[derive(Clone, Debug, PartialEq)]
+pub struct PaneFrame {
+    pub rect: Rect,
+    pub tabs: Vec<TabFrame>,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -62,6 +89,7 @@ pub enum Cursor {
 
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct Frame {
+    pub panes: Vec<PaneFrame>,
     pub windows: Vec<WindowFrame>,
     pub gaps: Vec<GapFrame>,
     /// The window under the cursor, drawn over everything. The only thing in

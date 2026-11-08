@@ -26,26 +26,40 @@ pub struct Gap {
     pub pair: (f32, f32),
 }
 
+/// One slot, solved: the windows sharing it, which of them is showing, and
+/// the rectangle they have.
+#[derive(Clone, Debug)]
+pub struct Pane {
+    pub windows: Vec<WindowId>,
+    pub showing: WindowId,
+    pub rect: Rect,
+}
+
+impl Pane {
+    pub fn holds(&self, window: WindowId) -> bool {
+        self.windows.contains(&window)
+    }
+}
+
 #[derive(Clone, Debug, Default)]
 pub struct Solved {
-    pub windows: Vec<(WindowId, Rect)>,
+    pub panes: Vec<Pane>,
     pub gaps: Vec<Gap>,
 }
 
 impl Solved {
-    pub fn rect(&self, window: WindowId) -> Option<Rect> {
-        self.windows
-            .iter()
-            .find(|(id, _)| *id == window)
-            .map(|(_, rect)| *rect)
+    /// The slot a window is in, showing or not.
+    pub fn pane(&self, window: WindowId) -> Option<&Pane> {
+        self.panes.iter().find(|pane| pane.holds(window))
     }
 
-    /// The window under a point, if any.
-    pub fn at(&self, p: crate::geometry::Point) -> Option<(WindowId, Rect)> {
-        self.windows
-            .iter()
-            .find(|(_, rect)| rect.contains(p))
-            .copied()
+    pub fn rect(&self, window: WindowId) -> Option<Rect> {
+        self.pane(window).map(|pane| pane.rect)
+    }
+
+    /// The slot under a point, if any.
+    pub fn at(&self, p: crate::geometry::Point) -> Option<&Pane> {
+        self.panes.iter().find(|pane| pane.rect.contains(p))
     }
 }
 
@@ -60,11 +74,15 @@ pub fn solve(root: &Node, area: Rect, metrics: &Metrics) -> Solved {
 
 fn walk(node: &Node, area: Rect, metrics: &Metrics, path: &mut Path, out: &mut Solved) {
     let Node::Group { axis, children } = node else {
-        let Node::Window(id) = node else {
-            unreachable!("a node is a window or a group");
+        let Node::Pane(stack) = node else {
+            unreachable!("a node is a pane or a group");
         };
 
-        out.windows.push((*id, area));
+        out.panes.push(Pane {
+            windows: stack.windows().to_vec(),
+            showing: stack.showing(),
+            rect: area,
+        });
 
         return;
     };

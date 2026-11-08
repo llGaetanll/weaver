@@ -92,13 +92,32 @@ fn cancelled() -> Event {
     Event::FromPointer(EventPointer::Cancelled)
 }
 
+/// The slot a window is in, tabs and all. What the window itself gets is
+/// this less the tabs, which is not what a test about layout is asking.
 fn rect(dock: &StateDock, window: WindowId) -> Rect {
+    dock.frame()
+        .panes
+        .iter()
+        .find(|pane| pane.tabs.iter().any(|tab| tab.window == window))
+        .map(|pane| pane.rect)
+        .expect("the window is in the dock")
+}
+
+/// The tabs of the slot a window is in, in the order they are drawn.
+fn tabs(dock: &StateDock, window: WindowId) -> Vec<WindowId> {
+    dock.frame()
+        .panes
+        .iter()
+        .find(|pane| pane.tabs.iter().any(|tab| tab.window == window))
+        .map(|pane| pane.tabs.iter().map(|tab| tab.window).collect())
+        .unwrap_or_default()
+}
+
+fn showing(dock: &StateDock, window: WindowId) -> bool {
     dock.frame()
         .windows
         .iter()
-        .find(|drawn| drawn.window == window)
-        .map(|drawn| drawn.rect)
-        .expect("the window is in the dock")
+        .any(|drawn| drawn.window == window && drawn.showing)
 }
 
 fn chosen(dock: &StateDock) -> Option<Zone> {
@@ -192,25 +211,78 @@ fn a_drop_lands_on_the_side_its_band_was_on() {
     near(rect(&dock, A).y, rect(&dock, B).y, "and its top");
 }
 
-/// The middle of a window is the room tabs will need. Until they have it,
-/// being there means no drop rather than the nearest one — which is also the
-/// only way to carry a window across the dock without proposing something at
-/// every step.
+/// The middle of a window is its stack: a window dropped there shares the
+/// slot rather than taking a side of it.
 #[test]
-fn the_middle_of_a_window_proposes_nothing() {
+fn the_middle_of_a_window_is_its_stack() {
     let mut dock = three();
 
     eval!(&mut dock, < down(10.0, 10.0));
     eval!(&mut dock, < moved(600.0, 150.0));
 
-    assert!(dock.frame().ghost.is_some(), "still being carried");
-    assert_eq!(dock.frame().regions.len(), 5, "the window is still a target");
-    assert!(chosen(&dock).is_none(), "but nothing in it is chosen");
+    assert_eq!(dock.frame().regions.len(), 5, "four bands and the middle");
+    assert!(chosen(&dock).is_some(), "and the middle is one of the answers");
 
     eval!(&mut dock, < up(600.0, 150.0));
 
-    near(rect(&dock, A).x, 0.0, "so letting go changed nothing");
-    near(rect(&dock, A).w, 397.5, "so letting go changed nothing");
+    assert_eq!(dock.frame().panes.len(), 2, "three windows in two slots");
+    assert_eq!(tabs(&dock, A), vec![B, A], "A joined B, behind it in the order");
+    assert!(showing(&dock, A), "and it is the one showing, since it was just put there");
+    assert!(!showing(&dock, B), "which means B is not");
+}
+
+/// A window alone in its slot has nothing to join and no side of itself to
+/// take, so carrying it over its own slot proposes nothing at all.
+#[test]
+fn a_window_over_its_own_slot_proposes_nothing() {
+    let mut dock = three();
+
+    eval!(&mut dock, < down(10.0, 10.0));
+    eval!(&mut dock, < moved(200.0, 300.0));
+
+    assert!(dock.frame().ghost.is_some(), "still being carried");
+    assert!(dock.frame().regions.is_empty(), "but its own slot is not a target");
+}
+
+/// A tab is picked by pressing it, and a window behind one keeps its place.
+#[test]
+fn pressing_a_tab_brings_its_window_forward() {
+    let mut dock = three();
+
+    eval!(&mut dock, < down(10.0, 10.0));
+    eval!(&mut dock, < moved(600.0, 150.0));
+    eval!(&mut dock, < up(600.0, 150.0));
+
+    assert!(showing(&dock, A), "A is in front");
+
+    // B's own tab is the first of the two, pressed past its grip so that this
+    // is a press and not a drag.
+    eval!(&mut dock, < down(80.0, 13.0));
+
+    assert!(showing(&dock, B), "and now B is");
+    assert_eq!(tabs(&dock, A), vec![B, A], "with neither of them having moved");
+}
+
+/// Leaving a stack is an ordinary move: the slot stays, holding what is left.
+#[test]
+fn a_window_can_be_taken_back_out_of_a_stack() {
+    let mut dock = three();
+
+    eval!(&mut dock, < down(10.0, 10.0));
+    eval!(&mut dock, < moved(600.0, 150.0));
+    eval!(&mut dock, < up(600.0, 150.0));
+
+    assert_eq!(dock.frame().panes.len(), 2);
+
+    // A's tab is the second of the two; drag it by its grip onto the top band
+    // of the slot below.
+    eval!(&mut dock, < down(168.0, 13.0));
+    eval!(&mut dock, < moved(400.0, 320.0));
+    eval!(&mut dock, < up(400.0, 320.0));
+
+    assert_eq!(dock.frame().panes.len(), 3, "three slots again");
+    assert_eq!(tabs(&dock, B), vec![B], "and B is alone in its own");
+    assert!(showing(&dock, A), "A is showing wherever it landed");
 }
 
 /// Dropping beside a window whose group already runs that way folds into the

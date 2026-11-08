@@ -22,6 +22,77 @@ pub enum Share {
     Fixed(f32),
 }
 
+/// The windows sharing one slot, one of them showing.
+///
+/// A slot holds a stack rather than a window because a dock that can only
+/// tile runs out of room: six windows on a laptop screen is six windows too
+/// narrow to use. The stack is the answer to "where does the next one go"
+/// when there is no room left to divide.
+#[derive(Clone, Debug)]
+pub struct Stack {
+    windows: Vec<WindowId>,
+    showing: usize,
+}
+
+impl Stack {
+    pub fn new(window: WindowId) -> Self {
+        Self {
+            windows: vec![window],
+            showing: 0,
+        }
+    }
+
+    pub fn windows(&self) -> &[WindowId] {
+        &self.windows
+    }
+
+    /// The one being drawn. A stack is never empty — it is taken out of the
+    /// tree when its last window leaves — so there is always one.
+    pub fn showing(&self) -> WindowId {
+        match self.windows.get(self.showing) {
+            Some(window) => *window,
+            None => unreachable!("a stack is never empty and always shows one"),
+        }
+    }
+
+    pub fn holds(&self, window: WindowId) -> bool {
+        self.windows.contains(&window)
+    }
+
+    /// A window in it that is not this one, which is what a drop needs to name
+    /// a pane it is landing beside.
+    pub fn other(&self, window: WindowId) -> Option<WindowId> {
+        self.windows.iter().copied().find(|held| *held != window)
+    }
+
+    pub fn show(&mut self, window: WindowId) {
+        if let Some(at) = self.windows.iter().position(|held| *held == window) {
+            self.showing = at;
+        }
+    }
+
+    /// Arriving in a stack means arriving in front: it was just dropped here,
+    /// so it is what the drop was for.
+    fn take(&mut self, window: WindowId) {
+        if self.holds(window) {
+            self.show(window);
+
+            return;
+        }
+
+        self.windows.push(window);
+        self.showing = self.windows.len() - 1;
+    }
+
+    /// Whether the stack is left empty, in which case its slot goes with it.
+    fn drop(&mut self, window: WindowId) -> bool {
+        self.windows.retain(|held| *held != window);
+        self.showing = self.showing.min(self.windows.len().saturating_sub(1));
+
+        self.windows.is_empty()
+    }
+}
+
 #[derive(Clone, Debug)]
 pub struct Child {
     pub share: Share,
@@ -30,7 +101,7 @@ pub struct Child {
 
 #[derive(Clone, Debug)]
 pub enum Node {
-    Window(WindowId),
+    Pane(Stack),
     Group { axis: Axis, children: Vec<Child> },
 }
 
@@ -40,23 +111,24 @@ pub type Path = Vec<usize>;
 
 /// Where a window being moved would land.
 ///
-/// Two of them, for the three targets the board draws: a window's edge and a
-/// gap are both *beside a window*, because a group nested in a group of the
+/// Three of them, for the four targets the board draws: a window's band and a
+/// gap are both *beside a pane*, because a group nested in a group of the
 /// same axis is folded into it and the two drops end up the same tree. The
 /// dock's outer edge is not, which is why it is the only way to get back a
-/// window spanning the whole height.
+/// window spanning the whole height. A window's middle is a stack.
 ///
-/// It names a window rather than a path on purpose: a path stops meaning what
-/// it meant the moment the window being moved is taken out of the tree, and a
-/// drop has to be worked out before that and carried out after.
+/// They name a window rather than a path on purpose: a path stops meaning
+/// what it meant the moment the window being moved is taken out of the tree,
+/// and a drop has to be worked out before that and carried out after.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Slot {
     Beside { window: WindowId, side: Side },
     Edge { side: Side },
+    With { window: WindowId },
 }
 
 impl Node {
-    /// Where a window is, as a path from the root.
+    /// Where a window is, as a path from the root to the pane holding it.
     pub fn find(&self, window: WindowId) -> Option<Path> {
         let mut path = Path::new();
 
@@ -65,7 +137,7 @@ impl Node {
 
     fn find_into(&self, window: WindowId, path: &mut Path) -> bool {
         match self {
-            Node::Window(id) => *id == window,
+            Node::Pane(stack) => stack.holds(window),
             Node::Group { children, .. } => {
                 for (i, child) in children.iter().enumerate() {
                     path.push(i);
@@ -82,21 +154,30 @@ impl Node {
         }
     }
 
-    fn at_mut(&mut self, path: &[usize]) -> Option<&mut Node> {
+    pub fn at_mut(&mut self, path: &[usize]) -> Option<&mut Node> {
         match path.split_first() {
             None => Some(self),
             Some((i, rest)) => match self {
-                Node::Window(_) => None,
+                Node::Pane(_) => None,
                 Node::Group { children, .. } => children.get_mut(*i)?.node.at_mut(rest),
             },
         }
     }
 
-    /// The last window under this node, which is what a gap uses to name the
+    pub fn stack_mut(&mut self, window: WindowId) -> Option<&mut Stack> {
+        let path = self.find(window)?;
+
+        match self.at_mut(&path)? {
+            Node::Pane(stack) => Some(stack),
+            Node::Group { .. } => None,
+        }
+    }
+
+    /// The last pane under this node, which is what a gap uses to name the
     /// neighbour a drop lands beside.
-    pub fn last(&self) -> WindowId {
+    pub fn last(&self) -> &Stack {
         match self {
-            Node::Window(id) => *id,
+            Node::Pane(stack) => stack,
             Node::Group { children, .. } => match children.last() {
                 Some(child) => child.node.last(),
                 None => unreachable!("a group always has children"),
@@ -110,7 +191,7 @@ impl Node {
 /// whole of it and the slot does not matter.
 pub fn place(root: &mut Option<Node>, window: WindowId, slot: Slot, share: Share) {
     let Some(node) = root.as_mut() else {
-        *root = Some(Node::Window(window));
+        *root = Some(Node::Pane(Stack::new(window)));
 
         return;
     };
@@ -121,6 +202,11 @@ pub fn place(root: &mut Option<Node>, window: WindowId, slot: Slot, share: Share
             window: target,
             side,
         } => place_beside(node, window, target, side, share),
+        Slot::With { window: target } => {
+            if let Some(stack) = node.stack_mut(target) {
+                stack.take(window);
+            }
+        }
     }
 
     // A slot names a window, and a window can have been closed between a drop
@@ -149,7 +235,7 @@ fn place_edge(root: &mut Node, window: WindowId, side: Side, share: Share) {
             at,
             Child {
                 share,
-                node: Node::Window(window),
+                node: Node::Pane(Stack::new(window)),
             },
         );
     } else {
@@ -184,7 +270,7 @@ fn place_beside(root: &mut Node, window: WindowId, target: WindowId, side: Side,
             at,
             Child {
                 share,
-                node: Node::Window(window),
+                node: Node::Pane(Stack::new(window)),
             },
         );
     } else {
@@ -199,11 +285,11 @@ fn place_beside(root: &mut Node, window: WindowId, target: WindowId, side: Side,
 /// Turn a node into a group of two along a new axis: the node, and the window
 /// arriving beside it.
 fn wrap(node: &mut Node, window: WindowId, side: Side, share: Share) {
-    let taken = std::mem::replace(node, Node::Window(window));
+    let taken = std::mem::replace(node, Node::Pane(Stack::new(window)));
 
     let arriving = Child {
         share,
-        node: Node::Window(window),
+        node: Node::Pane(Stack::new(window)),
     };
     let existing = Child {
         share: Share::Flex(1.0),
@@ -222,11 +308,20 @@ fn wrap(node: &mut Node, window: WindowId, side: Side, share: Share) {
     };
 }
 
-/// Take a window out. The tree is left canonical, so removing the second to
-/// last child of a group dissolves the group.
+/// Take a window out. Its slot goes with it when it was the last window in
+/// it, and the tree is left canonical — so removing the second to last child
+/// of a group dissolves the group.
 pub fn remove(root: &mut Option<Node>, window: WindowId) -> Option<Share> {
     let node = root.as_mut()?;
     let path = node.find(window)?;
+
+    let Some(Node::Pane(stack)) = node.at_mut(&path) else {
+        return None;
+    };
+
+    if !stack.drop(window) {
+        return None;
+    }
 
     let Some((index, parent_path)) = path.split_last() else {
         *root = None;
