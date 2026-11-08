@@ -132,6 +132,15 @@ fn PaneView(dock: Dock, index: usize, icon: Option<Callback<WindowId, AnyView>>)
     let pane = move || dock.frame().panes.get(index).cloned();
     let tabs = Memo::new(move |_| pane().map(|pane| pane.tabs.len()).unwrap_or_default());
 
+    // Keyed by window rather than by place: an element has to follow its own
+    // tab from one place to the next, or the tabs swap their names instead of
+    // moving and there is nothing left to animate.
+    let windows = Memo::new(move |_| {
+        pane()
+            .map(|pane| pane.tabs.iter().map(|tab| tab.window).collect::<Vec<_>>())
+            .unwrap_or_default()
+    });
+
     let strip = move || match tabs.get() {
         0 | 1 => "pane-strip",
         _ => "pane-strip is-stacked",
@@ -140,8 +149,8 @@ fn PaneView(dock: Dock, index: usize, icon: Option<Callback<WindowId, AnyView>>)
     view! {
         <div class="pane" style=move || pane().map(|pane| place(pane.rect)).unwrap_or_default()>
             <div class=strip></div>
-            <For each=move || 0..tabs.get() key=|tab| *tab let:tab>
-                <Tab dock=dock pane=index tab=tab icon=icon />
+            <For each=move || windows.get() key=|window| *window let:window>
+                <Tab dock=dock pane=index window=window icon=icon />
             </For>
         </div>
     }
@@ -153,21 +162,19 @@ fn PaneView(dock: Dock, index: usize, icon: Option<Callback<WindowId, AnyView>>)
 fn Tab(
     dock: Dock,
     pane: usize,
-    tab: usize,
+    window: WindowId,
     icon: Option<Callback<WindowId, AnyView>>,
 ) -> impl IntoView {
     let drawn = move || {
         let frame = dock.frame();
         let pane = frame.panes.get(pane)?;
+        let at = pane.tabs.iter().position(|tab| tab.window == window)?;
 
-        Some((pane.rect, pane.tabs.get(tab)?.clone()))
+        Some((pane.rect, pane.tabs.get(at)?.clone(), at, pane.tabs.len()))
     };
 
-    let only = move || dock.frame().panes.get(pane).is_some_and(|pane| pane.tabs.len() == 1);
-    let first = tab == 0;
-
     let class = move || {
-        let Some((_, tab)) = drawn() else {
+        let Some((_, tab, at, count)) = drawn() else {
             return String::new();
         };
 
@@ -177,7 +184,7 @@ fn Tab(
             class.push_str(" is-showing");
         }
 
-        if first {
+        if at == 0 {
             class.push_str(" is-first");
         }
 
@@ -185,7 +192,7 @@ fn Tab(
             class.push_str(" is-lifted");
         }
 
-        if only() {
+        if count == 1 {
             class.push_str(" is-only");
         }
 
@@ -195,7 +202,7 @@ fn Tab(
     // A tab is placed inside its own slot, so its rectangle is given from the
     // slot's corner rather than the dock's.
     let style = move || match drawn() {
-        Some((pane, tab)) => place(Rect::new(
+        Some((pane, tab, _, _)) => place(Rect::new(
             tab.rect.x - pane.x,
             tab.rect.y - pane.y,
             tab.rect.w,
@@ -204,16 +211,12 @@ fn Tab(
         None => String::new(),
     };
 
-    let mark = move || {
-        let (_, tab) = drawn()?;
-
-        Some(icon?.run(tab.window))
-    };
+    let mark = move || Some(icon?.run(window));
 
     view! {
         <div class=class style=style title="Drag to move this window">
             <span class="tab-icon">{mark}</span>
-            <h3>{move || drawn().map(|(_, tab)| tab.title).unwrap_or_default()}</h3>
+            <h3>{move || drawn().map(|(_, tab, _, _)| tab.title).unwrap_or_default()}</h3>
         </div>
     }
 }
