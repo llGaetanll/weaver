@@ -262,7 +262,11 @@ fn Gap(dock: Dock, index: usize) -> impl IntoView {
     view! {
         <div
             class=class
-            style=move || drawn().map(|gap| place(gap.rect.grown(grab))).unwrap_or_default()
+            style=move || {
+                drawn()
+                    .map(|gap| place(gap.rect.thickened(gap.axis, grab)))
+                    .unwrap_or_default()
+            }
         ></div>
     }
 }

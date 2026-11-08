@@ -149,22 +149,22 @@ body {
 .tab.is-showing {
   color: var(--text-muted);
   background: var(--panel);
+}
+
+.tab.is-showing:not(.is-only) {
   box-shadow:
     inset 1px 0 0 var(--border),
     inset -1px 0 0 var(--border);
 }
 
-.tab.is-showing.is-first { box-shadow: inset -1px 0 0 var(--border); }
+.tab.is-showing.is-first:not(.is-only) { box-shadow: inset -1px 0 0 var(--border); }
 
 .tab.is-showing .tab-icon { color: var(--text-muted); }
 /* A window alone in its slot has a title bar rather than a tab. It is still
    the same region and still the handle; there is just nothing for a box to
    divide it from, and a line drawn around it would be a line around the whole
    header. */
-.tab.is-only {
-  background: transparent;
-  box-shadow: none;
-}
+.tab.is-only { background: transparent; }
 
 .tab.is-lifted { opacity: .4; }
 

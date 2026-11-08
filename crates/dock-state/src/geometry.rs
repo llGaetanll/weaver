@@ -85,6 +85,16 @@ impl Rect {
         )
     }
 
+    /// Thicker by `by` on both sides, and no longer. A gap is a line: what
+    /// you take hold of reaches into the windows either side of it, never
+    /// past the ends of the windows it divides.
+    pub fn thickened(self, axis: Axis, by: f32) -> Self {
+        match axis {
+            Axis::Row => Self::new(self.x - by, self.y, self.w + by * 2.0, self.h),
+            Axis::Col => Self::new(self.x, self.y - by, self.w, self.h + by * 2.0),
+        }
+    }
+
     pub fn extent(self, axis: Axis) -> f32 {
         self.size().along(axis)
     }

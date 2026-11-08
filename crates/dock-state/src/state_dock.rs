@@ -166,7 +166,7 @@ impl StateDock {
         let hit = solved
             .gaps
             .iter()
-            .find(|gap| gap.rect.grown(self.metrics.grab).contains(at));
+            .find(|gap| gap.rect.thickened(gap.axis, self.metrics.grab).contains(at));
 
         if let Some(gap) = hit {
             let Some((a, b)) = self.shares(&gap.group, gap.index) else {
@@ -383,7 +383,7 @@ impl StateDock {
         let gap = solved
             .gaps
             .iter()
-            .find(|gap| gap.rect.grown(edge / 2.0).contains(at));
+            .find(|gap| gap.rect.thickened(gap.axis, edge).contains(at));
 
         if let Some(gap) = gap {
             let Some(before) = self.leaf(&gap.group, gap.index, moving) else {
