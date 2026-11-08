@@ -42,6 +42,13 @@
   --accent-weak: color-mix(in srgb, var(--n-950) 6%, transparent);
   --on-accent:   var(--n-0);
 
+  /* Where a window would go. The wash is the accent at its lightest, and the
+     line around it is grey rather than black: it is a region under a pointer
+     that is already moving, not a control, and a black edge on it reads as a
+     thing you could click. */
+  --drop:        color-mix(in srgb, var(--n-950) 8%, transparent);
+  --drop-edge:   var(--n-500);
+
   --danger:      var(--red-600);
   --danger-weak: var(--red-50);
 
