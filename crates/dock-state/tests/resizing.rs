@@ -2,6 +2,7 @@
 
 mod fixture;
 
+use dock_state::Cursor;
 use dock_state::Event;
 use dock_state::EventHost::Opened;
 use dock_state::EventPointer::Cancelled;
@@ -110,4 +111,40 @@ fn escape_puts_both_sides_of_a_corner_back() {
 
     near(rect(&dock, A).w, 399.5, "the row's gap is back");
     near(rect(&dock, B).h, 299.5, "and so is the column's");
+}
+
+/// The cursor is the machine's answer while the pointer is only hovering,
+/// too: two gaps overlap where they cross, and an element that knows it is a
+/// vertical line cannot know the horizontal one is there as well.
+#[test]
+fn hovering_a_gap_says_which_way_it_moves() {
+    let mut dock = three();
+
+    eval!(&mut dock,
+        < Event::FromPointer(Moved { at: Point::new(400.0, 100.0) }),
+    );
+
+    assert_eq!(dock.frame().cursor, Cursor::ColResize, "a vertical line");
+}
+
+#[test]
+fn hovering_a_crossing_says_it_moves_both_ways() {
+    let mut dock = three();
+
+    eval!(&mut dock,
+        < Event::FromPointer(Moved { at: Point::new(400.0, 300.0) }),
+    );
+
+    assert_eq!(dock.frame().cursor, Cursor::BothResize, "both at once");
+}
+
+#[test]
+fn hovering_a_window_says_nothing() {
+    let mut dock = three();
+
+    eval!(&mut dock,
+        < Event::FromPointer(Moved { at: Point::new(200.0, 300.0) }),
+    );
+
+    assert_eq!(dock.frame().cursor, Cursor::Default, "nothing to take hold of");
 }

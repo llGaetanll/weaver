@@ -84,6 +84,10 @@ pub struct StateDock {
     root: Option<Node>,
     windows: Vec<Window>,
     gesture: Option<Gesture>,
+    /// Where the pointer last was, gesture or no gesture. What it is over
+    /// decides what it looks like, and what it is over is a question about
+    /// rectangles.
+    pointer: Option<Point>,
     /// Whether the layout the dock is in now is one the windows should be
     /// moved into rather than snapped to. Only the events that change the
     /// layout touch it: a pointer moving over a dock that has just settled
@@ -245,6 +249,8 @@ impl StateDock {
     }
 
     fn drag(&mut self, at: Point) {
+        self.pointer = Some(at);
+
         match self.gesture.clone() {
             Some(Gesture::Pressed { window, origin }) => {
                 if at.distance(origin) < self.metrics.threshold {
@@ -628,22 +634,36 @@ impl StateDock {
         }
     }
 
+    /// What the pointer should look like: what it is holding, or failing
+    /// that what it is over. Hovering is answered here rather than left to
+    /// whichever element happens to be on top, because two gaps overlap at a
+    /// crossing and only the machine knows that both are there.
     fn cursor(&self) -> Cursor {
         match &self.gesture {
-            Some(Gesture::Moving { .. }) => Cursor::Grabbing,
-            Some(Gesture::Resizing { held }) => match held.first().map(|held| held.axis) {
-                _ if held
-                    .iter()
-                    .any(|one| Some(one.axis) != held.first().map(|f| f.axis)) =>
-                {
-                    Cursor::BothResize
-                }
-                Some(Axis::Row) => Cursor::ColResize,
-                Some(Axis::Col) => Cursor::RowResize,
-                None => Cursor::Default,
-            },
-            _ => Cursor::Default,
+            Some(Gesture::Moving { .. }) => return Cursor::Grabbing,
+            Some(Gesture::Resizing { held }) => {
+                return along(held.iter().map(|held| held.axis));
+            }
+            _ => {}
         }
+
+        let Some(at) = self.pointer else {
+            return Cursor::Default;
+        };
+
+        let Some(solved) = self.solved() else {
+            return Cursor::Default;
+        };
+
+        // The same reach a press has, so what the cursor promises and what a
+        // press takes hold of cannot be different things.
+        along(
+            solved
+                .gaps
+                .iter()
+                .filter(|gap| gap.rect.grown(self.metrics.grab).contains(at))
+                .map(|gap| gap.axis),
+        )
     }
 
     pub fn area(&self) -> Rect {
@@ -783,6 +803,28 @@ impl StateDock {
         if let Some(child) = children.get_mut(index + 1) {
             child.share = b;
         }
+    }
+}
+
+/// What a pointer over these gaps should look like. Two that cross are not
+/// two cursors but a third one, because taking hold of the corner moves both
+/// at once.
+fn along(axes: impl Iterator<Item = Axis>) -> Cursor {
+    let mut row = false;
+    let mut col = false;
+
+    for axis in axes {
+        match axis {
+            Axis::Row => row = true,
+            Axis::Col => col = true,
+        }
+    }
+
+    match (row, col) {
+        (true, true) => Cursor::BothResize,
+        (true, false) => Cursor::ColResize,
+        (false, true) => Cursor::RowResize,
+        (false, false) => Cursor::Default,
     }
 }
 
