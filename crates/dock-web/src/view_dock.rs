@@ -269,9 +269,11 @@ fn Gap(dock: Dock, after: WindowId) -> impl IntoView {
             .copied()
     };
 
-    let class = move || match drawn().map(|gap| gap.axis) {
-        Some(dock_state::Axis::Row) => "gap gap-v",
-        Some(dock_state::Axis::Col) => "gap gap-h",
+    let class = move || match drawn() {
+        Some(gap) if gap.held && gap.axis == dock_state::Axis::Row => "gap gap-v is-held",
+        Some(gap) if gap.held => "gap gap-h is-held",
+        Some(gap) if gap.axis == dock_state::Axis::Row => "gap gap-v",
+        Some(_) => "gap gap-h",
         None => "gap",
     };
 

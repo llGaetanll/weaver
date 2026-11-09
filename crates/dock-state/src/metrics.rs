@@ -17,6 +17,11 @@ pub struct Metrics {
     /// How far either side of that line still counts as being on it. The line
     /// is a line; what you take hold of is wider than what you see.
     pub grab: f32,
+    /// How near a crossing counts as being on both of the lines that make it.
+    /// Wider than `grab`, because the corner four windows share is a thing
+    /// somebody aims at, and a square seven pixels across is a small thing to
+    /// aim at.
+    pub corner: f32,
     /// The strip along the dock's edge that drops at the root.
     pub edge: f32,
     /// How much of a window's width and height each drop band takes, so a
@@ -39,6 +44,7 @@ impl Default for Metrics {
             tab_width: 160.0,
             gap: 1.0,
             grab: 3.0,
+            corner: 9.0,
             edge: 16.0,
             band: 0.1,
             threshold: 4.0,

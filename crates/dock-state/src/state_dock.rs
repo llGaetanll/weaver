@@ -181,15 +181,9 @@ impl StateDock {
             return;
         };
 
-        // Every gap near the pointer is taken hold of, so the corner where
-        // four windows meet moves as one thing. A gap is grown in both
-        // directions to find it: a crossing is where one gap's end meets
-        // another's side, and the ends are exactly what thickening leaves
-        // alone.
-        let held: Vec<Held> = solved
-            .gaps
-            .iter()
-            .filter(|gap| gap.rect.grown(self.metrics.grab).contains(at))
+        let held: Vec<Held> = self
+            .holding(at, &solved)
+            .into_iter()
             .filter_map(|gap| self.hold(gap, at))
             .collect();
 
@@ -216,6 +210,34 @@ impl StateDock {
             window: tab,
             origin: at,
         });
+    }
+
+    /// Which lines a point is on: the one it is over, and the one crossing
+    /// it when it is near enough to the corner the two of them make.
+    ///
+    /// Reaching further for the second is the whole of it. A crossing is
+    /// where one gap's end meets another's side, so the one being met has to
+    /// be looked for past its end — and the corner is a thing somebody aims
+    /// at, which a square as wide as the lines are grabbable is not.
+    fn holding<'a>(&self, at: Point, solved: &'a Solved) -> Vec<&'a Gap> {
+        let on: Vec<&Gap> = solved
+            .gaps
+            .iter()
+            .filter(|gap| gap.rect.thickened(gap.axis, self.metrics.grab).contains(at))
+            .collect();
+
+        let Some(first) = on.first() else {
+            return on;
+        };
+
+        let crossing = solved.gaps.iter().find(|gap| {
+            gap.axis != first.axis && gap.rect.grown(self.metrics.corner).contains(at)
+        });
+
+        match crossing {
+            Some(gap) => on.into_iter().chain([gap]).collect(),
+            None => on,
+        }
     }
 
     /// What a gap divides, written down so a drag can be measured from it.
@@ -613,6 +635,8 @@ impl StateDock {
             })
             .collect();
 
+        let held = self.held(&solved);
+
         let gaps = solved
             .gaps
             .iter()
@@ -620,6 +644,7 @@ impl StateDock {
                 rect: gap.rect,
                 axis: gap.axis,
                 after: gap.after,
+                held: held.contains(&(gap.group.clone(), gap.index)),
             })
             .collect();
 
@@ -655,15 +680,9 @@ impl StateDock {
             return Cursor::Default;
         };
 
-        // The same reach a press has, so what the cursor promises and what a
-        // press takes hold of cannot be different things.
-        along(
-            solved
-                .gaps
-                .iter()
-                .filter(|gap| gap.rect.grown(self.metrics.grab).contains(at))
-                .map(|gap| gap.axis),
-        )
+        // The same question a press asks, so what the cursor promises and
+        // what a press takes hold of cannot be different things.
+        along(self.holding(at, &solved).into_iter().map(|gap| gap.axis))
     }
 
     pub fn area(&self) -> Rect {
@@ -689,6 +708,31 @@ impl StateDock {
             .find(|open| open.id == window)
             .map(|open| open.title.clone())
             .unwrap_or_default()
+    }
+
+    /// The lines being held, or the ones the pointer is on when it is
+    /// holding nothing. Both lines of a crossing are in it together, which is
+    /// what lets both of them be drawn as taken hold of.
+    fn held(&self, solved: &Solved) -> Vec<(Path, usize)> {
+        if let Some(Gesture::Resizing { held }) = &self.gesture {
+            return held
+                .iter()
+                .map(|held| (held.group.clone(), held.index))
+                .collect();
+        }
+
+        if self.gesture.is_some() {
+            return Vec::new();
+        }
+
+        match self.pointer {
+            Some(at) => self
+                .holding(at, solved)
+                .into_iter()
+                .map(|gap| (gap.group.clone(), gap.index))
+                .collect(),
+            None => Vec::new(),
+        }
     }
 
     /// What is left of a slot under its tabs.

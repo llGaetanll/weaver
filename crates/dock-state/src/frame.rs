@@ -55,6 +55,9 @@ pub struct GapFrame {
     /// The slot it comes after. A gap has no name of its own, and whoever
     /// draws one needs to know it is the same gap it drew last time.
     pub after: WindowId,
+    /// The pointer is on it, or holding it. Both lines of a crossing are
+    /// held together, which an element on its own could never work out.
+    pub held: bool,
 }
 
 /// A region a drop can be aimed at, as the four corners of a quadrilateral.

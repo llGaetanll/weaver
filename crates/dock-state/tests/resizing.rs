@@ -148,3 +148,54 @@ fn hovering_a_window_says_nothing() {
 
     assert_eq!(dock.frame().cursor, Cursor::Default, "nothing to take hold of");
 }
+
+/// Near the crossing is near enough: the corner four windows share is a
+/// thing somebody aims at, and a square as wide as the lines are grabbable
+/// is a small thing to aim at.
+#[test]
+fn hovering_near_a_crossing_still_says_both() {
+    let mut dock = three();
+
+    eval!(&mut dock,
+        < Event::FromPointer(Moved { at: Point::new(400.0, 293.0) }),
+    );
+
+    assert_eq!(dock.frame().cursor, Cursor::BothResize, "seven above it");
+}
+
+#[test]
+fn a_line_far_from_a_crossing_is_only_itself() {
+    let mut dock = three();
+
+    eval!(&mut dock,
+        < Event::FromPointer(Moved { at: Point::new(400.0, 200.0) }),
+    );
+
+    assert_eq!(dock.frame().cursor, Cursor::ColResize, "a hundred above it");
+}
+
+/// Both lines of a crossing are held together, so both of them can be drawn
+/// as taken hold of.
+#[test]
+fn a_crossing_holds_both_of_its_lines() {
+    let mut dock = three();
+
+    eval!(&mut dock,
+        < Event::FromPointer(Moved { at: Point::new(400.0, 300.0) }),
+    );
+
+    let held = dock.frame().gaps.iter().filter(|gap| gap.held).count();
+
+    assert_eq!(held, 2, "the row's line and the column's");
+}
+
+#[test]
+fn a_pointer_on_no_line_holds_none_of_them() {
+    let mut dock = three();
+
+    eval!(&mut dock,
+        < Event::FromPointer(Moved { at: Point::new(200.0, 300.0) }),
+    );
+
+    assert!(dock.frame().gaps.iter().all(|gap| !gap.held));
+}

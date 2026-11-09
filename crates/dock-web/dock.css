@@ -75,8 +75,11 @@ body {
 .gap-v::after { inset: 0 var(--grab); }
 .gap-h::after { inset: var(--grab) 0; }
 
-.gap-v:hover::after { inset: 0 calc(var(--grab) - 1px); }
-.gap-h:hover::after { inset: calc(var(--grab) - 1px) 0; }
+/* Held is the machine's word, not the pointer's: both lines of a crossing
+   are held together, and an element on its own has no way of knowing the
+   other one is there. */
+.gap-v.is-held::after { inset: 0 calc(var(--grab) - 1px); }
+.gap-h.is-held::after { inset: calc(var(--grab) - 1px) 0; }
 
 /* --- A slot ------------------------------------------------------------- */
 
