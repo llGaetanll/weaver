@@ -12,12 +12,12 @@ use dock_state::Point;
 use dock_state::Share;
 use dock_state::Side;
 use dock_state::Slot;
+use eval::eval;
 use fixture::A;
 use fixture::B;
 use fixture::near;
 use fixture::rect;
 use fixture::three;
-use eval::eval;
 
 /// Between two flexible windows a drag moves weight from one to the other.
 /// Their total is untouched, so nothing outside the pair moves.

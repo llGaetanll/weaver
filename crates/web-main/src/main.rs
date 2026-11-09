@@ -28,12 +28,42 @@ fn main() {
 
     // The first window is the whole dock, and every one after it says where
     // it goes relative to one already open.
-    open(dock, EDITOR, "editor", Slot::Edge { side: Side::Right }, Share::Flex(1.0));
+    open(
+        dock,
+        EDITOR,
+        "editor",
+        Slot::Edge { side: Side::Right },
+        Share::Flex(1.0),
+    );
     open(dock, TESTS, "tests", with(EDITOR), Share::Flex(1.0));
-    open(dock, TERMINAL, "terminal", beside(EDITOR, Side::Down), Share::Fixed(168.0));
-    open(dock, FILES, "files", Slot::Edge { side: Side::Left }, Share::Fixed(224.0));
-    open(dock, OUTLINE, "outline", Slot::Edge { side: Side::Right }, Share::Fixed(268.0));
-    open(dock, NOTES, "notes", beside(OUTLINE, Side::Down), Share::Flex(1.0));
+    open(
+        dock,
+        TERMINAL,
+        "terminal",
+        beside(EDITOR, Side::Down),
+        Share::Fixed(168.0),
+    );
+    open(
+        dock,
+        FILES,
+        "files",
+        Slot::Edge { side: Side::Left },
+        Share::Fixed(224.0),
+    );
+    open(
+        dock,
+        OUTLINE,
+        "outline",
+        Slot::Edge { side: Side::Right },
+        Share::Fixed(268.0),
+    );
+    open(
+        dock,
+        NOTES,
+        "notes",
+        beside(OUTLINE, Side::Down),
+        Share::Flex(1.0),
+    );
 
     // Arriving in a slot means arriving in front, so the last one in would be
     // the one showing. This page would rather you saw the code.
@@ -148,15 +178,27 @@ fn files() -> impl IntoView {
 fn editor() -> impl IntoView {
     let lines = [
         ("/// Where a window is, as a path from the root.", true),
-        ("pub fn find(&self, window: WindowId) -> Option<Path> {", false),
+        (
+            "pub fn find(&self, window: WindowId) -> Option<Path> {",
+            false,
+        ),
         ("    let mut path = Path::new();", false),
         ("", false),
-        ("    self.find_into(window, &mut path).then_some(path)", false),
+        (
+            "    self.find_into(window, &mut path).then_some(path)",
+            false,
+        ),
         ("}", false),
         ("", false),
-        ("/// The two rules that keep a tree canonical, applied bottom up.", true),
+        (
+            "/// The two rules that keep a tree canonical, applied bottom up.",
+            true,
+        ),
         ("pub fn normalize(node: &mut Node) {", false),
-        ("    let Node::Group { axis, children } = node else {", false),
+        (
+            "    let Node::Group { axis, children } = node else {",
+            false,
+        ),
         ("        return;", false),
         ("    };", false),
         ("", false),
@@ -165,14 +207,20 @@ fn editor() -> impl IntoView {
         ("    }", false),
         ("", false),
         ("    let axis = *axis;", false),
-        ("    let mut folded: Vec<Child> = Vec::with_capacity(children.len());", false),
+        (
+            "    let mut folded: Vec<Child> = Vec::with_capacity(children.len());",
+            false,
+        ),
         ("", false),
         ("    for child in children.drain(..) {", false),
         ("        match child.node {", false),
         ("            Node::Group {", false),
         ("                axis: inner,", false),
         ("                children: grandchildren,", false),
-        ("            } if inner == axis => folded.extend(rescale(grandchildren, child.share)),", false),
+        (
+            "            } if inner == axis => folded.extend(rescale(grandchildren, child.share)),",
+            false,
+        ),
         ("            node => folded.push(Child {", false),
         ("                share: child.share,", false),
         ("                node,", false),
@@ -184,10 +232,16 @@ fn editor() -> impl IntoView {
         ("", false),
         ("    if children.len() == 1 {", false),
         ("        let Some(only) = children.pop() else {", false),
-        ("            unreachable!(\"just checked the length\");", false),
+        (
+            "            unreachable!(\"just checked the length\");",
+            false,
+        ),
         ("        };", false),
         ("", false),
-        ("        // The share belongs to the slot, and the slot is the parent's.", true),
+        (
+            "        // The share belongs to the slot, and the slot is the parent's.",
+            true,
+        ),
         ("        *node = only.node;", false),
         ("    }", false),
         ("}", false),

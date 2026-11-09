@@ -330,7 +330,7 @@ fn Region(dock: Dock, index: usize) -> impl IntoView {
 
     let style = move || {
         format!(
-            "opacity: {}; background: {}; clip-path: path(\"{}\")",
+            "opacity: {}; background: {}; clip-path: polygon({})",
             u8::from(zone().is_some()),
             fill.get(),
             shape.get(),
@@ -340,56 +340,22 @@ fn Region(dock: Dock, index: usize) -> impl IntoView {
     view! { <div class="region" style=style></div> }
 }
 
-/// A region, pulled in from its own edges so that neighbours do not touch,
-/// with its corners rounded.
+/// A region, pulled in from its own edges so that neighbours do not touch.
 ///
 /// The gutter is what makes five regions read as five rather than as one
 /// wash, now that they have no outline — the same answer the dock gives for
 /// two windows. Pulling every edge in by the same amount is the whole trick:
 /// moving each corner towards the middle instead leaves a wide gutter where
 /// two edges meet shallowly and a narrow one where they meet squarely, which
-/// is the uneven spacing that was there before.
+/// is uneven spacing by another name.
 fn clip(zone: Zone) -> String {
     const SEAM: f32 = 4.0;
-    const ROUND: f32 = 4.0;
 
-    let points = inset(zone.points, SEAM);
-    let mut path = String::new();
-
-    for i in 0..4 {
-        let previous = points[(i + 3) % 4];
-        let corner = points[i];
-        let next = points[(i + 1) % 4];
-
-        let back = corner.distance(previous);
-        let on = corner.distance(next);
-
-        // How far back a corner has to be cut to curve by the same radius
-        // depends on how sharp it is: the sharper the corner, the further.
-        // Cutting every corner back by the same distance instead is what made
-        // the thin regions look pointed.
-        let trim = (ROUND / half_angle(previous, corner, next))
-            .min(back / 2.0)
-            .min(on / 2.0);
-
-        let before = towards(corner, previous, trim);
-        let after = towards(corner, next, trim);
-
-        if i == 0 {
-            path.push_str(&format!("M {} {} ", before.x, before.y));
-        } else {
-            path.push_str(&format!("L {} {} ", before.x, before.y));
-        }
-
-        path.push_str(&format!(
-            "Q {} {} {} {} ",
-            corner.x, corner.y, after.x, after.y
-        ));
-    }
-
-    path.push('Z');
-
-    path
+    inset(zone.points, SEAM)
+        .iter()
+        .map(|point| format!("{}px {}px", point.x, point.y))
+        .collect::<Vec<_>>()
+        .join(", ")
 }
 
 /// Every edge of a convex quadrilateral moved inwards by the same distance,
@@ -434,33 +400,6 @@ fn meet(a: (Point, Point), b: (Point, Point)) -> Option<Point> {
     Some(Point::new(at.x + run.x * along, at.y + run.y * along))
 }
 
-/// The tangent of half the angle a corner turns through, which is what the
-/// radius is divided by to get how far back to cut it. Clamped so that a
-/// corner close to straight does not ask for an unbounded cut.
-fn half_angle(previous: Point, corner: Point, next: Point) -> f32 {
-    let back = towards(corner, previous, 1.0);
-    let on = towards(corner, next, 1.0);
-
-    let cos = ((back.x - corner.x) * (on.x - corner.x) + (back.y - corner.y) * (on.y - corner.y))
-        .clamp(-1.0, 1.0);
-    let angle = cos.acos();
-
-    (angle / 2.0).tan().max(0.2)
-}
-
-fn towards(from: Point, to: Point, by: f32) -> Point {
-    let length = from.distance(to).max(0.001);
-
-    Point::new(
-        from.x + (to.x - from.x) / length * by,
-        from.y + (to.y - from.y) / length * by,
-    )
-}
-
-/// What is under the cursor while a window is being carried: its tab, and
-/// nothing else. The window itself is still on screen behind, so a picture of
-/// it under the pointer would be a second copy of something already there —
-/// and it would cover the hole it is going into.
 #[component]
 fn Ghost(dock: Dock, icon: Option<Callback<WindowId, AnyView>>) -> impl IntoView {
     let carried = move || dock.frame().carried;

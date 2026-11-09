@@ -8,13 +8,13 @@ use dock_state::EventPointer::Down;
 use dock_state::EventPointer::Moved;
 use dock_state::EventPointer::Up;
 use dock_state::Point;
+use eval::eval;
 use fixture::A;
 use fixture::B;
 use fixture::C;
 use fixture::showing;
 use fixture::tabs;
 use fixture::three;
-use eval::eval;
 
 /// The middle of a window is its stack: a window dropped there shares the
 /// slot rather than taking a side of it.
@@ -30,7 +30,10 @@ fn the_middle_of_a_window_is_its_stack() {
 
     assert_eq!(dock.frame().panes.len(), 2, "three windows in two slots");
     assert_eq!(tabs(&dock, A), vec![B, A], "A joined B, behind it in order");
-    assert!(showing(&dock, A), "and it is the one showing, having arrived");
+    assert!(
+        showing(&dock, A),
+        "and it is the one showing, having arrived"
+    );
     assert!(!showing(&dock, B), "which means B is not");
 }
 
@@ -44,7 +47,10 @@ fn the_middle_of_a_window_is_offered_as_a_region() {
     );
 
     assert_eq!(dock.frame().regions.len(), 5, "four bands and the middle");
-    assert!(fixture::chosen(&dock).is_some(), "the middle is an answer too");
+    assert!(
+        fixture::chosen(&dock).is_some(),
+        "the middle is an answer too"
+    );
 }
 
 /// A tab is picked by pressing it, and a window behind one keeps its place.
@@ -60,7 +66,11 @@ fn pressing_a_tab_brings_its_window_forward() {
     );
 
     assert!(showing(&dock, B), "B's own tab is the first of the two");
-    assert_eq!(tabs(&dock, A), vec![B, A], "with neither of them having moved");
+    assert_eq!(
+        tabs(&dock, A),
+        vec![B, A],
+        "with neither of them having moved"
+    );
 }
 
 /// Leaving a stack is an ordinary move: the slot stays, holding what is
@@ -119,7 +129,11 @@ fn the_tabs_move_apart_to_leave_the_hole_a_drop_would_fill() {
     );
 
     assert!(dock.frame().regions.is_empty(), "no wash: the hole says it");
-    assert_eq!(tabs(&dock, B), vec![A, B], "and the tabs have already moved");
+    assert_eq!(
+        tabs(&dock, B),
+        vec![A, B],
+        "and the tabs have already moved"
+    );
 }
 
 /// Dropping a tab on the title bar of a window that is alone joins it: one

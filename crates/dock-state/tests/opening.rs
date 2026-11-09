@@ -9,13 +9,13 @@ use dock_state::EventHost::Opened;
 use dock_state::Share;
 use dock_state::Side;
 use dock_state::Slot;
+use eval::eval;
 use fixture::A;
 use fixture::B;
 use fixture::C;
 use fixture::near;
 use fixture::rect;
 use fixture::three;
-use eval::eval;
 
 #[test]
 fn opening_windows_divides_the_surface() {
@@ -57,7 +57,11 @@ fn closing_a_window_dissolves_its_group() {
     let frame = dock.frame();
 
     assert_eq!(frame.panes.len(), 2);
-    assert_eq!(frame.gaps.len(), 1, "the column is gone, not left holding one");
+    assert_eq!(
+        frame.gaps.len(),
+        1,
+        "the column is gone, not left holding one"
+    );
 
     near(rect(&dock, B).h, 600.0, "B has the whole height back");
 }

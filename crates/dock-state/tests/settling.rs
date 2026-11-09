@@ -14,8 +14,8 @@ use dock_state::EventPointer::Moved;
 use dock_state::EventPointer::Up;
 use dock_state::Point;
 use dock_state::Size;
-use fixture::three;
 use eval::eval;
+use fixture::three;
 
 #[test]
 fn a_gap_under_the_pointer_does_not_settle() {

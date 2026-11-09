@@ -469,13 +469,10 @@ impl StateDock {
             }),
             // The middle is the stack, and a window joining one goes on the
             // end of it: nothing was aimed at, so nothing is displaced.
-            None if !pane.holds(moving) => pane
-                .windows
-                .last()
-                .map(|last| Slot::With {
-                    window: *last,
-                    before: false,
-                }),
+            None if !pane.holds(moving) => pane.windows.last().map(|last| Slot::With {
+                window: *last,
+                before: false,
+            }),
             None => None,
         };
 
@@ -635,7 +632,10 @@ impl StateDock {
         match &self.gesture {
             Some(Gesture::Moving { .. }) => Cursor::Grabbing,
             Some(Gesture::Resizing { held }) => match held.first().map(|held| held.axis) {
-                _ if held.iter().any(|one| Some(one.axis) != held.first().map(|f| f.axis)) => {
+                _ if held
+                    .iter()
+                    .any(|one| Some(one.axis) != held.first().map(|f| f.axis)) =>
+                {
                     Cursor::BothResize
                 }
                 Some(Axis::Row) => Cursor::ColResize,
@@ -701,7 +701,12 @@ impl StateDock {
 
         let last = (pane.rect.right() - size.w).max(pane.rect.x);
 
-        Rect::new(loose.x.clamp(pane.rect.x, last), pane.rect.y, size.w, size.h)
+        Rect::new(
+            loose.x.clamp(pane.rect.x, last),
+            pane.rect.y,
+            size.w,
+            size.h,
+        )
     }
 
     /// Where a window's tab is right now.

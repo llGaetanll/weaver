@@ -12,13 +12,13 @@ use dock_state::Point;
 use dock_state::Share;
 use dock_state::Side;
 use dock_state::Slot;
+use eval::eval;
 use fixture::A;
 use fixture::B;
 use fixture::C;
 use fixture::near;
 use fixture::rect;
 use fixture::three;
-use eval::eval;
 
 /// The whole of it: a window taken out of the row and put against the left
 /// of another, which is the move every other test here is a corner of.
@@ -66,7 +66,10 @@ fn a_press_that_travels_lifts_the_window() {
 
     assert!(frame.carried.is_some(), "now it is a move");
     assert!(
-        frame.windows.iter().any(|drawn| drawn.window == A && drawn.lifted),
+        frame
+            .windows
+            .iter()
+            .any(|drawn| drawn.window == A && drawn.lifted),
         "and the window stays where it is, dimmed",
     );
 }
@@ -89,7 +92,10 @@ fn the_band_under_the_pointer_is_the_one_offered() {
     let zone = fixture::chosen(&dock).expect("in B's left band");
     let against = zone.points.iter().filter(|point| point.x < 403.0).count();
 
-    assert_eq!(against, 2, "a trapezium with its long side on B's left edge");
+    assert_eq!(
+        against, 2,
+        "a trapezium with its long side on B's left edge"
+    );
 }
 
 /// Dropping beside a window whose group already runs that way folds into the
@@ -155,7 +161,10 @@ fn a_window_over_its_own_slot_proposes_nothing() {
     );
 
     assert!(dock.frame().carried.is_some(), "still being carried");
-    assert!(dock.frame().regions.is_empty(), "its own slot is not a target");
+    assert!(
+        dock.frame().regions.is_empty(),
+        "its own slot is not a target"
+    );
 }
 
 /// A fixed window is fixed wherever it is put: the number was somebody's
