@@ -88,11 +88,15 @@ body {
 /* The box a stack of windows shares. Everything in it is placed by the
    machine, so there is no layout here beyond a background and a strip along
    the top for the tabs to sit in. */
+/* A slot's edge is a line drawn in the gap around it. At rest it is the
+   gap's own line; while slots ease it keeps an edge moving into empty ground
+   an edge, after the gap that was there has gone. */
 .pane {
   min-width: 0;
   min-height: 0;
   background: var(--panel);
   overflow: hidden;
+  box-shadow: 0 0 0 1px var(--border);
 }
 
 .pane-strip {
