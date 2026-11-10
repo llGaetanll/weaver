@@ -251,6 +251,14 @@ fn Tab(
         Some((pane.rect, pane.tabs.get(at)?.clone(), at, pane.tabs.len()))
     };
 
+    let before = move || {
+        let frame = dock.frame();
+        let pane = frame.panes.iter().find(|held| held.key == pane)?;
+        let at = pane.tabs.iter().position(|tab| tab.window == window)?;
+
+        pane.tabs.get(at.checked_sub(1)?).cloned()
+    };
+
     let class = move || {
         let Some((_, tab, at, count)) = drawn() else {
             return String::new();
@@ -276,6 +284,14 @@ fn Tab(
 
         if count == 1 {
             class.push_str(" is-only");
+        }
+
+        // The tab after a place opened for a window keeps a line between
+        // the two: for as long as the window hovers, and until it has landed.
+        match before() {
+            Some(before) if before.lifted => class.push_str(" is-after-hole"),
+            Some(before) if before.from.is_some() => class.push_str(" is-after-landing"),
+            _ => {}
         }
 
         class

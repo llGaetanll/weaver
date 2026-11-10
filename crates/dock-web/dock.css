@@ -363,6 +363,26 @@ body {
     color var(--settle) ease;
 }
 
+/* The line between a place opened for a window and the tab after it. The
+   tab's own lines say whether it is showing, and this one is neither: it is
+   there while the window hovers and until it lands, where the line the
+   landed tab draws takes over. */
+.tab:is(.is-after-hole, .is-after-landing)::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 1px;
+  background: var(--border);
+}
+
+.tab.is-after-landing::before { opacity: 0; }
+
+@keyframes until-landed { from, to { opacity: 1; } }
+
+.dock.settles:not(.is-moving) .tab.is-after-landing::before {
+  animation: until-landed var(--settle);
+}
+
 .dock.settles:not(.is-moving) .tab.is-covered .tab-icon {
   transition: color var(--settle) ease;
 }
