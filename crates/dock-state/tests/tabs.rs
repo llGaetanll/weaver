@@ -32,7 +32,7 @@ fn the_middle_of_a_window_is_its_stack() {
     );
 
     assert_eq!(dock.frame().panes.len(), 2, "three windows in two slots");
-    assert_eq!(tabs(&dock, A), vec![B, A], "A joined B, behind it in order");
+    assert_eq!(tabs(&dock, A), vec![A, B], "A joined B, in front of it");
     assert!(
         showing(&dock, A),
         "and it is the one showing, having arrived"
@@ -65,13 +65,13 @@ fn pressing_a_tab_brings_its_window_forward() {
         < Event::FromPointer(Down { at: Point::new(10.0, 10.0) }),
         < Event::FromPointer(Moved { at: Point::new(600.0, 150.0) }),
         < Event::FromPointer(Up { at: Point::new(600.0, 150.0) }),
-        < Event::FromPointer(Down { at: Point::new(80.0, 13.0) }),
+        < Event::FromPointer(Down { at: Point::new(240.0, 13.0) }),
     );
 
-    assert!(showing(&dock, B), "B's own tab is the first of the two");
+    assert!(showing(&dock, B), "B's own tab is the second of the two");
     assert_eq!(
         tabs(&dock, A),
-        vec![B, A],
+        vec![A, B],
         "with neither of them having moved"
     );
 }
@@ -87,7 +87,7 @@ fn a_window_can_be_taken_back_out_of_a_stack() {
         < Event::FromPointer(Down { at: Point::new(10.0, 10.0) }),
         < Event::FromPointer(Moved { at: Point::new(600.0, 150.0) }),
         < Event::FromPointer(Up { at: Point::new(600.0, 150.0) }),
-        < Event::FromPointer(Down { at: Point::new(168.0, 13.0) }),
+        < Event::FromPointer(Down { at: Point::new(40.0, 13.0) }),
         < Event::FromPointer(Moved { at: Point::new(400.0, 340.0) }),
         < Event::FromPointer(Up { at: Point::new(400.0, 340.0) }),
     );
@@ -108,12 +108,12 @@ fn a_tab_dragged_along_its_strip_changes_the_order() {
         < Event::FromPointer(Down { at: Point::new(10.0, 10.0) }),
         < Event::FromPointer(Moved { at: Point::new(600.0, 150.0) }),
         < Event::FromPointer(Up { at: Point::new(600.0, 150.0) }),
-        < Event::FromPointer(Down { at: Point::new(168.0, 13.0) }),
-        < Event::FromPointer(Moved { at: Point::new(40.0, 13.0) }),
-        < Event::FromPointer(Up { at: Point::new(40.0, 13.0) }),
+        < Event::FromPointer(Down { at: Point::new(40.0, 13.0) }),
+        < Event::FromPointer(Moved { at: Point::new(300.0, 13.0) }),
+        < Event::FromPointer(Up { at: Point::new(300.0, 13.0) }),
     );
 
-    assert_eq!(tabs(&dock, A), vec![A, B], "now in front of B");
+    assert_eq!(tabs(&dock, A), vec![B, A], "now behind B");
     assert_eq!(dock.frame().panes.len(), 2, "without having left the slot");
 }
 
@@ -183,7 +183,7 @@ fn a_window_lifted_out_of_a_stack_leaves_the_next_one_showing() {
         < Event::FromPointer(Down { at: Point::new(10.0, 10.0) }),
         < Event::FromPointer(Moved { at: Point::new(600.0, 150.0) }),
         < Event::FromPointer(Up { at: Point::new(600.0, 150.0) }),
-        < Event::FromPointer(Down { at: Point::new(200.0, 13.0) }),
+        < Event::FromPointer(Down { at: Point::new(40.0, 13.0) }),
         < Event::FromPointer(Moved { at: Point::new(100.0, 400.0) }),
     );
 
@@ -206,8 +206,8 @@ fn a_window_stays_while_its_tab_is_put_in_order() {
         < Event::FromPointer(Down { at: Point::new(10.0, 10.0) }),
         < Event::FromPointer(Moved { at: Point::new(600.0, 150.0) }),
         < Event::FromPointer(Up { at: Point::new(600.0, 150.0) }),
-        < Event::FromPointer(Down { at: Point::new(200.0, 13.0) }),
-        < Event::FromPointer(Moved { at: Point::new(20.0, 13.0) }),
+        < Event::FromPointer(Down { at: Point::new(40.0, 13.0) }),
+        < Event::FromPointer(Moved { at: Point::new(300.0, 13.0) }),
     );
 
     assert_eq!(
@@ -297,8 +297,8 @@ fn the_tabs_move_apart_to_leave_the_hole_a_drop_would_fill() {
         < Event::FromPointer(Down { at: Point::new(10.0, 10.0) }),
         < Event::FromPointer(Moved { at: Point::new(600.0, 150.0) }),
         < Event::FromPointer(Up { at: Point::new(600.0, 150.0) }),
-        < Event::FromPointer(Down { at: Point::new(168.0, 13.0) }),
-        < Event::FromPointer(Moved { at: Point::new(40.0, 13.0) }),
+        < Event::FromPointer(Down { at: Point::new(40.0, 13.0) }),
+        < Event::FromPointer(Moved { at: Point::new(300.0, 13.0) }),
     );
 
     let strip = Zone::rect(Rect::new(0.0, 0.0, 800.0, 27.0), true);
@@ -306,7 +306,7 @@ fn the_tabs_move_apart_to_leave_the_hole_a_drop_would_fill() {
     assert_eq!(dock.frame().regions.len(), 6, "with the window's others beside it");
     assert_eq!(
         tabs(&dock, B),
-        vec![A, B],
+        vec![B, A],
         "and the tabs have already moved"
     );
 }

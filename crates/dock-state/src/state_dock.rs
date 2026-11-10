@@ -544,11 +544,11 @@ impl StateDock {
                 window: anchor,
                 side,
             }),
-            // The middle is the stack, and a window joining one goes on the
-            // end of it: nothing was aimed at, so nothing is displaced.
-            None if !pane.holds(moving) => pane.windows.last().map(|last| Slot::With {
-                window: *last,
-                before: false,
+            // The middle is the stack, and a window joining one goes in front
+            // of it: it is what the drop was for, so it is the first tab.
+            None if !pane.holds(moving) => pane.windows.first().map(|first| Slot::With {
+                window: *first,
+                before: true,
             }),
             None => None,
         };
