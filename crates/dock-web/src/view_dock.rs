@@ -155,6 +155,18 @@ fn PaneView(dock: Dock, pane: SlotId, icon: Option<Callback<WindowId, AnyView>>)
         )
     });
 
+    // The strip's own line runs only beyond the tabs. Under them each tab
+    // says for itself, so a place opened for a tab has none.
+    let beyond = move || {
+        pane()
+            .map(|pane| {
+                let end = pane.tabs.iter().map(|tab| tab.rect.right()).fold(pane.rect.x, f32::max);
+
+                format!("left: {}px", end - pane.rect.x)
+            })
+            .unwrap_or_default()
+    };
+
     let strip = move || match tabs.get() {
         0 | 1 => "pane-strip",
         _ => "pane-strip is-stacked",
@@ -194,7 +206,7 @@ fn PaneView(dock: Dock, pane: SlotId, icon: Option<Callback<WindowId, AnyView>>)
 
     view! {
         <div node_ref=node class=class style=style>
-            <div class=strip></div>
+            <div class=strip style=beyond></div>
             <For each=move || windows.get() key=|window| *window let:window>
                 <Tab
                     dock=dock

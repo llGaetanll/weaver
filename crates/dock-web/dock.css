@@ -185,8 +185,9 @@ body {
 /* A window alone in its slot has a title bar rather than a tab. It is still
    the same region and still the handle; there is just nothing for a box to
    divide it from, and a line drawn around it would be a line around the whole
-   header. */
-.tab.is-only { background: transparent; }
+   header. The one along its bottom is the header's, and it draws it itself,
+   since the strip's own line only runs beyond the tabs. */
+.tab.is-only { background: transparent; box-shadow: inset 0 -1px 0 var(--border); }
 
 /* The tab being carried is a hole rather than a dimmed tab: what is drawn
    under the cursor is that tab, and the space it leaves is where it lands.
@@ -195,6 +196,7 @@ body {
 .tab.is-lifted { opacity: 0; }
 
 .dock.is-moving .tab { transition: left var(--fade) ease, width var(--fade) ease; }
+.dock.is-moving .pane-strip { transition: left var(--fade) ease; }
 
 /* What the host put in a window. */
 .win {
@@ -278,7 +280,7 @@ body {
    whenever the layout changed on its own rather than under the pointer. The
    window just put down eases from where it was in the air, and a slot or tab
    made for it starts there too. */
-.dock.settles:not(.is-moving) :is(.pane, .win, .gap, .tab) {
+.dock.settles:not(.is-moving) :is(.pane, .pane-strip, .win, .gap, .tab) {
   transition:
     left var(--settle) ease,
     top var(--settle) ease,
