@@ -130,8 +130,8 @@ fn a_tab_pushed_to_the_end_of_a_strip_covers_the_gap() {
     let carried = dock.frame().carried.expect("a tab is being carried");
     assert_eq!(
         carried.rect,
-        Rect::new(240.5, 0.0, 160.0, 27.0),
-        "its right edge is past the gap"
+        Rect::new(240.5, -1.0, 160.0, 27.0),
+        "its right edge is past the gap, and its top past the dock's"
     );
 }
 
@@ -153,9 +153,10 @@ fn a_tab_pushed_to_the_start_of_a_strip_covers_the_gap() {
     );
 }
 
-/// The dock's own edge has no gap to cover, so a tab stops at it.
+/// The dock's own edge is treated as a gap: the tab reaches past it, and the
+/// dock clips the line it would have drawn beside whatever the host has.
 #[test]
-fn a_tab_pushed_to_the_dock_edge_stops_there() {
+fn a_tab_pushed_to_the_dock_edge_reaches_past_it() {
     let mut dock = three();
 
     eval!(&mut dock,
@@ -166,8 +167,8 @@ fn a_tab_pushed_to_the_dock_edge_stops_there() {
     let carried = dock.frame().carried.expect("a tab is being carried");
     assert_eq!(
         carried.rect,
-        Rect::new(0.0, 0.0, 160.0, 27.0),
-        "inside the dock"
+        Rect::new(-1.0, -1.0, 160.0, 27.0),
+        "a pixel past the left and the top"
     );
 }
 

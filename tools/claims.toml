@@ -198,3 +198,12 @@ role = "carried"
 side = "bottom"
 is = "none"
 broken-by = ".ghost { z-index: 1 !important }"
+
+[[claim]]
+name = "a carried tab over a strip at the dock's top has one line above it"
+says = "Over a slot's strip the tab reaches over the line above it, so its top is that line and not a second one beside it."
+gesture = "down:80,13|move:120,60|move:700,13"
+check = "seam"
+role = "carried"
+side = "top"
+broken-by = ".ghost { margin-top: 1px }"

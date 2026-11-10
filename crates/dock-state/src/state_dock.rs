@@ -762,9 +762,10 @@ impl StateDock {
     /// is being asked to do. Anywhere else it follows the pointer exactly,
     /// which is what carrying one out of a slot needs.
     ///
-    /// Pushed to either end it reaches over the gap there, so its own line
-    /// lands on the gap's instead of beside it — and so does its top, when it
-    /// has one, which is while its window is in the air.
+    /// Pushed to either end it reaches over the line there, so its own line
+    /// lands on that one instead of beside it — and so does its top, when it
+    /// has one, which is while its window is in the air. At the dock's edge
+    /// the line is the host's or nothing, and the dock clips the tab's own.
     ///
     /// The slot a lone window left is empty, and an empty strip holds
     /// nothing to stick to.
@@ -787,12 +788,11 @@ impl StateDock {
             return loose;
         }
 
-        let area = self.area();
-        let first = (pane.rect.x - self.metrics.gap).max(area.x);
-        let last = ((pane.rect.right() + self.metrics.gap).min(area.right()) - size.w).max(first);
+        let first = pane.rect.x - self.metrics.gap;
+        let last = (pane.rect.right() + self.metrics.gap - size.w).max(first);
 
         let top = match away {
-            true => (pane.rect.y - self.metrics.gap).max(area.y),
+            true => pane.rect.y - self.metrics.gap,
             false => pane.rect.y,
         };
 
