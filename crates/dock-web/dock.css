@@ -285,9 +285,7 @@ body {
     height var(--settle) ease;
 }
 
-/* Above the windows making room for it, whatever order they were opened in. */
 .dock.settles .win.is-arriving {
-  z-index: 1;
   outline: 1px solid transparent;
   outline-offset: -1px;
 }
@@ -298,7 +296,9 @@ body {
    of its own. Only the tab is raised, not the slot it is in, so the slot's
    edges and the gaps stay under the window. They hold for as long as the settle does, and when it lands
    the slot's own lines take over. */
-@keyframes landing-window { from, to { outline-color: var(--border); } }
+/* Above the windows making room for it, whatever order they were opened in,
+   and only until it lands: after that it is a window like any other. */
+@keyframes landing-window { from, to { z-index: 1; outline-color: var(--border); } }
 
 @keyframes landing-tab {
   from, to {
