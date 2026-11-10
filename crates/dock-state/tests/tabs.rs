@@ -243,8 +243,8 @@ fn a_tab_carried_over_another_strip_covers_the_gap_above() {
     );
 }
 
-/// A title bar has no order to be put in, so it does not slide along its
-/// own strip: it stays where it is until the pointer leaves the strip.
+/// A title bar has no order to be put in, so held over its own strip it is
+/// not drawn as moving at all until the pointer leaves the strip.
 #[test]
 fn a_title_bar_does_not_slide_along_its_own_strip() {
     let mut dock = three();
@@ -254,9 +254,18 @@ fn a_title_bar_does_not_slide_along_its_own_strip() {
         < Event::FromPointer(Moved { at: Point::new(200.0, 13.0) }),
     );
 
-    let carried = dock.frame().carried.expect("a tab is being carried");
-    assert_eq!(carried.rect, Rect::new(0.0, 0.0, 160.0, 27.0), "it has not moved");
-    assert!(!window(&dock, A).lifted, "and neither has its window");
+    let frame = dock.frame();
+    let tab = frame
+        .panes
+        .iter()
+        .flat_map(|pane| &pane.tabs)
+        .find(|tab| tab.window == A)
+        .expect("A has a title bar");
+
+    assert!(frame.carried.is_none(), "nothing is carried");
+    assert_eq!(tab.rect, Rect::new(0.0, 0.0, 160.0, 27.0), "the title bar is where it was");
+    assert!(!tab.lifted, "and is drawn as it is at rest");
+    assert!(!window(&dock, A).lifted, "and so is its window");
 }
 
 /// The tabs move apart as the pointer goes, so the hole they leave is where

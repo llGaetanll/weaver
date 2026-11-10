@@ -578,22 +578,20 @@ impl StateDock {
             };
         };
 
-        let moving = self.moving();
-
         let (carried, regions, aim, aloft) = match &self.gesture {
             Some(Gesture::Moving {
                 window,
                 grab,
                 size,
                 at,
-            }) => {
+            }) if !self.still(*window, *at, &solved) => {
                 let (regions, aim) = self.targets(*window, *at);
                 let away = self.away(*window, *at, &solved);
 
                 let carried = TabFrame {
                     window: *window,
                     title: self.title(*window),
-                    rect: self.carried(*window, *at, *grab, *size, away, &solved),
+                    rect: self.carried(*at, *grab, *size, away, &solved),
                     showing: true,
                     lifted: true,
                 };
@@ -607,6 +605,8 @@ impl StateDock {
 
             _ => (None, Vec::new(), None, None),
         };
+
+        let moving = carried.as_ref().map(|tab| tab.window);
 
         // A window in the air leaves its stack showing the one that would
         // show once it lands.
@@ -778,18 +778,7 @@ impl StateDock {
     /// Pushed to either end it reaches over the gap there, so its own line
     /// lands on the gap's instead of beside it — and so does its top, when it
     /// has one, which is while its window is in the air.
-    ///
-    /// A title bar has no order to be put in, so over its own strip it stays
-    /// where it is.
-    fn carried(
-        &self,
-        window: WindowId,
-        at: Point,
-        grab: Point,
-        size: Size,
-        away: bool,
-        solved: &Solved,
-    ) -> Rect {
+    fn carried(&self, at: Point, grab: Point, size: Size, away: bool, solved: &Solved) -> Rect {
         let loose = Rect::new(at.x - grab.x, at.y - grab.y, size.w, size.h);
 
         let Some(pane) = solved.at(at) else {
@@ -798,10 +787,6 @@ impl StateDock {
 
         if at.y >= pane.rect.y + self.metrics.tab {
             return loose;
-        }
-
-        if !away && pane.windows == [window] {
-            return Rect::new(pane.rect.x, pane.rect.y, size.w, size.h);
         }
 
         let area = self.area();
@@ -814,6 +799,15 @@ impl StateDock {
         };
 
         Rect::new(loose.x.clamp(first, last), top, size.w, size.h)
+    }
+
+    /// A title bar held over its own strip: it has no order to be put in, so
+    /// until the pointer leaves the strip nothing is drawn as moving at all.
+    fn still(&self, window: WindowId, at: Point, solved: &Solved) -> bool {
+        !self.away(window, at, solved)
+            && solved
+                .pane(window)
+                .is_some_and(|pane| pane.windows.len() == 1)
     }
 
     /// Whether a window being carried has left its slot. Not while its tab is
