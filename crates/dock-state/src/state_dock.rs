@@ -473,12 +473,7 @@ impl StateDock {
 
         let rect = self.body(pane.rect);
         let chosen = band(rect, at, self.metrics.band);
-        let mut zones = regions(rect, self.metrics.band, chosen, !pane.holds(moving));
-
-        // The tabs are a target too, though never the one the pointer is in
-        // here: over them the hole they leave is the answer.
-        let strip = Rect::new(pane.rect.x, pane.rect.y, pane.rect.w, self.metrics.tab);
-        zones.push(Zone::rect(strip, false));
+        let zones = self.offered(pane, chosen, false, moving);
 
         let slot = match chosen {
             Some(side) => Some(Slot::Beside {
@@ -530,9 +525,19 @@ impl StateDock {
             },
         };
 
-        // Nothing is drawn: the tabs move apart to leave the hole it would go
-        // in, and the tab under the cursor is the other half of saying so.
-        (Vec::new(), Some(slot))
+        (self.offered(pane, None, true, moving), Some(slot))
+    }
+
+    /// Every region a window offers: its four bands, its middle and its tabs,
+    /// with the one the pointer is in darker.
+    fn offered(&self, pane: &Pane, band: Option<Side>, tabs: bool, moving: WindowId) -> Vec<Zone> {
+        let stackable = !tabs && !pane.holds(moving);
+        let mut zones = regions(self.body(pane.rect), self.metrics.band, band, stackable);
+
+        let strip = Rect::new(pane.rect.x, pane.rect.y, pane.rect.w, self.metrics.tab);
+        zones.push(Zone::rect(strip, tabs));
+
+        zones
     }
 
     /// The order a slot's tabs are drawn in, which is the order they would be

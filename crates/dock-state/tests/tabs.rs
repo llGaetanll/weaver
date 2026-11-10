@@ -287,7 +287,8 @@ fn the_tabs_of_the_window_under_the_pointer_are_offered() {
 }
 
 /// The tabs move apart as the pointer goes, so the hole they leave is where
-/// the drop would land. Nothing else is drawn: the hole is the answer.
+/// the drop would land, and the strip is the darker region, as any region
+/// the pointer is in.
 #[test]
 fn the_tabs_move_apart_to_leave_the_hole_a_drop_would_fill() {
     let mut dock = three();
@@ -300,7 +301,9 @@ fn the_tabs_move_apart_to_leave_the_hole_a_drop_would_fill() {
         < Event::FromPointer(Moved { at: Point::new(40.0, 13.0) }),
     );
 
-    assert!(dock.frame().regions.is_empty(), "no wash: the hole says it");
+    let strip = Zone::rect(Rect::new(0.0, 0.0, 800.0, 27.0), true);
+    assert!(dock.frame().regions.contains(&strip), "the tabs are the darker region");
+    assert_eq!(dock.frame().regions.len(), 6, "with the window's others beside it");
     assert_eq!(
         tabs(&dock, B),
         vec![A, B],
