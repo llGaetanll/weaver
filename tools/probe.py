@@ -287,6 +287,36 @@ def check_edge(moment, claim):
     return None
 
 
+def check_seam(moment, claim):
+    """No second line a pixel outside a side of a role: two lines a pixel
+    apart read as a seam rather than an edge, whoever drew the other one."""
+    x0, y0, x1, y1 = moment.box(claim["role"])
+    side = claim["side"]
+    inset = claim.get("inset", 2)
+
+    if side in ("left", "right"):
+        x = x0 if side == "left" else x1 - 1
+        line = [(x, y) for y in range(y0 + inset, y1 - inset)]
+        outward = (-1 if side == "left" else 1, 0)
+    else:
+        y = y0 if side == "top" else y1 - 1
+        line = [(x, y) for x in range(x0 + inset, x1 - inset)]
+        outward = (0, -1 if side == "top" else 1)
+
+    border = moment.token("border")
+    both = [
+        (x, y) for x, y in line
+        if moment.picture.at(x, y) == border
+        and moment.picture.at(x + outward[0], y + outward[1]) == border
+    ]
+
+    if both:
+        x, y = both[0]
+        return f"the {side} of {claim['role']} is a line with another beside it, at {x},{y}"
+
+    return None
+
+
 def check_outside(moment, claim):
     """Nothing is painted outside a role: no shadow, no glow, no halo.
 
@@ -380,6 +410,7 @@ def patch(name, x0, y0, x1, y1):
 
 CHECKS = {
     "edge": check_edge,
+    "seam": check_seam,
     "outside": check_outside,
     "corners": check_corners,
     "fill": check_fill,
