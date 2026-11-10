@@ -129,6 +129,24 @@ fn the_band_under_the_pointer_is_the_one_offered() {
     );
 }
 
+/// A gap is not a target: beside one, the pointer is in a window, and what is
+/// offered is that window's regions.
+#[test]
+fn beside_a_gap_the_window_is_what_is_offered() {
+    let mut dock = three();
+
+    eval!(&mut dock,
+        < Event::FromPointer(Down { at: Point::new(410.0, 310.0) }),
+        < Event::FromPointer(Moved { at: Point::new(395.0, 300.0) }),
+    );
+
+    assert_eq!(
+        dock.frame().regions.len(),
+        5,
+        "A's five regions, not a strip along the gap"
+    );
+}
+
 /// Dropping beside a window whose group already runs that way folds into the
 /// group rather than nesting, so the arrival takes an equal share of it.
 #[test]

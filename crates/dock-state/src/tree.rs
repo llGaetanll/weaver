@@ -59,12 +59,6 @@ impl Stack {
         self.windows.contains(&window)
     }
 
-    /// A window in it that is not this one, which is what a drop needs to name
-    /// a pane it is landing beside.
-    pub fn other(&self, window: WindowId) -> Option<WindowId> {
-        self.windows.iter().copied().find(|held| *held != window)
-    }
-
     pub fn show(&mut self, window: WindowId) {
         if let Some(at) = self.windows.iter().position(|held| *held == window) {
             self.showing = at;
@@ -177,18 +171,6 @@ impl Node {
         match self.at_mut(&path)? {
             Node::Pane(stack) => Some(stack),
             Node::Group { .. } => None,
-        }
-    }
-
-    /// The last pane under this node, which is what a gap uses to name the
-    /// neighbour a drop lands beside.
-    pub fn last(&self) -> &Stack {
-        match self {
-            Node::Pane(stack) => stack,
-            Node::Group { children, .. } => match children.last() {
-                Some(child) => child.node.last(),
-                None => unreachable!("a group always has children"),
-            },
         }
     }
 }

@@ -417,8 +417,8 @@ impl StateDock {
     ///
     /// The two are worked out together and handed back together, so the shape
     /// drawn and the drop carried out cannot be about different things. The
-    /// three targets the board draws, in the order they take precedence: the
-    /// dock's edge, a gap, then the window under the pointer.
+    /// targets the board draws, in the order they take precedence: a slot's
+    /// tabs, the dock's edge, then the window under the pointer.
     fn targets(&self, moving: WindowId, at: Point) -> (Vec<Zone>, Option<Slot>) {
         let nothing = (Vec::new(), None);
 
@@ -458,36 +458,6 @@ impl StateDock {
             let zone = Zone::rect(strip(area, side, edge), true);
 
             return (vec![zone], Some(Slot::Edge { side }));
-        }
-
-        let gap = solved
-            .gaps
-            .iter()
-            .find(|gap| gap.rect.thickened(gap.axis, edge).contains(at));
-
-        if let Some(gap) = gap {
-            let Some(before) = self.leaf(&gap.group, gap.index, moving) else {
-                return nothing;
-            };
-
-            let side = match gap.axis {
-                Axis::Row => Side::Right,
-                Axis::Col => Side::Down,
-            };
-
-            if before == moving {
-                return nothing;
-            }
-
-            let zone = Zone::rect(gap.rect.thickened(gap.axis, edge), true);
-
-            return (
-                vec![zone],
-                Some(Slot::Beside {
-                    window: before,
-                    side,
-                }),
-            );
         }
 
         let Some(pane) = solved.at(at) else {
@@ -887,17 +857,6 @@ impl StateDock {
         };
 
         Some((children.get(index)?.share, children.get(index + 1)?.share))
-    }
-
-    /// A window in the pane a gap's left or upper side ends in, which is the
-    /// neighbour a drop on that gap lands beside. Never the window being
-    /// moved, since that one is about to be taken out of the tree.
-    fn leaf(&self, path: &Path, index: usize, moving: WindowId) -> Option<WindowId> {
-        let Node::Group { children, .. } = self.group(path)? else {
-            return None;
-        };
-
-        children.get(index)?.node.last().other(moving)
     }
 
     fn write(&mut self, path: &Path, index: usize, a: Share, b: Share) {

@@ -34,7 +34,6 @@
   <a href="#resize">resize</a>
   <a href="#drops">where a drop lands</a>
   <a href="#edge">edge</a>
-  <a href="#between">gap</a>
   <a href="#outer">outer edge</a>
   <a href="#nowhere">nowhere</a>
   <a href="#alone">alone, and empty</a>
@@ -260,9 +259,11 @@
     swallow a control everybody can.
   </p>
   <p class="note">
-    There are two more targets, and neither is a window's band: <b>a gap</b>
-    (<a href="#between">#between</a>) and <b>the dock's outer edge</b>
-    (<a href="#outer">#outer</a>). Four kinds of target in total, which is as
+    There is one more target, and it is not a window's band: <b>the dock's
+    outer edge</b> (<a href="#outer">#outer</a>). A gap is not one: the band
+    of the window on either side of it already lands there, so a strip along
+    the line would be a second way of saying the same thing. Three kinds of
+    target in total, which is as
     many as can be told apart without a legend.
   </p>
 </section>
@@ -351,7 +352,9 @@
     <b>What the window will get is an equal share of whatever group it lands
     in.</b> Landing in a group of two gives it a third of that group;
     splitting one window gives it half. One rule, and it is the same rule the
-    gap and the outer edge follow.
+    outer edge follows. A drop beside a window whose group already runs that
+    way <b>joins that group</b> rather than nesting a new one inside it: a
+    group whose axis matches its parent's is flattened into it.
   </p>
   <p class="note">
     <b>Two things move, at two speeds.</b> The regions fade, and the dark one
@@ -369,65 +372,6 @@
     nowhere has brought a window forward and done nothing else, and a twitch
     does not rearrange the screen. The threshold is a distance and not a duration, which
     is why nothing in the library reads a clock.
-  </p>
-</section>
-
-<!-- ------------------------------------------------------------- between -->
-<section class="sheet" id="between">
-  <div class="name"><h2>Moving — over a gap</h2><code>#between</code></div>
-  <p class="note">
-    The pointer is on the gap between the column and the inspector, so the
-    window lands <b>between them</b>: the row gets a third child and all three
-    share the width. What is drawn is the gap and the few pixels either side of
-    it, which is the region, not the slot.
-  </p>
-  <p class="note">
-    This is not a fourth kind of operation. Dropping on the right edge of the
-    column would nest a row inside a row, and a group whose axis matches its
-    parent's is <b>flattened into it</b> — so that drop and this one produce the
-    same tree. The gap is offered as a target because it is the one place where
-    "which side of this line am I on" has no answer, and asking the user to
-    guess at a boundary is how a drop lands somewhere they did not intend.
-  </p>
-  <div class="frame">
-    <div class="app">
-      <div class="hostbar"><b>weaver</b> <span>moving — timeline between the column and the inspector</span></div>
-      <div class="dock row" style="grid-template-columns: 1fr var(--gap) 300px">
-        <div class="col" style="grid-template-rows: 1fr var(--gap) 120px">
-          <div class="pane sketch">
-            <div class="pane-strip"></div><div class="tab is-showing is-only"><span class="tab-icon"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2 H10 V10 H2 Z" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></span><h3>Canvas</h3></div>
-            <div class="win"><div class="fill">the host's</div></div>
-          </div>
-          <div class="gap gap-h"></div>
-          <div class="pane sketch is-empty">
-            <div class="pane-strip"></div>
-          </div>
-        </div>
-        <div class="gap gap-v"></div>
-        <div class="pane sketch">
-          <div class="pane-strip"></div><div class="tab is-showing is-only"><span class="tab-icon"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2 H10 V10 H2 Z" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></span><h3>Inspector</h3></div>
-          <div class="win"><div class="fill lines"></div></div>
-        </div>
-
-        <div class="regions-at" style="left: calc(100% - 313px); top: 0; width: 21px; height: 100%">
-          <div class="region" style="opacity: 1; background: var(--drop-chosen)"></div>
-        </div>
-
-        <div class="win is-lifted" style="position: absolute; left: calc(100% - 430px); top: calc(150px + var(--tab) - 1px); width: calc(100% - 300px - var(--gap)); height: calc(120px - var(--tab))"><div class="fill lines"></div></div>
-        <div class="ghost is-aloft" style="left: calc(100% - 430px); top: 150px; width: 160px; height: var(--tab)">
-          <div class="tab is-showing is-only"><span class="tab-icon"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2 H10 V10 H2 Z" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></span><h3>Timeline</h3></div>
-        </div>
-        <div class="cursor" style="left: calc(100% - 303px); top: 163px">
-          <svg width="14" height="20" viewBox="0 0 14 20" aria-hidden="true"><path d="M1.2 1.2 L1.2 15.2 L5.2 11.4 L7.8 18 L10.4 17 L7.9 10.5 L12.4 10.5 Z" fill="#0a0a0a" stroke="#fff" stroke-width="1.3"/></svg>
-        </div>
-      </div>
-    </div>
-  </div>
-  <p class="note">
-    The column is left holding one window, so <b>it collapses into that
-    window</b>: a group with one child is not a group. Without that rule a
-    week of dragging leaves a tree of wrappers nobody can see and every
-    resize has to walk through.
   </p>
 </section>
 
@@ -479,6 +423,12 @@
       </div>
     </div>
   </div>
+  <p class="note">
+    The row the inspector leaves is holding only the column, so <b>it
+    collapses into the column</b>: a group with one child is not a group. Without that
+    rule a week of dragging leaves a tree of wrappers nobody can see and every
+    resize has to walk through.
+  </p>
   <div class="gap-note">
     <b>Not settled:</b> how wide the outer strip is. It has to be reachable
     without leaving the dock and narrow enough that a drop meant for the window
