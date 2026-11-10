@@ -97,6 +97,9 @@ pub struct StateDock {
     /// layout touch it: a pointer moving over a dock that has just settled
     /// must not cut the settling short.
     settling: bool,
+    /// The window just put down, while the dock settles around it. Where it
+    /// came from is history, so it is kept rather than worked out.
+    arrived: Option<WindowId>,
     /// What the next slot made will be called.
     next: SlotId,
 }
@@ -134,6 +137,7 @@ impl StateDock {
         // up with it; a window opening or closing is not, so the rest of them
         // move over to make room.
         self.settling = !matches!(event, EventHost::Resized { .. });
+        self.arrived = None;
 
         match event {
             EventHost::Resized { size } => self.surface = *size,
@@ -318,6 +322,7 @@ impl StateDock {
             Some(Gesture::Resizing { held }) => {
                 // A window under the pointer keeps up with it.
                 self.settling = false;
+                self.arrived = None;
 
                 for held in &held {
                     self.resize(held, at);
@@ -335,12 +340,14 @@ impl StateDock {
     }
 
     fn release(&mut self, at: Point) {
-        if let Some(Gesture::Moving { window, .. }) = self.gesture.clone()
-            && let (_, Some(slot)) = self.targets(window, at)
-        {
-            self.root = self.dropped(window, slot);
-            self.next = SlotId(self.next.0 + 1);
-            self.settling = true;
+        if let Some(Gesture::Moving { window, .. }) = self.gesture.clone() {
+            self.arrived = Some(window);
+
+            if let (_, Some(slot)) = self.targets(window, at) {
+                self.root = self.dropped(window, slot);
+                self.next = SlotId(self.next.0 + 1);
+                self.settling = true;
+            }
         }
 
         self.gesture = None;
@@ -349,12 +356,17 @@ impl StateDock {
     /// Nothing decided. A resize is put back where it was, since half a drag
     /// is not a size anybody asked for.
     fn cancel(&mut self) {
+        if let Some(Gesture::Moving { window, .. }) = self.gesture {
+            self.arrived = Some(window);
+        }
+
         if let Some(Gesture::Resizing { held }) = self.gesture.clone() {
             for held in &held {
                 self.write(&held.group, held.index, held.before.0, held.before.1);
             }
 
             self.settling = true;
+            self.arrived = None;
         }
 
         self.gesture = None;
@@ -648,12 +660,14 @@ impl StateDock {
                         rect,
                         showing: true,
                         lifted: true,
+                        arriving: false,
                     },
                     _ => WindowFrame {
                         window: *window,
                         rect: self.body(pane.rect),
                         showing: *window == shown(pane),
                         lifted: false,
+                        arriving: self.arrived == Some(*window),
                     },
                 })
             })

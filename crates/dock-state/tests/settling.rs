@@ -9,6 +9,7 @@ mod fixture;
 
 use dock_state::Event;
 use dock_state::EventHost::Resized;
+use dock_state::EventPointer::Cancelled;
 use dock_state::EventPointer::Down;
 use dock_state::EventPointer::Moved;
 use dock_state::EventPointer::Up;
@@ -19,6 +20,7 @@ use fixture::A;
 use fixture::B;
 use fixture::slot;
 use fixture::three;
+use fixture::window;
 
 #[test]
 fn a_gap_under_the_pointer_does_not_settle() {
@@ -85,6 +87,52 @@ fn a_pointer_moving_afterwards_does_not_cut_a_settle_short() {
     );
 
     assert!(dock.frame().settling, "and still settling into it");
+}
+
+/// The window put down is the one the dock settles around. It is named,
+/// because how it gets to its slot is not how the others get to theirs.
+#[test]
+fn the_window_put_down_is_arriving() {
+    let mut dock = three();
+
+    eval!(&mut dock,
+        < Event::FromPointer(Down { at: Point::new(10.0, 10.0) }),
+        < Event::FromPointer(Moved { at: Point::new(420.0, 100.0) }),
+        < Event::FromPointer(Up { at: Point::new(420.0, 100.0) }),
+    );
+
+    assert!(window(&dock, A).arriving, "A was put down");
+    assert!(!window(&dock, B).arriving, "B made room for it");
+}
+
+/// Escape puts a window back where it came from, which is arriving too.
+#[test]
+fn a_window_put_back_is_arriving() {
+    let mut dock = three();
+
+    eval!(&mut dock,
+        < Event::FromPointer(Down { at: Point::new(10.0, 10.0) }),
+        < Event::FromPointer(Moved { at: Point::new(420.0, 100.0) }),
+        < Event::FromPointer(Cancelled),
+    );
+
+    assert!(window(&dock, A).arriving, "A went back");
+}
+
+/// Whatever changes the layout next is a settle of its own, around nothing
+/// in particular.
+#[test]
+fn the_next_change_forgets_what_arrived() {
+    let mut dock = three();
+
+    eval!(&mut dock,
+        < Event::FromPointer(Down { at: Point::new(10.0, 10.0) }),
+        < Event::FromPointer(Moved { at: Point::new(420.0, 100.0) }),
+        < Event::FromPointer(Up { at: Point::new(420.0, 100.0) }),
+        < Event::FromHost(Resized { size: Size::new(900.0, 600.0) }),
+    );
+
+    assert!(!window(&dock, A).arriving, "the resize is about everyone");
 }
 
 /// What a slot is called is what lets it ease from where it was, so a slot

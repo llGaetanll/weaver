@@ -22,6 +22,8 @@ pub struct WindowFrame {
     /// and its slot is left empty. The slot is not closed up, which would
     /// move the target out from under the cursor.
     pub lifted: bool,
+    /// Just put down, while the rest of the dock settles around it.
+    pub arriving: bool,
 }
 
 /// One tab: the name of a window sharing a slot, and whatever the host draws

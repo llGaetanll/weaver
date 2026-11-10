@@ -269,22 +269,20 @@ body {
    the top of the answer is the slowest way to be told nothing. */
 .dock:not(.is-moving) .region { transition: none; }
 
-/* Windows do not move to where they belong yet. They are simply there.
+/* A settle is every slot easing from the rectangle it had to the one it has,
+   whenever the layout changed on its own rather than under the pointer. The
+   window just put down is not one of them: it has no rectangle in the old
+   layout to ease from, so for now it is simply there. */
+.dock.settles:not(.is-moving) :is(.pane, .win, .gap, .tab) {
+  transition:
+    left var(--settle) ease,
+    top var(--settle) ease,
+    width var(--settle) ease,
+    height var(--settle) ease;
+}
 
-   A settle is every slot easing from the rectangle it had to the one it has,
-   and the frame already says when that should happen: `settles` is on the
-   dock whenever the layout changed on its own rather than under the pointer.
-   What is missing is what a slot that did not exist a moment ago should ease
-   *from* — a window arriving pops into place while the one making room for it
-   glides, and that half of an answer is worse than none. The rule comes back
-   here when there is one.
-
-       .dock.settles .pane, .dock.settles .win, .dock.settles .gap {
-         transition: left var(--settle) ease, …;
-       }
-
-   Tabs do move, because a tab arriving has somewhere to come from: the one
-   under the cursor. See `.dock.is-moving .tab` above. */
+/* Above the windows making room for it, whatever order they were opened in. */
+.dock.settles .win.is-arriving { transition: none; z-index: 1; }
 
 /* The cursor, drawn so a picture can show where the pointer is. Not the
    library's. */

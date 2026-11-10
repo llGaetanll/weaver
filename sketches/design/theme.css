@@ -63,7 +63,7 @@
      under a pointer that is already moving, so it is quick; a window settling
      is the dock answering, so it is not. */
   --fade:   .2s;
-  --settle: 2s;
+  --settle: 3s;
 
   --row:    26px;
   --row-sm: 21px;
