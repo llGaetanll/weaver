@@ -174,13 +174,19 @@ fn PaneView(dock: Dock, pane: SlotId, icon: Option<Callback<WindowId, AnyView>>)
     let start = untrack(move || pane().and_then(|pane| pane.from));
     let born = RwSignal::new(true);
 
+    // Once, when the slot is made. It watches nothing but the element: a
+    // frame that changes later is not a reason to start out again.
     Effect::new(move |_| {
         let Some(element) = node.get() else {
             return;
         };
 
+        if !born.get_untracked() {
+            return;
+        }
+
         if let Some(from) = start {
-            fly(&element, &place(from), &style());
+            fly(&element, &place(from), &untrack(style));
         }
 
         born.set(false);
