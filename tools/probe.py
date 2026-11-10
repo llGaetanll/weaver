@@ -110,12 +110,18 @@ def catch(port, into):
     server.server_close()
 
 
+# What a watching browser loses around its page. One taking a picture is
+# sized by its page, so the two only agree once this is added back.
+FRAME = [0, 0]
+
+
 def chrome(query, shot=None):
     """A browser on the page, which quits on its own only if it is taking a
     picture — one that is only watching has to be stopped."""
+    w, h = (WIDTH, HEIGHT) if shot else (WIDTH + FRAME[0], HEIGHT + FRAME[1])
     args = [
         "google-chrome-stable", "--headless", "--disable-gpu", "--hide-scrollbars",
-        "--force-device-scale-factor=1", f"--window-size={WIDTH},{HEIGHT}",
+        "--force-device-scale-factor=1", f"--window-size={w},{h}",
     ]
     if shot:
         args.append(f"--screenshot={shot}")
@@ -140,6 +146,21 @@ def visit(gesture, break_with=None, hide=None):
     if hide:
         base["hide"] = hide
 
+    seen = watch(base)
+    view = seen[0].get("viewport", {"w": WIDTH, "h": HEIGHT})
+
+    if (view["w"], view["h"]) != (WIDTH, HEIGHT):
+        FRAME[0] += WIDTH - view["w"]
+        FRAME[1] += HEIGHT - view["h"]
+        seen = watch(base)
+
+    chrome(base, shot=SHOT).wait(timeout=60)
+
+    return seen[0], Picture(SHOT)
+
+
+def watch(base):
+    """What the page says is where, from a browser that is only watching."""
     seen = []
     listen = threading.Thread(target=catch, args=(BACK, seen))
     listen.start()
@@ -152,9 +173,7 @@ def visit(gesture, break_with=None, hide=None):
     if not seen:
         raise SystemExit("the page said nothing — is `trunk serve` running?")
 
-    chrome(base, shot=SHOT).wait(timeout=60)
-
-    return seen[0], Picture(SHOT)
+    return seen
 
 
 TOKENS = ["panel", "sunken", "border", "border-firm", "bg", "drop", "drop-chosen", "text"]

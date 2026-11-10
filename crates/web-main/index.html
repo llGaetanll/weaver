@@ -140,7 +140,10 @@
 
           fetch("http://127.0.0.1:" + (query.get("to") || 7151) + "/probe", {
             method: "POST",
-            body: JSON.stringify({ origin: { x: origin.x, y: origin.y }, tokens, boxes }),
+            body: JSON.stringify({
+              origin: { x: origin.x, y: origin.y }, tokens, boxes,
+              viewport: { w: innerWidth, h: innerHeight },
+            }),
           });
         }, 1000 + steps.length * 100 + 200);
       }
