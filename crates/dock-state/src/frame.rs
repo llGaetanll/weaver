@@ -17,8 +17,8 @@ pub struct WindowFrame {
     pub window: WindowId,
     pub rect: Rect,
     pub showing: bool,
-    /// Being moved. Once its tab leaves its own strip it hangs under the tab
-    /// and its slot is left empty; the slot is not closed up, which would
+    /// In the air: its tab has left its own strip, so it hangs under the tab
+    /// and its slot is left empty. The slot is not closed up, which would
     /// move the target out from under the cursor.
     pub lifted: bool,
 }

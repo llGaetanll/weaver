@@ -148,3 +148,53 @@ check = "ink"
 role = "pane:2"
 same-as = "strip:2"
 broken-by = ".win.is-lifted { left: 0 !important; top: 27px !important }"
+
+[[claim]]
+name = "the carried tab has a line along its top once its window is in the air"
+says = "One line goes round the tab and the window together."
+gesture = "down:80,13|move:120,60|move:400,200|move:700,300"
+check = "edge"
+role = "carried"
+side = "top"
+is = "border"
+broken-by = ".ghost.is-aloft .tab { box-shadow: inset 1px 0 0 var(--border), inset -1px 0 0 var(--border) !important }"
+
+[[claim]]
+name = "the carried window has a line down its left"
+says = "One line goes round the tab and the window together."
+gesture = "down:80,13|move:120,60|move:700,13"
+check = "edge"
+role = "win:files"
+side = "left"
+is = "border"
+broken-by = ".win.is-lifted { outline: none !important }"
+
+[[claim]]
+name = "the carried window has a line down its right"
+says = "One line goes round the tab and the window together."
+gesture = "down:80,13|move:120,60|move:700,13"
+check = "edge"
+role = "win:files"
+side = "right"
+is = "border"
+broken-by = ".win.is-lifted { outline: none !important }"
+
+[[claim]]
+name = "the carried window has a line along its bottom"
+says = "One line goes round the tab and the window together."
+gesture = "down:80,13|move:120,60|move:700,13"
+check = "edge"
+role = "win:files"
+side = "bottom"
+is = "border"
+broken-by = ".win.is-lifted { outline: none !important }"
+
+[[claim]]
+name = "no line runs between the carried tab and its window"
+says = "None runs between them: the tab is still a piece of the window, folded up."
+gesture = "down:80,13|move:120,60|move:400,200|move:700,300"
+check = "edge"
+role = "carried"
+side = "bottom"
+is = "none"
+broken-by = ".ghost { z-index: 1 !important }"

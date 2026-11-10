@@ -411,10 +411,16 @@ fn Ghost(dock: Dock, icon: Option<Callback<WindowId, AnyView>>) -> impl IntoView
     let carried = move || dock.frame().carried;
     let mark = move || Some(icon?.run(carried()?.window));
 
+    // The tab has a top only while its window is in the air under it.
+    let class = move || match dock.frame().windows.iter().any(|drawn| drawn.lifted) {
+        true => "ghost is-aloft",
+        false => "ghost",
+    };
+
     view! {
         <Show when=move || carried().is_some()>
             <div
-                class="ghost"
+                class=class
                 style=move || carried().map(|tab| place(tab.rect)).unwrap_or_default()
             >
                 <div class="tab is-showing is-only">

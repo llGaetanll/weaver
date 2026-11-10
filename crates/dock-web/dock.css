@@ -197,8 +197,14 @@ body {
 
 .win.is-hidden { display: none; }
 
-/* The window under its tab, above the drop regions. */
-.win.is-lifted { z-index: 2; }
+/* The window under its tab, above the drop regions, with a line all the way
+   round. An outline is drawn over what the host put inside; the tab covers
+   it where the two meet. */
+.win.is-lifted {
+  z-index: 2;
+  outline: 1px solid var(--border);
+  outline-offset: -1px;
+}
 
 /* --- Moving a window ---------------------------------------------------- */
 
@@ -207,9 +213,10 @@ body {
    thing in the library allowed over another window, and why the dock is a
    positioned surface.
 
-   It wears the edges a showing tab wears and nothing else. A shadow under it
-   would lift it off the surface, and the tab is still a piece of its own
-   window rather than a card taken out of the dock. */
+   It wears the edges a showing tab wears, and a top once its window is in
+   the air, so one line goes round the tab and the window together. A shadow
+   under it would lift it off the surface, and the tab is still a piece of
+   its own window rather than a card taken out of the dock. */
 .ghost {
   position: absolute;
   z-index: 2;
@@ -227,6 +234,12 @@ body {
   box-shadow: inset 1px 0 0 var(--border), inset -1px 0 0 var(--border);
 }
 .ghost .tab { height: var(--tab); background: var(--panel); }
+.ghost.is-aloft .tab {
+  box-shadow:
+    inset 1px 0 0 var(--border),
+    inset -1px 0 0 var(--border),
+    inset 0 1px 0 var(--border);
+}
 
 /* Every region a drop could aim at, where the pointer is: the five a window
    is divided into, or the one a gap or the dock's edge makes. They are the

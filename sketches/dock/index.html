@@ -306,8 +306,8 @@
           <div class="region" style="opacity: 1; clip-path: polygon(10% 10%, 90% 10%, 90% 90%, 10% 90%)"></div>
         </div>
 
-        <div class="win is-lifted" style="position: absolute; left: 150px; top: calc(120px + var(--tab)); width: 300px; height: calc(100% - var(--tab))"><div class="fill lines"></div></div>
-        <div class="ghost" style="left: 150px; top: 120px; width: 160px; height: var(--tab)">
+        <div class="win is-lifted" style="position: absolute; left: 150px; top: calc(120px + var(--tab) - 1px); width: 300px; height: calc(100% - var(--tab))"><div class="fill lines"></div></div>
+        <div class="ghost is-aloft" style="left: 150px; top: 120px; width: 160px; height: var(--tab)">
           <div class="tab is-showing is-only"><span class="tab-icon"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2 H10 V10 H2 Z" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></span><h3>Inspector</h3></div>
         </div>
         <div class="cursor" style="left: 188px; top: 133px">
@@ -317,7 +317,7 @@
     </div>
   </div>
   <p class="note">
-    Five decisions are argued here.
+    Six decisions are argued here.
   </p>
   <p class="note">
     <b>The window follows its tab, and the slot it left is empty.</b> It is
@@ -327,6 +327,12 @@
     moment you pick something up moves the target you were aiming at out from
     under your cursor. The regions are drawn under the window rather than over
     it — what aims is the pointer, and the pointer is on the tab.
+  </p>
+  <p class="note">
+    <b>One line goes round the tab and the window together</b>, and none runs
+    between them: the tab is still a piece of the window, folded up. Over a
+    slot's strip the tab reaches over the gap above it, as it does at the
+    ends, so its top is that gap's line and not a second one beside it.
   </p>
   <p class="note">
     <b>A window lifted out of a stack leaves the rest of the stack behind</b>,
@@ -401,8 +407,8 @@
           <div class="region" style="opacity: 1; background: var(--drop-chosen)"></div>
         </div>
 
-        <div class="win is-lifted" style="position: absolute; left: calc(100% - 430px); top: calc(150px + var(--tab)); width: calc(100% - 300px - var(--gap)); height: calc(120px - var(--tab))"><div class="fill lines"></div></div>
-        <div class="ghost" style="left: calc(100% - 430px); top: 150px; width: 160px; height: var(--tab)">
+        <div class="win is-lifted" style="position: absolute; left: calc(100% - 430px); top: calc(150px + var(--tab) - 1px); width: calc(100% - 300px - var(--gap)); height: calc(120px - var(--tab))"><div class="fill lines"></div></div>
+        <div class="ghost is-aloft" style="left: calc(100% - 430px); top: 150px; width: 160px; height: var(--tab)">
           <div class="tab is-showing is-only"><span class="tab-icon"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2 H10 V10 H2 Z" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></span><h3>Timeline</h3></div>
         </div>
         <div class="cursor" style="left: calc(100% - 303px); top: 163px">
@@ -457,8 +463,8 @@
           <div class="region" style="opacity: 1; background: var(--drop-chosen)"></div>
         </div>
 
-        <div class="win is-lifted" style="position: absolute; left: 24px; top: calc(140px + var(--tab)); width: 300px; height: calc(100% - var(--tab))"><div class="fill lines"></div></div>
-        <div class="ghost" style="left: 24px; top: 140px; width: 160px; height: var(--tab)">
+        <div class="win is-lifted" style="position: absolute; left: 24px; top: calc(140px + var(--tab) - 1px); width: 300px; height: calc(100% - var(--tab))"><div class="fill lines"></div></div>
+        <div class="ghost is-aloft" style="left: 24px; top: 140px; width: 160px; height: var(--tab)">
           <div class="tab is-showing is-only"><span class="tab-icon"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2 H10 V10 H2 Z" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></span><h3>Inspector</h3></div>
         </div>
         <div class="cursor" style="left: 7px; top: 152px">
@@ -509,8 +515,8 @@
           <div class="pane-strip"></div>
         </div>
 
-        <div class="win is-lifted" style="position: absolute; left: 50%; top: calc(-22px + var(--tab)); width: 300px; height: calc(100% - var(--tab))"><div class="fill lines"></div></div>
-        <div class="ghost" style="left: 50%; top: -22px; width: 160px; height: var(--tab)">
+        <div class="win is-lifted" style="position: absolute; left: 50%; top: calc(-22px + var(--tab) - 1px); width: 300px; height: calc(100% - var(--tab))"><div class="fill lines"></div></div>
+        <div class="ghost is-aloft" style="left: 50%; top: -22px; width: 160px; height: var(--tab)">
           <div class="tab is-showing is-only"><span class="tab-icon"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2 H10 V10 H2 Z" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></span><h3>Inspector</h3></div>
         </div>
       </div>

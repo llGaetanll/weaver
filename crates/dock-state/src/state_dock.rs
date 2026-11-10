@@ -588,16 +588,19 @@ impl StateDock {
                 at,
             }) => {
                 let (regions, aim) = self.targets(*window, *at);
+                let away = self.away(*window, *at, &solved);
 
                 let carried = TabFrame {
                     window: *window,
                     title: self.title(*window),
-                    rect: self.carried(*at, *grab, *size, &solved),
+                    rect: self.carried(*at, *grab, *size, away, &solved),
                     showing: true,
                     lifted: true,
                 };
 
-                let aloft = self.aloft(*window, *at, carried.rect, &solved);
+                let aloft = away
+                    .then(|| self.aloft(*window, carried.rect, &solved))
+                    .flatten();
 
                 (Some(carried), regions, aim, aloft)
             }
@@ -648,7 +651,7 @@ impl StateDock {
                         window: *window,
                         rect: self.body(pane.rect),
                         showing: *window == shown(pane),
-                        lifted: moving == Some(*window),
+                        lifted: false,
                     },
                 })
             })
@@ -773,8 +776,9 @@ impl StateDock {
     /// which is what carrying one out of a slot needs.
     ///
     /// Pushed to either end it reaches over the gap there, so its own line
-    /// lands on the gap's instead of beside it.
-    fn carried(&self, at: Point, grab: Point, size: Size, solved: &Solved) -> Rect {
+    /// lands on the gap's instead of beside it — and so does its top, when it
+    /// has one, which is while its window is in the air.
+    fn carried(&self, at: Point, grab: Point, size: Size, away: bool, solved: &Solved) -> Rect {
         let loose = Rect::new(at.x - grab.x, at.y - grab.y, size.w, size.h);
 
         let Some(pane) = solved.at(at) else {
@@ -789,27 +793,31 @@ impl StateDock {
         let first = (pane.rect.x - self.metrics.gap).max(area.x);
         let last = ((pane.rect.right() + self.metrics.gap).min(area.right()) - size.w).max(first);
 
-        Rect::new(
-            loose.x.clamp(first, last),
-            pane.rect.y,
-            size.w,
-            size.h,
-        )
+        let top = match away {
+            true => (pane.rect.y - self.metrics.gap).max(area.y),
+            false => pane.rect.y,
+        };
+
+        Rect::new(loose.x.clamp(first, last), top, size.w, size.h)
     }
 
-    /// Where a window being carried is drawn: hanging under its tab, the size
-    /// it was. None while its tab is over its own strip, where it is being
-    /// put in order rather than moved, and stays in its slot.
-    fn aloft(&self, window: WindowId, at: Point, tab: Rect, solved: &Solved) -> Option<Rect> {
-        let home = solved.pane(window)?;
+    /// Whether a window being carried has left its slot. Not while its tab is
+    /// over its own strip: that is putting it in order, not moving it.
+    fn away(&self, window: WindowId, at: Point, solved: &Solved) -> bool {
+        let Some(home) = solved.pane(window) else {
+            return false;
+        };
 
-        if home.rect.contains(at) && at.y < home.rect.y + self.metrics.tab {
-            return None;
-        }
+        !(home.rect.contains(at) && at.y < home.rect.y + self.metrics.tab)
+    }
 
-        let body = self.body(home.rect);
+    /// Where a window in the air is drawn: under its tab, the size it was.
+    /// Its top row is the tab's bottom one, so the line around the window is
+    /// hidden by the tab where the two meet.
+    fn aloft(&self, window: WindowId, tab: Rect, solved: &Solved) -> Option<Rect> {
+        let body = self.body(solved.pane(window)?.rect);
 
-        Some(Rect::new(tab.x, tab.y + self.metrics.tab, body.w, body.h))
+        Some(Rect::new(tab.x, tab.bottom() - self.metrics.gap, body.w, body.h))
     }
 
     /// Where a window's tab is right now.

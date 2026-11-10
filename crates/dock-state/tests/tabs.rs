@@ -177,7 +177,7 @@ fn a_window_lifted_out_of_a_stack_leaves_the_next_one_showing() {
     assert!(showing(&dock, B), "B shows in its place");
     assert_eq!(
         window(&dock, A).rect,
-        Rect::new(60.0, 414.0, 800.0, 272.5),
+        Rect::new(60.0, 413.0, 800.0, 272.5),
         "and A hangs under its tab",
     );
 }
@@ -203,6 +203,32 @@ fn a_window_stays_while_its_tab_is_put_in_order() {
     );
     assert!(showing(&dock, A), "and still the one showing");
     assert!(!showing(&dock, B), "with B behind it");
+    assert!(!window(&dock, A).lifted, "it is not in the air");
+}
+
+/// A tab whose window is in the air has a line along its top, so over
+/// another slot's strip it reaches over the gap above, the way it does at
+/// the ends, and the two lines are one.
+#[test]
+fn a_tab_carried_over_another_strip_covers_the_gap_above() {
+    let mut dock = three();
+
+    eval!(&mut dock,
+        < Event::FromPointer(Down { at: Point::new(10.0, 10.0) }),
+        < Event::FromPointer(Moved { at: Point::new(600.0, 310.0) }),
+    );
+
+    let carried = dock.frame().carried.expect("a tab is being carried");
+    assert_eq!(
+        carried.rect,
+        Rect::new(590.0, 299.5, 160.0, 27.0),
+        "its top is on the gap"
+    );
+    assert_eq!(
+        window(&dock, A).rect,
+        Rect::new(590.0, 325.5, 399.5, 573.0),
+        "and its window follows",
+    );
 }
 
 /// The tabs move apart as the pointer goes, so the hole they leave is where

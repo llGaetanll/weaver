@@ -74,7 +74,11 @@ fn a_press_that_travels_lifts_the_window() {
         .expect("A is drawn");
 
     assert_eq!(carried.rect, Rect::new(190.0, 290.0, 160.0, 27.0), "the tab is where it was held");
-    assert_eq!(window.rect, Rect::new(190.0, 317.0, 399.5, 573.0), "and the window hangs under it");
+    assert_eq!(
+        window.rect,
+        Rect::new(190.0, 316.0, 399.5, 573.0),
+        "and the window hangs under it, its top row under the tab's bottom one",
+    );
     assert!(window.showing && window.lifted, "drawn, and in the air");
 }
 
