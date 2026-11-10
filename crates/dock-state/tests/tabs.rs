@@ -8,6 +8,7 @@ use dock_state::EventPointer::Down;
 use dock_state::EventPointer::Moved;
 use dock_state::EventPointer::Up;
 use dock_state::Point;
+use dock_state::Rect;
 use eval::eval;
 use fixture::A;
 use fixture::B;
@@ -112,6 +113,49 @@ fn a_tab_dragged_along_its_strip_changes_the_order() {
 
     assert_eq!(tabs(&dock, A), vec![A, B], "now in front of B");
     assert_eq!(dock.frame().panes.len(), 2, "without having left the slot");
+}
+
+/// A tab pushed to the end of its strip reaches over the gap there, so the
+/// line down its side is the gap's line rather than a second one beside it.
+#[test]
+fn a_tab_pushed_to_the_end_of_its_strip_covers_the_gap() {
+    let mut dock = three();
+
+    eval!(&mut dock,
+        < Event::FromPointer(Down { at: Point::new(10.0, 13.0) }),
+        < Event::FromPointer(Moved { at: Point::new(398.0, 13.0) }),
+    );
+
+    let carried = dock.frame().carried.expect("a tab is being carried");
+    assert_eq!(carried.rect, Rect::new(240.5, 0.0, 160.0, 27.0), "its right edge is past the gap");
+}
+
+/// The same at the start of a strip.
+#[test]
+fn a_tab_pushed_to_the_start_of_its_strip_covers_the_gap() {
+    let mut dock = three();
+
+    eval!(&mut dock,
+        < Event::FromPointer(Down { at: Point::new(420.0, 13.0) }),
+        < Event::FromPointer(Moved { at: Point::new(401.0, 13.0) }),
+    );
+
+    let carried = dock.frame().carried.expect("a tab is being carried");
+    assert_eq!(carried.rect, Rect::new(399.5, 0.0, 160.0, 27.0), "it starts on the gap");
+}
+
+/// The dock's own edge has no gap to cover, so a tab stops at it.
+#[test]
+fn a_tab_pushed_to_the_dock_edge_stops_there() {
+    let mut dock = three();
+
+    eval!(&mut dock,
+        < Event::FromPointer(Down { at: Point::new(100.0, 13.0) }),
+        < Event::FromPointer(Moved { at: Point::new(2.0, 13.0) }),
+    );
+
+    let carried = dock.frame().carried.expect("a tab is being carried");
+    assert_eq!(carried.rect, Rect::new(0.0, 0.0, 160.0, 27.0), "inside the dock");
 }
 
 /// The tabs move apart as the pointer goes, so the hole they leave is where

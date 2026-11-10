@@ -752,6 +752,9 @@ impl StateDock {
     /// wanders out of line while being put in line is a tab fighting what it
     /// is being asked to do. Anywhere else it follows the pointer exactly,
     /// which is what carrying one out of a slot needs.
+    ///
+    /// Pushed to either end it reaches over the gap there, so its own line
+    /// lands on the gap's instead of beside it.
     fn carried(&self, at: Point, grab: Point, size: Size, solved: &Solved) -> Rect {
         let loose = Rect::new(at.x - grab.x, at.y - grab.y, size.w, size.h);
 
@@ -763,10 +766,12 @@ impl StateDock {
             return loose;
         }
 
-        let last = (pane.rect.right() - size.w).max(pane.rect.x);
+        let area = self.area();
+        let first = (pane.rect.x - self.metrics.gap).max(area.x);
+        let last = ((pane.rect.right() + self.metrics.gap).min(area.right()) - size.w).max(first);
 
         Rect::new(
-            loose.x.clamp(pane.rect.x, last),
+            loose.x.clamp(first, last),
             pane.rect.y,
             size.w,
             size.h,
