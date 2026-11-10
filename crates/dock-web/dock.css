@@ -286,7 +286,48 @@ body {
 }
 
 /* Above the windows making room for it, whatever order they were opened in. */
-.dock.settles :is(.pane, .win).is-arriving { z-index: 1; }
+.dock.settles .win.is-arriving {
+  z-index: 1;
+  outline: 1px solid transparent;
+  outline-offset: -1px;
+}
+
+/* On its way in, what was put down keeps the edges it had in the air and is
+   drawn as it was: its tab over its window, with the row under the tab
+   covered so no line runs between them, and the slot around them no shape
+   of its own. They hold for as long as the settle does, and when it lands
+   the slot's own lines take over. */
+@keyframes landing-window { from, to { outline-color: var(--border); } }
+
+@keyframes landing-tab {
+  from, to {
+    background-color: var(--panel);
+    color: var(--text-muted);
+    box-shadow:
+      inset 1px 0 0 var(--border),
+      inset -1px 0 0 var(--border),
+      inset 0 1px 0 var(--border),
+      0 2px 0 -1px var(--panel);
+  }
+}
+
+@keyframes landing-slot { from, to { z-index: 2; background-color: transparent; } }
+
+@keyframes landing-new-slot {
+  from, to { z-index: 2; background-color: transparent; box-shadow: 0 0 0 0 transparent; }
+}
+
+@keyframes landing-strip { from, to { border-bottom-color: transparent; } }
+
+.dock.settles:not(.is-moving) .win.is-arriving { animation: landing-window var(--settle); }
+.dock.settles:not(.is-moving) .tab.is-arriving { animation: landing-tab var(--settle); }
+.dock.settles:not(.is-moving) .pane:not(.is-arriving):has(> .tab.is-arriving) {
+  animation: landing-slot var(--settle);
+}
+.dock.settles:not(.is-moving) .pane.is-arriving { animation: landing-new-slot var(--settle); }
+.dock.settles:not(.is-moving) .pane:has(> .tab.is-arriving) > .pane-strip {
+  animation: landing-strip var(--settle);
+}
 
 /* The cursor, drawn so a picture can show where the pointer is. Not the
    library's. */

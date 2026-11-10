@@ -241,3 +241,43 @@ fn a_window_let_go_of_nowhere_settles_back() {
 
     assert!(dock.frame().settling, "it eases back");
 }
+
+/// Picked up again before it has landed, a window is no longer arriving
+/// anywhere: the next time it is put down is a landing of its own.
+#[test]
+fn a_window_picked_up_again_is_not_arriving() {
+    let mut dock = three();
+
+    eval!(&mut dock,
+        < Event::FromPointer(Down { at: Point::new(10.0, 10.0) }),
+        < Event::FromPointer(Moved { at: Point::new(420.0, 100.0) }),
+        < Event::FromPointer(Up { at: Point::new(420.0, 100.0) }),
+        < Event::FromPointer(Down { at: Point::new(410.0, 13.0) }),
+        < Event::FromPointer(Moved { at: Point::new(600.0, 400.0) }),
+    );
+
+    assert!(!window(&dock, A).arriving, "it is in the air again");
+}
+
+/// A tab let go of along its own strip was never in the air, so it has
+/// nowhere to come from and settles where it is.
+#[test]
+fn a_tab_put_in_order_comes_from_nowhere() {
+    let mut dock = three();
+
+    eval!(&mut dock,
+        < Event::FromPointer(Down { at: Point::new(10.0, 10.0) }),
+        < Event::FromPointer(Moved { at: Point::new(600.0, 150.0) }),
+        < Event::FromPointer(Up { at: Point::new(600.0, 150.0) }),
+        < Event::FromPointer(Down { at: Point::new(40.0, 13.0) }),
+        < Event::FromPointer(Moved { at: Point::new(300.0, 13.0) }),
+        < Event::FromPointer(Up { at: Point::new(300.0, 13.0) }),
+    );
+
+    let frame = dock.frame();
+    let tabs = frame.panes.iter().flat_map(|pane| &pane.tabs);
+
+    for tab in tabs {
+        assert_eq!(tab.from, None, "{:?} was in its strip all along", tab.window);
+    }
+}

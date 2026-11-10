@@ -305,6 +305,8 @@ impl StateDock {
                     return;
                 };
 
+                // Picked up again, it is no longer arriving anywhere.
+                self.arrived = None;
                 self.gesture = Some(Gesture::Moving {
                     window,
                     grab: Point::new(origin.x - tab.x, origin.y - tab.y),
@@ -389,9 +391,11 @@ impl StateDock {
             .find(|drawn| drawn.window == window && drawn.lifted)
             .map(|drawn| drawn.rect);
 
+        // A tab let go of along its own strip was never in the air, and it
+        // settles where it is.
         self.arrived = Some(Arrival {
             window,
-            tab: frame.carried.map(|tab| tab.rect),
+            tab: body.and(frame.carried.map(|tab| tab.rect)),
             body,
         });
 

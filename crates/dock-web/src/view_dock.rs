@@ -248,6 +248,8 @@ fn Tab(
 
         if tab.lifted {
             class.push_str(" is-lifted");
+        } else if tab.from.is_some() {
+            class.push_str(" is-arriving");
         }
 
         if count == 1 {
