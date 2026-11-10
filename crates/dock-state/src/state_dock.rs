@@ -593,7 +593,7 @@ impl StateDock {
                 let carried = TabFrame {
                     window: *window,
                     title: self.title(*window),
-                    rect: self.carried(*at, *grab, *size, away, &solved),
+                    rect: self.carried(*window, *at, *grab, *size, away, &solved),
                     showing: true,
                     lifted: true,
                 };
@@ -778,7 +778,18 @@ impl StateDock {
     /// Pushed to either end it reaches over the gap there, so its own line
     /// lands on the gap's instead of beside it — and so does its top, when it
     /// has one, which is while its window is in the air.
-    fn carried(&self, at: Point, grab: Point, size: Size, away: bool, solved: &Solved) -> Rect {
+    ///
+    /// A title bar has no order to be put in, so over its own strip it stays
+    /// where it is.
+    fn carried(
+        &self,
+        window: WindowId,
+        at: Point,
+        grab: Point,
+        size: Size,
+        away: bool,
+        solved: &Solved,
+    ) -> Rect {
         let loose = Rect::new(at.x - grab.x, at.y - grab.y, size.w, size.h);
 
         let Some(pane) = solved.at(at) else {
@@ -787,6 +798,10 @@ impl StateDock {
 
         if at.y >= pane.rect.y + self.metrics.tab {
             return loose;
+        }
+
+        if !away && pane.windows == [window] {
+            return Rect::new(pane.rect.x, pane.rect.y, size.w, size.h);
         }
 
         let area = self.area();

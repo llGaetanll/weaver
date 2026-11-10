@@ -116,33 +116,41 @@ fn a_tab_dragged_along_its_strip_changes_the_order() {
     assert_eq!(dock.frame().panes.len(), 2, "without having left the slot");
 }
 
-/// A tab pushed to the end of its strip reaches over the gap there, so the
+/// A tab pushed to the end of a strip reaches over the gap there, so the
 /// line down its side is the gap's line rather than a second one beside it.
 #[test]
-fn a_tab_pushed_to_the_end_of_its_strip_covers_the_gap() {
-    let mut dock = three();
-
-    eval!(&mut dock,
-        < Event::FromPointer(Down { at: Point::new(10.0, 13.0) }),
-        < Event::FromPointer(Moved { at: Point::new(398.0, 13.0) }),
-    );
-
-    let carried = dock.frame().carried.expect("a tab is being carried");
-    assert_eq!(carried.rect, Rect::new(240.5, 0.0, 160.0, 27.0), "its right edge is past the gap");
-}
-
-/// The same at the start of a strip.
-#[test]
-fn a_tab_pushed_to_the_start_of_its_strip_covers_the_gap() {
+fn a_tab_pushed_to_the_end_of_a_strip_covers_the_gap() {
     let mut dock = three();
 
     eval!(&mut dock,
         < Event::FromPointer(Down { at: Point::new(420.0, 13.0) }),
-        < Event::FromPointer(Moved { at: Point::new(401.0, 13.0) }),
+        < Event::FromPointer(Moved { at: Point::new(398.0, 13.0) }),
     );
 
     let carried = dock.frame().carried.expect("a tab is being carried");
-    assert_eq!(carried.rect, Rect::new(399.5, 0.0, 160.0, 27.0), "it starts on the gap");
+    assert_eq!(
+        carried.rect,
+        Rect::new(240.5, 0.0, 160.0, 27.0),
+        "its right edge is past the gap"
+    );
+}
+
+/// The same at the start of a strip, and along its top.
+#[test]
+fn a_tab_pushed_to_the_start_of_a_strip_covers_the_gap() {
+    let mut dock = three();
+
+    eval!(&mut dock,
+        < Event::FromPointer(Down { at: Point::new(10.0, 13.0) }),
+        < Event::FromPointer(Moved { at: Point::new(401.0, 310.0) }),
+    );
+
+    let carried = dock.frame().carried.expect("a tab is being carried");
+    assert_eq!(
+        carried.rect,
+        Rect::new(399.5, 299.5, 160.0, 27.0),
+        "it starts on the gap"
+    );
 }
 
 /// The dock's own edge has no gap to cover, so a tab stops at it.
@@ -151,12 +159,16 @@ fn a_tab_pushed_to_the_dock_edge_stops_there() {
     let mut dock = three();
 
     eval!(&mut dock,
-        < Event::FromPointer(Down { at: Point::new(100.0, 13.0) }),
+        < Event::FromPointer(Down { at: Point::new(420.0, 13.0) }),
         < Event::FromPointer(Moved { at: Point::new(2.0, 13.0) }),
     );
 
     let carried = dock.frame().carried.expect("a tab is being carried");
-    assert_eq!(carried.rect, Rect::new(0.0, 0.0, 160.0, 27.0), "inside the dock");
+    assert_eq!(
+        carried.rect,
+        Rect::new(0.0, 0.0, 160.0, 27.0),
+        "inside the dock"
+    );
 }
 
 /// A window lifted out of a stack leaves the rest behind, and the tab that
@@ -229,6 +241,22 @@ fn a_tab_carried_over_another_strip_covers_the_gap_above() {
         Rect::new(590.0, 325.5, 399.5, 573.0),
         "and its window follows",
     );
+}
+
+/// A title bar has no order to be put in, so it does not slide along its
+/// own strip: it stays where it is until the pointer leaves the strip.
+#[test]
+fn a_title_bar_does_not_slide_along_its_own_strip() {
+    let mut dock = three();
+
+    eval!(&mut dock,
+        < Event::FromPointer(Down { at: Point::new(10.0, 13.0) }),
+        < Event::FromPointer(Moved { at: Point::new(200.0, 13.0) }),
+    );
+
+    let carried = dock.frame().carried.expect("a tab is being carried");
+    assert_eq!(carried.rect, Rect::new(0.0, 0.0, 160.0, 27.0), "it has not moved");
+    assert!(!window(&dock, A).lifted, "and neither has its window");
 }
 
 /// The tabs move apart as the pointer goes, so the hole they leave is where

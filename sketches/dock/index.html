@@ -247,7 +247,9 @@
     The bands stop at the body, because <b>a window's tabs are its order</b>:
     a window carried over them lands between two of them rather than in the
     window under them, which is the only way a stack can be rearranged. A slot
-    with one tab has no order to change, so a drop on its title bar joins it.
+    with one tab has no order to change, so a drop on its title bar joins it —
+    and its own title bar does not slide along it: it stays where it is until
+    the pointer leaves the strip, and then the window lifts.
   </p>
   <p class="note">
     The tabs are looked at before the dock's own edge, which means the edge
