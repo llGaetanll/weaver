@@ -194,7 +194,6 @@ body {
 }
 
 .win.is-hidden { display: none; }
-.win.is-lifted { opacity: .4; }
 
 /* --- Moving a window ---------------------------------------------------- */
 
@@ -203,21 +202,26 @@ body {
    the pointer would be a second copy of something already there, and it
    would cover the hole it is going into. It is the one thing in the library
    allowed over another window, and it is why the dock is a positioned
-   surface. */
+   surface.
+
+   It wears the edges a showing tab wears and nothing else. A shadow under it
+   would lift it off the surface, and the tab is still a piece of its own
+   window rather than a card taken out of the dock. */
 .ghost {
   position: absolute;
   z-index: 2;
-  border-radius: var(--radius-sm);
   background: var(--panel);
-  box-shadow: 0 0 0 1px var(--border-firm), 0 5px 14px rgb(0 0 0 / .14);
   overflow: hidden;
   pointer-events: none;
 }
 
+/* The lines go on the tab and not on the ghost around it: the tab fills the
+   ghost and its own ground would paint over anything drawn there. */
 .ghost .tab {
   position: absolute;
   inset: 0;
   color: var(--text-muted);
+  box-shadow: inset 1px 0 0 var(--border), inset -1px 0 0 var(--border);
 }
 .ghost .tab { height: var(--tab); background: var(--panel); }
 
