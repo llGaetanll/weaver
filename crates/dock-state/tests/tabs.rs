@@ -9,6 +9,7 @@ use dock_state::EventPointer::Moved;
 use dock_state::EventPointer::Up;
 use dock_state::Point;
 use dock_state::Rect;
+use dock_state::Zone;
 use eval::eval;
 use fixture::A;
 use fixture::B;
@@ -48,7 +49,7 @@ fn the_middle_of_a_window_is_offered_as_a_region() {
         < Event::FromPointer(Moved { at: Point::new(600.0, 150.0) }),
     );
 
-    assert_eq!(dock.frame().regions.len(), 5, "four bands and the middle");
+    assert_eq!(dock.frame().regions.len(), 6, "four bands, the middle and the tabs");
     assert!(
         fixture::chosen(&dock).is_some(),
         "the middle is an answer too"
@@ -267,6 +268,22 @@ fn a_title_bar_does_not_slide_along_its_own_strip() {
     assert_eq!(tab.rect, Rect::new(0.0, 0.0, 160.0, 27.0), "the title bar is where it was");
     assert!(!tab.lifted, "and is drawn as it is at rest");
     assert!(!window(&dock, A).lifted, "and so is its window");
+}
+
+/// A window's tabs are somewhere a drop can land, so while the pointer is
+/// over the window they are offered as a region of their own — never the
+/// chosen one, since the pointer is not on them.
+#[test]
+fn the_tabs_of_the_window_under_the_pointer_are_offered() {
+    let mut dock = three();
+
+    eval!(&mut dock,
+        < Event::FromPointer(Down { at: Point::new(10.0, 10.0) }),
+        < Event::FromPointer(Moved { at: Point::new(600.0, 150.0) }),
+    );
+
+    let strip = Zone::rect(Rect::new(400.5, 0.0, 399.5, 27.0), false);
+    assert!(dock.frame().regions.contains(&strip), "B's tabs are washed");
 }
 
 /// The tabs move apart as the pointer goes, so the hole they leave is where

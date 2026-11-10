@@ -118,7 +118,7 @@ fn the_band_under_the_pointer_is_the_one_offered() {
         < Event::FromPointer(Moved { at: Point::new(420.0, 100.0) }),
     );
 
-    assert_eq!(dock.frame().regions.len(), 5, "four bands and the middle");
+    assert_eq!(dock.frame().regions.len(), 6, "four bands, the middle and the tabs");
 
     let zone = fixture::chosen(&dock).expect("in B's left band");
     let against = zone.points.iter().filter(|point| point.x < 403.0).count();
@@ -142,8 +142,8 @@ fn beside_a_gap_the_window_is_what_is_offered() {
 
     assert_eq!(
         dock.frame().regions.len(),
-        5,
-        "A's five regions, not a strip along the gap"
+        6,
+        "A's six regions, not a strip along the gap"
     );
 }
 

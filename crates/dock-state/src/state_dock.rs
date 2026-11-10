@@ -29,9 +29,9 @@ use crate::tree::WindowId;
 use crate::tree::place;
 use crate::tree::remove;
 
-/// The most regions that can be on offer at once: the four bands of a window
-/// and its middle.
-pub const REGIONS: usize = 5;
+/// The most regions that can be on offer at once: the four bands of a window,
+/// its middle and its tabs.
+pub const REGIONS: usize = 6;
 
 /// A window the host has opened, and the name the dock writes on it.
 #[derive(Clone, Debug)]
@@ -473,7 +473,12 @@ impl StateDock {
 
         let rect = self.body(pane.rect);
         let chosen = band(rect, at, self.metrics.band);
-        let zones = regions(rect, self.metrics.band, chosen, !pane.holds(moving));
+        let mut zones = regions(rect, self.metrics.band, chosen, !pane.holds(moving));
+
+        // The tabs are a target too, though never the one the pointer is in
+        // here: over them the hole they leave is the answer.
+        let strip = Rect::new(pane.rect.x, pane.rect.y, pane.rect.w, self.metrics.tab);
+        zones.push(Zone::rect(strip, false));
 
         let slot = match chosen {
             Some(side) => Some(Slot::Beside {

@@ -254,6 +254,12 @@
     to stick to.
   </p>
   <p class="note">
+    While the pointer is over a window, <b>its tabs are washed as a region of
+    their own</b>, never the darker one, so that they read as somewhere to go.
+    Once the pointer is on them nothing is washed: the tabs part to leave the
+    hole, and that is the answer.
+  </p>
+  <p class="note">
     The tabs are looked at before the dock's own edge, which means the edge
     cannot be reached along the top of a slot. A band nobody can see must not
     swallow a control everybody can.
@@ -310,6 +316,10 @@
           <div class="region" style="opacity: 1; clip-path: polygon(100% 0, 100% 100%, 90% 90%, 90% 10%)"></div>
           <div class="region" style="opacity: 1; clip-path: polygon(0 100%, 10% 90%, 90% 90%, 100% 100%)"></div>
           <div class="region" style="opacity: 1; clip-path: polygon(10% 10%, 90% 10%, 90% 90%, 10% 90%)"></div>
+        </div>
+
+        <div class="regions-at" style="left: 0; top: 0; width: calc(100% - 300px - var(--gap)); height: var(--tab)">
+          <div class="region" style="opacity: 1"></div>
         </div>
 
         <div class="win is-lifted" style="position: absolute; left: 150px; top: calc(120px + var(--tab) - 1px); width: 300px; height: calc(100% - var(--tab))"><div class="fill lines"></div></div>
