@@ -206,7 +206,9 @@ fn PaneView(dock: Dock, pane: SlotId, icon: Option<Callback<WindowId, AnyView>>)
 
     view! {
         <div node_ref=node class=class style=style>
-            <div class=strip style=beyond></div>
+            <div class=strip>
+                <div class="pane-line" style=beyond></div>
+            </div>
             <For each=move || windows.get() key=|window| *window let:window>
                 <Tab
                     dock=dock
