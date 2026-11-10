@@ -275,8 +275,8 @@ body {
 
 /* A settle is every slot easing from the rectangle it had to the one it has,
    whenever the layout changed on its own rather than under the pointer. The
-   window just put down is not one of them: it has no rectangle in the old
-   layout to ease from, so for now it is simply there. */
+   window just put down eases from where it was in the air, and a slot or tab
+   made for it starts there too. */
 .dock.settles:not(.is-moving) :is(.pane, .win, .gap, .tab) {
   transition:
     left var(--settle) ease,
@@ -286,7 +286,7 @@ body {
 }
 
 /* Above the windows making room for it, whatever order they were opened in. */
-.dock.settles .win.is-arriving { transition: none; z-index: 1; }
+.dock.settles :is(.pane, .win).is-arriving { z-index: 1; }
 
 /* The cursor, drawn so a picture can show where the pointer is. Not the
    library's. */

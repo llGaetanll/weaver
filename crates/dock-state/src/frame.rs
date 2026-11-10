@@ -37,6 +37,9 @@ pub struct TabFrame {
     pub rect: Rect,
     pub showing: bool,
     pub lifted: bool,
+    /// Where it was drawn the moment before, for a tab that has just been put
+    /// down: a tab made for it has no old place in this slot to ease from.
+    pub from: Option<Rect>,
 }
 
 /// One slot: the box a group of windows shares, and the tabs along the top of
@@ -48,6 +51,9 @@ pub struct PaneFrame {
     /// change while the slot stays the same thing.
     pub key: SlotId,
     pub rect: Rect,
+    /// Where it was the moment before, for a slot made for a window just put
+    /// down: around that window and its tab, in the air.
+    pub from: Option<Rect>,
     pub tabs: Vec<TabFrame>,
 }
 

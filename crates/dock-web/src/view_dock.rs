@@ -160,19 +160,56 @@ fn PaneView(dock: Dock, pane: SlotId, icon: Option<Callback<WindowId, AnyView>>)
         _ => "pane-strip is-stacked",
     };
 
-    let class = move || match tabs.get() {
-        0 => "pane is-empty",
+    let class = move || match (tabs.get(), pane().and_then(|pane| pane.from)) {
+        (0, _) => "pane is-empty",
+        (_, Some(_)) => "pane is-arriving",
         _ => "pane",
     };
 
+    let node: NodeRef<Div> = NodeRef::new();
+    let style = move || pane().map(|pane| place(pane.rect)).unwrap_or_default();
+
+    // A slot made for a window just put down starts where that window was,
+    // and so do the tabs made with it. One made later starts where it is.
+    let start = untrack(move || pane().and_then(|pane| pane.from));
+    let born = RwSignal::new(true);
+
+    Effect::new(move |_| {
+        let Some(element) = node.get() else {
+            return;
+        };
+
+        if let Some(from) = start {
+            fly(&element, &place(from), &style());
+        }
+
+        born.set(false);
+    });
+
     view! {
-        <div class=class style=move || pane().map(|pane| place(pane.rect)).unwrap_or_default()>
+        <div node_ref=node class=class style=style>
             <div class=strip></div>
             <For each=move || windows.get() key=|window| *window let:window>
-                <Tab dock=dock pane=key window=WindowId(window) icon=icon />
+                <Tab
+                    dock=dock
+                    pane=key
+                    window=WindowId(window)
+                    icon=icon
+                    start=if born.get_untracked() { start } else { None }
+                />
             </For>
         </div>
     }
+}
+
+/// Put an element where it was, with nothing easing, and then where it
+/// belongs, so that the second is a change it eases through. Whatever order
+/// the styles would otherwise have been applied in, it is laid out once at
+/// each.
+fn fly(element: &web_sys::HtmlDivElement, from: &str, to: &str) {
+    let _ = element.set_attribute("style", &format!("{from}; transition: none"));
+    let _ = element.get_bounding_client_rect();
+    let _ = element.set_attribute("style", to);
 }
 
 /// A tab: whatever the host draws for a window, and its name. The whole of
@@ -183,6 +220,8 @@ fn Tab(
     pane: SlotId,
     window: WindowId,
     icon: Option<Callback<WindowId, AnyView>>,
+    /// Where the slot it is in starts, when the two are made together.
+    start: Option<Rect>,
 ) -> impl IntoView {
     let drawn = move || {
         let frame = dock.frame();
@@ -218,22 +257,51 @@ fn Tab(
         class
     };
 
+    let node: NodeRef<Div> = NodeRef::new();
+
     // A tab is placed inside its own slot, so its rectangle is given from the
     // slot's corner rather than the dock's.
+    let within = |rect: Rect, pane: Rect| {
+        place(Rect::new(rect.x - pane.x, rect.y - pane.y, rect.w, rect.h))
+    };
+
     let style = move || match drawn() {
-        Some((pane, tab, _, _)) => place(Rect::new(
-            tab.rect.x - pane.x,
-            tab.rect.y - pane.y,
-            tab.rect.w,
-            tab.rect.h,
-        )),
+        Some((pane, tab, _, _)) => within(tab.rect, pane),
         None => String::new(),
     };
+
+    // A tab that has just been put down — made for the drop, or a hole that
+    // is filled now — starts where it was let go of. Until then it waits.
+    Effect::new(move |waiting: Option<bool>| {
+        let waiting = waiting.unwrap_or(true);
+
+        let Some((pane, tab, _, _)) = drawn() else {
+            return waiting;
+        };
+
+        if tab.lifted {
+            return true;
+        }
+
+        if !waiting {
+            return false;
+        }
+
+        let Some(element) = node.get() else {
+            return true;
+        };
+
+        if let Some(from) = tab.from {
+            fly(&element, &within(from, start.unwrap_or(pane)), &within(tab.rect, pane));
+        }
+
+        false
+    });
 
     let mark = move || Some(icon?.run(window));
 
     view! {
-        <div class=class style=style data-window=window.0 title="Drag to move this window">
+        <div node_ref=node class=class style=style data-window=window.0 title="Drag to move this window">
             <span class="tab-icon">{mark}</span>
             <h3>{move || drawn().map(|(_, tab, _, _)| tab.title).unwrap_or_default()}</h3>
         </div>

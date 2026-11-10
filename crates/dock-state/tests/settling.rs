@@ -14,6 +14,7 @@ use dock_state::EventPointer::Down;
 use dock_state::EventPointer::Moved;
 use dock_state::EventPointer::Up;
 use dock_state::Point;
+use dock_state::Rect;
 use dock_state::Size;
 use eval::eval;
 use fixture::A;
@@ -166,4 +167,77 @@ fn a_window_put_beside_another_has_a_new_slot() {
     );
 
     assert_ne!(slot(&dock, A), before, "a new slot");
+}
+
+/// A window put down eases from where it was in the air: its tab from where
+/// the pointer let go of it, and the slot made for it from around the tab and
+/// the window hanging under it.
+#[test]
+fn a_window_put_down_comes_from_where_it_was_in_the_air() {
+    let mut dock = three();
+
+    eval!(&mut dock,
+        < Event::FromPointer(Down { at: Point::new(10.0, 10.0) }),
+        < Event::FromPointer(Moved { at: Point::new(420.0, 100.0) }),
+        < Event::FromPointer(Up { at: Point::new(420.0, 100.0) }),
+    );
+
+    let frame = dock.frame();
+    let pane = frame
+        .panes
+        .iter()
+        .find(|pane| pane.tabs.iter().any(|tab| tab.window == A))
+        .expect("A has a slot");
+
+    assert_eq!(
+        pane.tabs[0].from,
+        Some(Rect::new(410.0, 90.0, 160.0, 27.0)),
+        "its tab, where it was let go of",
+    );
+    assert_eq!(
+        pane.from,
+        Some(Rect::new(410.0, 90.0, 399.5, 599.0)),
+        "its slot, around the tab and the window under it",
+    );
+}
+
+/// Nothing else comes from anywhere: every other slot has a rectangle in the
+/// old layout to ease from.
+#[test]
+fn the_slots_making_room_come_from_nowhere_in_particular() {
+    let mut dock = three();
+
+    eval!(&mut dock,
+        < Event::FromPointer(Down { at: Point::new(10.0, 10.0) }),
+        < Event::FromPointer(Moved { at: Point::new(420.0, 100.0) }),
+        < Event::FromPointer(Up { at: Point::new(420.0, 100.0) }),
+    );
+
+    let frame = dock.frame();
+    let others = frame
+        .panes
+        .iter()
+        .filter(|pane| pane.tabs.iter().all(|tab| tab.window != A));
+
+    for pane in others {
+        assert_eq!(pane.from, None, "{:?} was already there", pane.key);
+        assert!(pane.tabs.iter().all(|tab| tab.from.is_none()), "and so were its tabs");
+    }
+}
+
+/// Let go of nowhere, a window in the air goes back to its slot rather than
+/// appearing there, so that is a settle too.
+#[test]
+fn a_window_let_go_of_nowhere_settles_back() {
+    let mut dock = three();
+
+    eval!(&mut dock,
+        < Event::FromHost(Resized { size: Size::new(800.0, 600.0) }),
+        < Event::FromPointer(Down { at: Point::new(10.0, 10.0) }),
+        < Event::FromPointer(Moved { at: Point::new(420.0, 100.0) }),
+        < Event::FromPointer(Moved { at: Point::new(-50.0, 300.0) }),
+        < Event::FromPointer(Up { at: Point::new(-50.0, 300.0) }),
+    );
+
+    assert!(dock.frame().settling, "it eases back");
 }

@@ -388,11 +388,19 @@
     easing into the ground the window left still has one; at rest it is the
     same pixel as the gap's line.
   </p>
+  <p class="note">
+    <b>The window put down eases in from where it was in the air</b>, at the
+    same time and above the windows making room for it: its window from
+    where it hung, its tab from where the pointer let go of it, and a slot
+    made for it from around the two. None of them has a rectangle in the old
+    layout, so where they were the moment before is kept for them to start
+    from. A window let go of nowhere goes back the same way, and so does a
+    tab let go of along its own strip.
+  </p>
   <div class="gap-note">
-    <b>Not settled:</b> how the window put down gets to its slot. It has no
-    rectangle in the old layout to ease from — only the one it had in the
-    air — so for now it is simply there, above the windows making room for
-    it.
+    <b>Not settled:</b> the curve. Everything eases the same way over the
+    same three seconds, which is long on purpose while the motion is being
+    looked at.
   </div>
   <p class="note">
     <b>A press is not yet a move.</b> A tab is picked the moment it is pressed,

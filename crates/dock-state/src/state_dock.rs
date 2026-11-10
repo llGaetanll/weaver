@@ -41,6 +41,17 @@ struct Window {
     title: String,
 }
 
+/// Where a window being put down was drawn the moment before. Its new slot
+/// and its tab in it have no rectangle in the old layout, so this is what
+/// they ease from.
+#[derive(Clone, Copy, Debug)]
+struct Arrival {
+    window: WindowId,
+    tab: Option<Rect>,
+    /// None unless the window was in the air.
+    body: Option<Rect>,
+}
+
 /// What the pointer is in the middle of. One value, so resizing while moving
 /// is not a state the dock can be in.
 #[derive(Clone, Debug)]
@@ -99,7 +110,7 @@ pub struct StateDock {
     settling: bool,
     /// The window just put down, while the dock settles around it. Where it
     /// came from is history, so it is kept rather than worked out.
-    arrived: Option<WindowId>,
+    arrived: Option<Arrival>,
     /// What the next slot made will be called.
     next: SlotId,
 }
@@ -333,6 +344,20 @@ impl StateDock {
         }
     }
 
+    /// Where a slot made for the window just put down was, the moment before:
+    /// around its tab and its window, in the air.
+    fn came_from(&self, pane: &Pane) -> Option<Rect> {
+        let arrival = self.arrived?;
+
+        if pane.windows != [arrival.window] {
+            return None;
+        }
+
+        let (tab, body) = (arrival.tab?, arrival.body?);
+
+        Some(Rect::new(tab.x, tab.y, body.w, body.bottom() - tab.y))
+    }
+
     /// Whether a window carried to here has left its own strip.
     fn left(&self, window: WindowId, at: Point) -> bool {
         self.solved()
@@ -341,7 +366,7 @@ impl StateDock {
 
     fn release(&mut self, at: Point) {
         if let Some(Gesture::Moving { window, .. }) = self.gesture.clone() {
-            self.arrived = Some(window);
+            self.land(window);
 
             if let (_, Some(slot)) = self.targets(window, at) {
                 self.root = self.dropped(window, slot);
@@ -353,11 +378,33 @@ impl StateDock {
         self.gesture = None;
     }
 
+    /// Note where a window being put down was drawn, before the layout it
+    /// lands in replaces the one it was carried over. One that was in the air
+    /// eases to its slot even when the slot is the one it left.
+    fn land(&mut self, window: WindowId) {
+        let frame = self.frame();
+        let body = frame
+            .windows
+            .iter()
+            .find(|drawn| drawn.window == window && drawn.lifted)
+            .map(|drawn| drawn.rect);
+
+        self.arrived = Some(Arrival {
+            window,
+            tab: frame.carried.map(|tab| tab.rect),
+            body,
+        });
+
+        if body.is_some() {
+            self.settling = true;
+        }
+    }
+
     /// Nothing decided. A resize is put back where it was, since half a drag
     /// is not a size anybody asked for.
     fn cancel(&mut self) {
         if let Some(Gesture::Moving { window, .. }) = self.gesture {
-            self.arrived = Some(window);
+            self.land(window);
         }
 
         if let Some(Gesture::Resizing { held }) = self.gesture.clone() {
@@ -608,6 +655,7 @@ impl StateDock {
                     rect: self.carried(*window, *at, *grab, *size, away, &solved),
                     showing: true,
                     lifted: true,
+                    from: None,
                 };
 
                 let aloft = away
@@ -637,6 +685,7 @@ impl StateDock {
             .map(|pane| PaneFrame {
                 key: pane.slot,
                 rect: pane.rect,
+                from: self.came_from(pane),
                 tabs: tabs(&self.order(pane, moving, aim), pane.rect, &self.metrics)
                     .into_iter()
                     .map(|(window, rect)| TabFrame {
@@ -645,6 +694,10 @@ impl StateDock {
                         rect,
                         showing: window == shown(pane),
                         lifted: moving == Some(window),
+                        from: self
+                            .arrived
+                            .filter(|arrival| arrival.window == window)
+                            .and_then(|arrival| arrival.tab),
                     })
                     .collect(),
             })
@@ -667,7 +720,7 @@ impl StateDock {
                         rect: self.body(pane.rect),
                         showing: *window == shown(pane),
                         lifted: false,
-                        arriving: self.arrived == Some(*window),
+                        arriving: self.arrived.is_some_and(|arrival| arrival.window == *window),
                     },
                 })
             })
