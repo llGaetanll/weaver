@@ -11,6 +11,7 @@ use crate::tree::Child;
 use crate::tree::Node;
 use crate::tree::Path;
 use crate::tree::Share;
+use crate::tree::SlotId;
 use crate::tree::WindowId;
 
 /// One gap, and the two children it divides.
@@ -21,9 +22,9 @@ pub struct Gap {
     pub index: usize,
     pub axis: Axis,
     pub rect: Rect,
-    /// The slot this gap comes after, which is what names it: a gap is not a
-    /// thing in the tree, so it is known by what is on one side of it.
-    pub after: WindowId,
+    /// The first slot after this gap, which with its axis is what names it: a
+    /// gap is not a thing in the tree, so it is known by what is beside it.
+    pub before: SlotId,
     /// What the two children either side of it measure right now, which is
     /// where a resize starts counting from.
     pub pair: (f32, f32),
@@ -33,6 +34,7 @@ pub struct Gap {
 /// the rectangle they have.
 #[derive(Clone, Debug)]
 pub struct Pane {
+    pub slot: SlotId,
     pub windows: Vec<WindowId>,
     pub showing: WindowId,
     pub rect: Rect,
@@ -43,17 +45,6 @@ impl Pane {
         self.windows.contains(&window)
     }
 
-    /// A name for this slot that does not change when its windows are
-    /// reordered or leafed through, so that whoever draws it can tell it from
-    /// the slot that was in the same place a frame ago. Slots have no names
-    /// of their own, so the smallest window in one stands for it.
-    pub fn key(&self) -> WindowId {
-        self.windows
-            .iter()
-            .copied()
-            .min_by_key(|window| window.0)
-            .unwrap_or(self.showing)
-    }
 }
 
 #[derive(Clone, Debug, Default)]
@@ -74,6 +65,17 @@ impl Solved {
     }
 }
 
+/// The first slot under a node, which is the one a gap before it is beside.
+fn first(node: &Node) -> SlotId {
+    match node {
+        Node::Pane(stack) => stack.id(),
+        Node::Group { children, .. } => match children.first() {
+            Some(child) => first(&child.node),
+            None => unreachable!("a group always has children"),
+        },
+    }
+}
+
 pub fn solve(root: &Node, area: Rect, metrics: &Metrics) -> Solved {
     let mut solved = Solved::default();
     let mut path = Path::new();
@@ -90,6 +92,7 @@ fn walk(node: &Node, area: Rect, metrics: &Metrics, path: &mut Path, out: &mut S
         };
 
         out.panes.push(Pane {
+            slot: stack.id(),
             windows: stack.windows().to_vec(),
             showing: stack.showing(),
             rect: area,
@@ -104,19 +107,13 @@ fn walk(node: &Node, area: Rect, metrics: &Metrics, path: &mut Path, out: &mut S
 
     for (i, (child, extent)) in children.iter().zip(&extents).enumerate() {
         if i > 0 {
-            // Whatever was laid out last is the slot on this gap's near side.
-            let after = match out.panes.last() {
-                Some(pane) => pane.key(),
-                None => unreachable!("a gap always follows a slot"),
-            };
-
             out.gaps.push(Gap {
                 group: path.clone(),
                 index: i - 1,
                 axis,
                 rect: area.slice(axis, at, metrics.gap),
                 pair: (extents[i - 1], *extent),
-                after,
+                before: first(&child.node),
             });
 
             at += metrics.gap;

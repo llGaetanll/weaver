@@ -4,6 +4,7 @@
 use crate::geometry::Axis;
 use crate::geometry::Point;
 use crate::geometry::Rect;
+use crate::tree::SlotId;
 use crate::tree::WindowId;
 
 /// One window's contents: where to draw them, and whether they are the ones
@@ -43,7 +44,7 @@ pub struct PaneFrame {
     /// What to call this slot from one frame to the next. It is not the
     /// window showing in it and not its place on screen — both of those
     /// change while the slot stays the same thing.
-    pub key: WindowId,
+    pub key: SlotId,
     pub rect: Rect,
     pub tabs: Vec<TabFrame>,
 }
@@ -52,9 +53,10 @@ pub struct PaneFrame {
 pub struct GapFrame {
     pub rect: Rect,
     pub axis: Axis,
-    /// The slot it comes after. A gap has no name of its own, and whoever
-    /// draws one needs to know it is the same gap it drew last time.
-    pub after: WindowId,
+    /// The slot it comes before. A gap has no name of its own, and whoever
+    /// draws one needs to know it is the same gap it drew last time; that is
+    /// this and its axis.
+    pub before: SlotId,
     /// The pointer is on it, or holding it. Both lines of a crossing are
     /// held together, which an element on its own could never work out.
     pub held: bool,

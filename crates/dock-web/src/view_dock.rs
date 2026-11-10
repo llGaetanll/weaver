@@ -1,11 +1,13 @@
 //! The elements. A window is a box the frame puts somewhere; what is in one
 //! comes from the host.
 
+use dock_state::Axis;
 use dock_state::Cursor;
 use dock_state::Event;
 use dock_state::EventPointer;
 use dock_state::Point;
 use dock_state::Rect;
+use dock_state::SlotId;
 use dock_state::WindowId;
 use dock_state::Zone;
 use leptos::ev;
@@ -62,9 +64,11 @@ pub fn DockView(
     // rectangle, so the order the elements sit in makes no difference to the
     // picture — while moving one to keep a list tidy takes it out of the page
     // and puts it back, which ends whatever it was in the middle of doing.
-    let windows = Memo::new(move |_| sorted(dock.frame().windows.iter().map(|w| w.window)));
-    let panes = Memo::new(move |_| sorted(dock.frame().panes.iter().map(|pane| pane.key)));
-    let gaps = Memo::new(move |_| sorted(dock.frame().gaps.iter().map(|gap| gap.after)));
+    let windows = Memo::new(move |_| sorted(dock.frame().windows.iter().map(|w| w.window.0)));
+    let panes = Memo::new(move |_| sorted(dock.frame().panes.iter().map(|pane| pane.key.0)));
+    let gaps = Memo::new(move |_| {
+        sorted(dock.frame().gaps.iter().map(|gap| (gap.before.0, gap.axis == Axis::Row)))
+    });
 
     let settling = move || {
         if dock.frame().settling {
@@ -106,15 +110,15 @@ pub fn DockView(
             }
         >
             <For each=move || panes.get() key=|pane| *pane let:pane>
-                <PaneView dock=dock pane=pane icon=icon />
+                <PaneView dock=dock pane=SlotId(pane) icon=icon />
             </For>
 
             <For each=move || windows.get() key=|window| *window let:window>
-                <Window dock=dock window=window content=content />
+                <Window dock=dock window=WindowId(window) content=content />
             </For>
 
             <For each=move || gaps.get() key=|gap| *gap let:gap>
-                <Gap dock=dock after=gap />
+                <Gap dock=dock before=SlotId(gap.0) row=gap.1 />
             </For>
 
             <Regions dock=dock />
@@ -128,7 +132,7 @@ pub fn DockView(
 /// belong to the slot — a slot with one window in it has one tab, and that is
 /// the title bar.
 #[component]
-fn PaneView(dock: Dock, pane: WindowId, icon: Option<Callback<WindowId, AnyView>>) -> impl IntoView {
+fn PaneView(dock: Dock, pane: SlotId, icon: Option<Callback<WindowId, AnyView>>) -> impl IntoView {
     let key = pane;
     let pane = move || {
         dock.frame()
@@ -145,7 +149,7 @@ fn PaneView(dock: Dock, pane: WindowId, icon: Option<Callback<WindowId, AnyView>
     let windows = Memo::new(move |_| {
         sorted(
             pane()
-                .map(|pane| pane.tabs.iter().map(|tab| tab.window).collect::<Vec<_>>())
+                .map(|pane| pane.tabs.iter().map(|tab| tab.window.0).collect::<Vec<_>>())
                 .unwrap_or_default()
                 .into_iter(),
         )
@@ -165,7 +169,7 @@ fn PaneView(dock: Dock, pane: WindowId, icon: Option<Callback<WindowId, AnyView>
         <div class=class style=move || pane().map(|pane| place(pane.rect)).unwrap_or_default()>
             <div class=strip></div>
             <For each=move || windows.get() key=|window| *window let:window>
-                <Tab dock=dock pane=key window=window icon=icon />
+                <Tab dock=dock pane=key window=WindowId(window) icon=icon />
             </For>
         </div>
     }
@@ -176,7 +180,7 @@ fn PaneView(dock: Dock, pane: WindowId, icon: Option<Callback<WindowId, AnyView>
 #[component]
 fn Tab(
     dock: Dock,
-    pane: WindowId,
+    pane: SlotId,
     window: WindowId,
     icon: Option<Callback<WindowId, AnyView>>,
 ) -> impl IntoView {
@@ -269,19 +273,19 @@ fn Window(dock: Dock, window: WindowId, content: Callback<WindowId, AnyView>) ->
 /// The gap is the resize control, so the only thing it draws is the cursor
 /// that says so.
 #[component]
-fn Gap(dock: Dock, after: WindowId) -> impl IntoView {
+fn Gap(dock: Dock, before: SlotId, row: bool) -> impl IntoView {
     let drawn = move || {
         dock.frame()
             .gaps
             .iter()
-            .find(|gap| gap.after == after)
+            .find(|gap| gap.before == before && (gap.axis == Axis::Row) == row)
             .copied()
     };
 
     let class = move || match drawn() {
-        Some(gap) if gap.held && gap.axis == dock_state::Axis::Row => "gap gap-v is-held",
+        Some(gap) if gap.held && gap.axis == Axis::Row => "gap gap-v is-held",
         Some(gap) if gap.held => "gap gap-h is-held",
-        Some(gap) if gap.axis == dock_state::Axis::Row => "gap gap-v",
+        Some(gap) if gap.axis == Axis::Row => "gap gap-v",
         Some(_) => "gap gap-h",
         None => "gap",
     };
@@ -437,14 +441,14 @@ fn Ghost(dock: Dock, icon: Option<Callback<WindowId, AnyView>>) -> impl IntoView
     }
 }
 
-/// The same windows in the same order every time, whatever order they happen
+/// The same things in the same order every time, whatever order they happen
 /// to be drawn in.
-fn sorted(windows: impl Iterator<Item = WindowId>) -> Vec<WindowId> {
-    let mut windows: Vec<WindowId> = windows.collect();
+fn sorted<T: Ord>(keys: impl Iterator<Item = T>) -> Vec<T> {
+    let mut keys: Vec<T> = keys.collect();
 
-    windows.sort_by_key(|window| window.0);
+    keys.sort();
 
-    windows
+    keys
 }
 
 fn place(rect: Rect) -> String {

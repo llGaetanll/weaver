@@ -44,4 +44,5 @@ pub use state_dock::REGIONS;
 pub use state_dock::StateDock;
 pub use tree::Share;
 pub use tree::Slot;
+pub use tree::SlotId;
 pub use tree::WindowId;

@@ -25,6 +25,7 @@ use crate::tree::Node;
 use crate::tree::Path;
 use crate::tree::Share;
 use crate::tree::Slot;
+use crate::tree::SlotId;
 use crate::tree::WindowId;
 use crate::tree::place;
 use crate::tree::remove;
@@ -96,6 +97,8 @@ pub struct StateDock {
     /// layout touch it: a pointer moving over a dock that has just settled
     /// must not cut the settling short.
     settling: bool,
+    /// What the next slot made will be called.
+    next: SlotId,
 }
 
 impl StateDock {
@@ -150,7 +153,8 @@ impl StateDock {
                     title: title.clone(),
                 });
 
-                place(&mut self.root, *window, *at, *share);
+                place(&mut self.root, *window, *at, *share, self.next);
+                self.next = SlotId(self.next.0 + 1);
             }
 
             EventHost::Show { window } => self.show(*window),
@@ -335,6 +339,7 @@ impl StateDock {
             && let (_, Some(slot)) = self.targets(window, at)
         {
             self.root = self.dropped(window, slot);
+            self.next = SlotId(self.next.0 + 1);
             self.settling = true;
         }
 
@@ -407,7 +412,7 @@ impl StateDock {
         // side of the dock is still the width somebody set it to.
         let share = remove(&mut root, window).unwrap_or(Share::Flex(1.0));
 
-        place(&mut root, window, slot, share);
+        place(&mut root, window, slot, share, self.next);
 
         root
     }
@@ -618,7 +623,7 @@ impl StateDock {
             .panes
             .iter()
             .map(|pane| PaneFrame {
-                key: pane.key(),
+                key: pane.slot,
                 rect: pane.rect,
                 tabs: tabs(&self.order(pane, moving, aim), pane.rect, &self.metrics)
                     .into_iter()
@@ -662,7 +667,7 @@ impl StateDock {
             .map(|gap| GapFrame {
                 rect: gap.rect,
                 axis: gap.axis,
-                after: gap.after,
+                before: gap.before,
                 held: held.contains(&(gap.group.clone(), gap.index)),
             })
             .collect();

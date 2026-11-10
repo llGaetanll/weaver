@@ -13,6 +13,7 @@ use dock_state::Share;
 use dock_state::Side;
 use dock_state::Size;
 use dock_state::Slot;
+use dock_state::SlotId;
 use dock_state::StateDock;
 use dock_state::WindowFrame;
 use dock_state::WindowId;
@@ -78,6 +79,16 @@ pub fn rect(dock: &StateDock, window: WindowId) -> Rect {
         .iter()
         .find(|pane| pane.tabs.iter().any(|tab| tab.window == window))
         .map(|pane| pane.rect)
+        .expect("the window is in the dock")
+}
+
+/// What the slot a window is in is called.
+pub fn slot(dock: &StateDock, window: WindowId) -> SlotId {
+    dock.frame()
+        .panes
+        .iter()
+        .find(|pane| pane.tabs.iter().any(|tab| tab.window == window))
+        .map(|pane| pane.key)
         .expect("the window is in the dock")
 }
 

@@ -13,6 +13,11 @@ use crate::geometry::Side;
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct WindowId(pub u64);
 
+/// A slot's own name, kept for as long as the slot is: windows join it,
+/// leave it and change places in it without it becoming another slot.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
+pub struct SlotId(pub u64);
+
 /// How much of its group a child takes.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Share {
@@ -30,16 +35,22 @@ pub enum Share {
 /// when there is no room left to divide.
 #[derive(Clone, Debug)]
 pub struct Stack {
+    id: SlotId,
     windows: Vec<WindowId>,
     showing: usize,
 }
 
 impl Stack {
-    pub fn new(window: WindowId) -> Self {
+    pub fn new(id: SlotId, window: WindowId) -> Self {
         Self {
+            id,
             windows: vec![window],
             showing: 0,
         }
+    }
+
+    pub fn id(&self) -> SlotId {
+        self.id
     }
 
     pub fn windows(&self) -> &[WindowId] {
@@ -177,20 +188,21 @@ impl Node {
 
 /// Put a window where a slot says, with the share it takes of whatever group
 /// it lands in. The tree may be empty, in which case the window becomes the
-/// whole of it and the slot does not matter.
-pub fn place(root: &mut Option<Node>, window: WindowId, slot: Slot, share: Share) {
+/// whole of it and the slot does not matter. A slot made for it is called
+/// `id`.
+pub fn place(root: &mut Option<Node>, window: WindowId, slot: Slot, share: Share, id: SlotId) {
     let Some(node) = root.as_mut() else {
-        *root = Some(Node::Pane(Stack::new(window)));
+        *root = Some(Node::Pane(Stack::new(id, window)));
 
         return;
     };
 
     match slot {
-        Slot::Edge { side } => place_edge(node, window, side, share),
+        Slot::Edge { side } => place_edge(node, window, side, share, id),
         Slot::Beside {
             window: target,
             side,
-        } => place_beside(node, window, target, side, share),
+        } => place_beside(node, window, target, side, share, id),
         Slot::With {
             window: target,
             before,
@@ -205,7 +217,7 @@ pub fn place(root: &mut Option<Node>, window: WindowId, slot: Slot, share: Share
     // being worked out and carried out. Putting it on the end is wrong; losing
     // it is worse.
     if node.find(window).is_none() {
-        place_edge(node, window, Side::Right, share);
+        place_edge(node, window, Side::Right, share, id);
     }
 
     normalize(node);
@@ -213,7 +225,7 @@ pub fn place(root: &mut Option<Node>, window: WindowId, slot: Slot, share: Share
 
 /// Along the whole of one side of the dock, which is the only drop that can
 /// reach past the group a window is in.
-fn place_edge(root: &mut Node, window: WindowId, side: Side, share: Share) {
+fn place_edge(root: &mut Node, window: WindowId, side: Side, share: Share, id: SlotId) {
     let fits = matches!(root, Node::Group { axis, .. } if *axis == side.axis());
 
     if fits {
@@ -227,22 +239,29 @@ fn place_edge(root: &mut Node, window: WindowId, side: Side, share: Share) {
             at,
             Child {
                 share,
-                node: Node::Pane(Stack::new(window)),
+                node: Node::Pane(Stack::new(id, window)),
             },
         );
     } else {
-        wrap(root, window, side, share);
+        wrap(root, window, side, share, id);
     }
 }
 
-fn place_beside(root: &mut Node, window: WindowId, target: WindowId, side: Side, share: Share) {
+fn place_beside(
+    root: &mut Node,
+    window: WindowId,
+    target: WindowId,
+    side: Side,
+    share: Share,
+    id: SlotId,
+) {
     let Some(path) = root.find(target) else {
         return;
     };
 
     let Some((index, parent_path)) = path.split_last() else {
         // The target is the whole tree, so there is no group to join.
-        wrap(root, window, side, share);
+        wrap(root, window, side, share, id);
 
         return;
     };
@@ -262,7 +281,7 @@ fn place_beside(root: &mut Node, window: WindowId, target: WindowId, side: Side,
             at,
             Child {
                 share,
-                node: Node::Pane(Stack::new(window)),
+                node: Node::Pane(Stack::new(id, window)),
             },
         );
     } else {
@@ -270,18 +289,18 @@ fn place_beside(root: &mut Node, window: WindowId, target: WindowId, side: Side,
             return;
         };
 
-        wrap(&mut child.node, window, side, share);
+        wrap(&mut child.node, window, side, share, id);
     }
 }
 
 /// Turn a node into a group of two along a new axis: the node, and the window
 /// arriving beside it.
-fn wrap(node: &mut Node, window: WindowId, side: Side, share: Share) {
-    let taken = std::mem::replace(node, Node::Pane(Stack::new(window)));
+fn wrap(node: &mut Node, window: WindowId, side: Side, share: Share, id: SlotId) {
+    let taken = std::mem::replace(node, Node::Pane(Stack::new(id, window)));
 
     let arriving = Child {
         share,
-        node: Node::Pane(Stack::new(window)),
+        node: Node::Pane(Stack::new(id, window)),
     };
     let existing = Child {
         share: Share::Flex(1.0),
