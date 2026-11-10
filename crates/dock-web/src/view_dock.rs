@@ -224,7 +224,7 @@ fn Tab(
     let mark = move || Some(icon?.run(window));
 
     view! {
-        <div class=class style=style title="Drag to move this window">
+        <div class=class style=style data-window=window.0 title="Drag to move this window">
             <span class="tab-icon">{mark}</span>
             <h3>{move || drawn().map(|(_, tab, _, _)| tab.title).unwrap_or_default()}</h3>
         </div>
@@ -246,12 +246,15 @@ fn Window(dock: Dock, window: WindowId, content: Callback<WindowId, AnyView>) ->
 
     let class = move || match drawn() {
         Some(drawn) if !drawn.showing => "win is-hidden",
-        Some(drawn) if drawn.lifted => "win is-lifted",
         _ => "win",
     };
 
     view! {
-        <div class=class style=move || drawn().map(|drawn| place(drawn.rect)).unwrap_or_default()>
+        <div
+            class=class
+            style=move || drawn().map(|drawn| place(drawn.rect)).unwrap_or_default()
+            data-window=window.0
+        >
             {content.run(window)}
         </div>
     }

@@ -37,6 +37,16 @@
         document.documentElement.style.setProperty("--settle", "0s");
       }
 
+      // A probe proves itself by breaking the thing on purpose. Whatever CSS
+      // is handed over here is added to the page, and the claim that is about
+      // it then has to fail. See tools/probe.py --self-check.
+      const broken = query.get("break");
+      if (broken) {
+        const rule = document.createElement("style");
+        rule.textContent = broken;
+        document.head.append(rule);
+      }
+
       const steps = script.split("|").map((step) => {
         const [what, where] = step.split(":");
         const [x, y] = where.split(",").map(Number);
@@ -58,6 +68,82 @@
       steps.forEach((step, i) => {
         setTimeout(() => send("pointer" + step.what, step.x, step.y), 1000 + i * 100);
       });
+
+      // A claim about what is painted *around* something asks for the same
+      // moment without it. The name is the one the probe knows it by, and it
+      // is left out with a rule rather than an inline style: what the dock
+      // draws has its own idea of what that element's style attribute says.
+      const hide = query.get("hide");
+      if (hide) {
+        const where = { ghost: ".ghost", carried: ".ghost .tab" }[hide]
+          || `.tab[data-window="${hide}"]`;
+        const rule = document.createElement("style");
+        rule.textContent = `${where} { visibility: hidden }`;
+        document.head.append(rule);
+      }
+
+      // What a probe is told: where the things the dock draws are, and what
+      // the host's colours resolve to. A claim is written against these names
+      // and read off the picture taken in the same run, so a backend that is
+      // not a browser answers the same questions by filling this in. See
+      // tools/probe.py.
+      if (query.has("probe")) {
+        setTimeout(() => {
+          const dock = document.querySelector(".dock");
+          const origin = dock.getBoundingClientRect();
+          const style = getComputedStyle(document.documentElement);
+          const title = (window) =>
+            document.querySelector(`.tab[data-window="${window}"] h3`)?.textContent || window;
+
+          const boxes = [];
+          const say = (name, node) => {
+            const box = node.getBoundingClientRect();
+            boxes.push({ name, x: box.x, y: box.y, w: box.width, h: box.height });
+          };
+
+          say("dock", dock);
+          dock.querySelectorAll(".pane").forEach((node, i) => say(`pane:${i}`, node));
+          dock.querySelectorAll(".pane-strip").forEach((node, i) => say(`strip:${i}`, node));
+          dock.querySelectorAll(".gap").forEach((node, i) => say(`gap:${i}`, node));
+          // A region is a full-surface element with a hole cut in it, so its
+          // box says nothing: what it is, is its clip and its fill.
+          dock.querySelectorAll(".region").forEach((node, i) => {
+            const paint = getComputedStyle(node);
+            say(`region:${i}`, node);
+            Object.assign(boxes[boxes.length - 1], {
+              clip: paint.clipPath, fill: paint.backgroundColor, opacity: paint.opacity,
+            });
+          });
+
+          dock.querySelectorAll(".tab[data-window]").forEach((node) => {
+            const window = node.dataset.window;
+            const marks = [...node.classList].filter((name) => name.startsWith("is-"));
+            say(`tab:${title(window)}${marks.map((m) => ":" + m.slice(3)).join("")}`, node);
+          });
+
+          dock.querySelectorAll(".win[data-window]").forEach((node) => {
+            const window = node.dataset.window;
+            const hidden = node.classList.contains("is-hidden") ? ":hidden" : "";
+            say(`win:${title(window)}${hidden}`, node);
+          });
+
+          const ghost = dock.querySelector(".ghost");
+          if (ghost) {
+            say("ghost", ghost);
+            say("carried", ghost.querySelector(".tab"));
+          }
+
+          const tokens = {};
+          for (const name of query.get("tokens")?.split(",") || []) {
+            tokens[name] = style.getPropertyValue("--" + name).trim();
+          }
+
+          fetch("http://127.0.0.1:" + (query.get("to") || 7151) + "/probe", {
+            method: "POST",
+            body: JSON.stringify({ origin: { x: origin.x, y: origin.y }, tokens, boxes }),
+          });
+        }, 1000 + steps.length * 100 + 200);
+      }
 
       const trace = Number(query.get("trace") || 0);
       if (!trace) return;

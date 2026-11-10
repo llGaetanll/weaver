@@ -1,0 +1,141 @@
+# What the dock has to look like, as claims a picture can settle.
+#
+# Each one names the gesture to play, the thing to look at, the question to
+# ask of it, and the sentence from the board that it is holding. `broken-by`
+# is the one-line change that has to make it fail — a claim nothing can break
+# is a claim that proves nothing, and `probe.py --self-check` applies each in
+# turn and watches for it.
+#
+# Roles are what the dock draws, named by the backend and not by a selector:
+# `tab:editor`, `win:editor`, `carried`, `ghost`, `strip:0`, `gap:2`.
+
+# --- Tabs, at rest ------------------------------------------------------
+
+[[claim]]
+name = "the showing tab wears the window's own ground"
+says = "A tab is a piece of the window it belongs to, folded up."
+gesture = "down:5,5|up:5,5"
+check = "fill"
+role = "tab:editor"
+patch = "right"
+is = "panel"
+broken-by = ".tab.is-showing { background: var(--sunken) !important }"
+
+[[claim]]
+name = "a tab that is not showing sits on the ground a gap shows"
+says = "A tab that is not showing sits on the ground a gap shows, which is where anything not in front belongs."
+gesture = "down:5,5|up:5,5"
+check = "fill"
+role = "tab:tests"
+patch = "right"
+is = "sunken"
+broken-by = ".tab:not(.is-showing) { background: var(--panel) !important }"
+
+[[claim]]
+name = "a tab that is not showing carries the line along its bottom"
+says = "It carries the line along its own bottom, since its ground covers the one the strip drew there."
+gesture = "down:5,5|up:5,5"
+check = "edge"
+role = "tab:tests"
+side = "bottom"
+is = "border"
+broken-by = ".tab:not(.is-showing) { box-shadow: none !important }"
+
+[[claim]]
+name = "the showing tab has no line along its top"
+says = "It has no line along its top: the slot above it already drew one there, and two lines a pixel apart is a seam rather than an edge."
+gesture = "down:5,5|up:5,5"
+check = "edge"
+role = "tab:editor"
+side = "top"
+is = "none"
+broken-by = ".tab.is-showing { box-shadow: inset 0 1px 0 var(--border) !important }"
+
+[[claim]]
+name = "the first tab has no line down its left"
+says = "Except on the left when it is the first tab, where the slot's own edge is already a line and a second one beside it is a seam."
+gesture = "down:5,5|up:5,5"
+check = "edge"
+role = "tab:editor"
+side = "left"
+is = "none"
+broken-by = ".tab.is-showing.is-first { box-shadow: inset 1px 0 0 var(--border), inset -1px 0 0 var(--border) !important }"
+
+[[claim]]
+name = "the showing tab has a line down its right"
+says = "The showing tab covers the line under it with the window's own ground and carries it up its sides instead."
+gesture = "down:5,5|up:5,5"
+check = "edge"
+role = "tab:editor"
+side = "right"
+is = "border"
+broken-by = ".tab.is-showing { box-shadow: none !important }"
+
+[[claim]]
+name = "a window alone in its slot has a title bar and not a tab"
+says = "A window alone in its slot has a title bar rather than a tab. A line drawn around it would be a line around the whole header."
+gesture = "down:5,5|up:5,5"
+check = "edge"
+role = "tab:files"
+side = "right"
+is = "none"
+broken-by = ".tab.is-only { box-shadow: inset -1px 0 0 var(--border) !important }"
+
+# --- The tab being carried ----------------------------------------------
+
+[[claim]]
+name = "the carried tab casts no shadow"
+says = "A shadow under it would lift it off the surface, and the tab is still a piece of its own window rather than a card taken out of the dock."
+gesture = "down:300,13|move:330,14|move:380,15|move:430,14|move:460,13"
+check = "outside"
+role = "ghost"
+band = 10
+broken-by = ".ghost { box-shadow: 0 0 0 1px var(--border-firm), 0 5px 14px rgb(0 0 0 / .14) }"
+
+[[claim]]
+name = "the carried tab has square corners"
+says = "It wears the edges a showing tab wears and nothing else."
+gesture = "down:300,13|move:330,14|move:380,15|move:430,14|move:460,13"
+check = "corners"
+role = "ghost"
+is = "panel"
+broken-by = ".ghost { border-radius: 6px }"
+
+[[claim]]
+name = "the carried tab keeps the line down its left"
+says = "It wears the edges a showing tab wears: the line goes around the showing tab rather than under it."
+gesture = "down:300,13|move:330,14|move:380,15|move:430,14|move:460,13"
+check = "edge"
+role = "carried"
+side = "left"
+is = "border"
+broken-by = ".ghost .tab { box-shadow: none } .ghost { box-shadow: inset 1px 0 0 var(--border), inset -1px 0 0 var(--border) }"
+
+[[claim]]
+name = "the carried tab keeps the line down its right"
+says = "It wears the edges a showing tab wears: the line goes around the showing tab rather than under it."
+gesture = "down:300,13|move:330,14|move:380,15|move:430,14|move:460,13"
+check = "edge"
+role = "carried"
+side = "right"
+is = "border"
+broken-by = ".ghost .tab { box-shadow: none } .ghost { box-shadow: inset 1px 0 0 var(--border), inset -1px 0 0 var(--border) }"
+
+[[claim]]
+name = "the carried tab wears its window's ground"
+says = "What follows the cursor is that tab and not a small copy of the window."
+gesture = "down:300,13|move:330,14|move:380,15|move:430,14|move:460,13"
+check = "fill"
+role = "carried"
+patch = "right"
+is = "panel"
+broken-by = ".ghost .tab { background: var(--sunken) !important }"
+
+[[claim]]
+name = "the window whose tab is being carried is not dimmed"
+says = "The window being moved stays where it is, unchanged. It does not vanish, it does not dim."
+gesture = "down:300,13|move:330,14|move:380,15|move:430,14|move:460,13"
+check = "ink"
+role = "win:editor"
+same-as = "dock"
+broken-by = ".win[data-window='1'] { opacity: .4 }"

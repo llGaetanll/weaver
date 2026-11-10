@@ -144,6 +144,31 @@ Aim with measured numbers rather than assumed ones: the dock is not as tall as
 the window, and a drop a few pixels out lands somewhere else entirely. Run a
 gesture that does nothing (`down:5,5|up:5,5`) to read the layout first.
 
+## Checking what it looks like
+
+`tools/probe.py` checks the dock against `tools/claims.toml`, which is the
+list of things it has to look like — one claim per line of the argument the
+board makes. A claim plays a gesture, holds there, and asks two questions of
+that moment: where the things the dock draws are, which the page answers, and
+what colour each pixel is, which a still answers. Nothing in it reads the
+stylesheet, so the same claims can be put to a backend that is not a browser.
+
+```
+cd crates/web-main && trunk serve
+tools/probe.py                 # every claim
+tools/probe.py --only shadow   # the ones whose name matches
+tools/probe.py --self-check    # break each claim on purpose, and watch it fail
+```
+
+**A claim carries the change that has to break it.** `broken-by` is one line
+of CSS, and `--self-check` applies it and fails the claim that then passes. A
+claim nobody can break proves nothing, and that is the one thing about a test
+of a picture that cannot be checked by looking at the picture.
+
+Claims are about flat fills and one pixel lines, never about text: the shape
+of a glyph is the font's business and not the dock's. What is about rects and
+order belongs in `dock-state`'s tests instead, where no browser is needed.
+
 ## Commits
 
 A commit is small and does one thing. Its description is at most three
