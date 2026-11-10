@@ -156,8 +156,13 @@ fn PaneView(dock: Dock, pane: WindowId, icon: Option<Callback<WindowId, AnyView>
         _ => "pane-strip is-stacked",
     };
 
+    let class = move || match tabs.get() {
+        0 => "pane is-empty",
+        _ => "pane",
+    };
+
     view! {
-        <div class="pane" style=move || pane().map(|pane| place(pane.rect)).unwrap_or_default()>
+        <div class=class style=move || pane().map(|pane| place(pane.rect)).unwrap_or_default()>
             <div class=strip></div>
             <For each=move || windows.get() key=|window| *window let:window>
                 <Tab dock=dock pane=key window=window icon=icon />

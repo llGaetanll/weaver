@@ -142,12 +142,12 @@ broken-by = ".win[data-window='4'] { opacity: .4 }"
 
 [[claim]]
 name = "the slot a carried window left is empty"
-says = "The window follows its tab, and the slot it left is empty."
+says = "The window follows its tab, and the slot it left is empty — the ground a gap shows, with no strip across it."
 gesture = "down:80,13|move:120,60|move:400,200|move:700,300"
-check = "ink"
+check = "fill"
 role = "pane:2"
-same-as = "strip:2"
-broken-by = ".win.is-lifted { left: 0 !important; top: 27px !important }"
+is = "sunken"
+broken-by = ".pane.is-empty { background: var(--panel) !important }"
 
 [[claim]]
 name = "the carried tab has a line along its top once its window is in the air"

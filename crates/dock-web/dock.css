@@ -102,6 +102,11 @@ body {
   border-bottom: 1px solid var(--border);
 }
 
+/* A slot whose only window is in the air holds nothing, so it is the
+   ground a gap shows, with no strip across it. */
+.pane.is-empty { background: var(--sunken); }
+.pane.is-empty > .pane-strip { display: none; }
+
 /* Once there is more than one tab, what is left of the strip beside them is
    ground rather than panel: the window is behind its tabs, not beside
    them. */
