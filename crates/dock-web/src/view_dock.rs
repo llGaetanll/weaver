@@ -270,6 +270,8 @@ fn Tab(
             class.push_str(" is-lifted");
         } else if tab.from.is_some() {
             class.push_str(" is-arriving");
+        } else if tab.covered {
+            class.push_str(" is-covered");
         }
 
         if count == 1 {

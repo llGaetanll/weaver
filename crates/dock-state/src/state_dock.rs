@@ -228,7 +228,9 @@ impl StateDock {
 
         // A tab is picked by pressing it and moved by dragging it, and both
         // are the same press: picking happens at once, and whether it was
-        // also a drag is answered by whether the pointer goes anywhere.
+        // also a drag is answered by whether the pointer goes anywhere. What
+        // it picks is the pointer's doing, not a landing's.
+        self.arrived = None;
         self.show(tab);
 
         self.gesture = Some(Gesture::Pressed {
@@ -681,6 +683,7 @@ impl StateDock {
                     rect: self.carried(*window, *at, *grab, *size, away, &solved),
                     showing: true,
                     lifted: true,
+                    covered: false,
                     from: None,
                 };
 
@@ -720,6 +723,7 @@ impl StateDock {
                         rect,
                         showing: window == shown(pane),
                         lifted: moving == Some(window),
+                        covered: self.covered(pane, window),
                         from: self
                             .arrived
                             .as_ref()

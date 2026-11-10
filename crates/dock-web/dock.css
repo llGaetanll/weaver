@@ -167,9 +167,15 @@ body {
 /* A tab that is not showing sits on the ground a gap shows, which is where
    anything not in front belongs — and carries the line along its own bottom,
    since its ground covers the one the strip drew there. */
+/* Every look a tab has names the same three lines, left, right and bottom,
+   with the ones it does not draw transparent: one look can then fade into
+   another a line at a time. */
 .tab:not(.is-showing) {
   background: var(--sunken);
-  box-shadow: inset 0 -1px 0 var(--border);
+  box-shadow:
+    inset 1px 0 0 transparent,
+    inset -1px 0 0 transparent,
+    inset 0 -1px 0 var(--border);
 }
 
 /* The showing tab covers the line under it with the window's own ground and
@@ -186,10 +192,16 @@ body {
 .tab.is-showing:not(.is-only) {
   box-shadow:
     inset 1px 0 0 var(--border),
-    inset -1px 0 0 var(--border);
+    inset -1px 0 0 var(--border),
+    inset 0 -1px 0 transparent;
 }
 
-.tab.is-showing.is-first:not(.is-only) { box-shadow: inset -1px 0 0 var(--border); }
+.tab.is-showing.is-first:not(.is-only) {
+  box-shadow:
+    inset 1px 0 0 transparent,
+    inset -1px 0 0 var(--border),
+    inset 0 -1px 0 transparent;
+}
 
 .tab.is-showing .tab-icon { color: var(--text-muted); }
 /* A window alone in its slot has a title bar rather than a tab. It is still
@@ -197,7 +209,13 @@ body {
    divide it from, and a line drawn around it would be a line around the whole
    header. The one along its bottom is the header's, and it draws it itself,
    since the strip's own line only runs beyond the tabs. */
-.tab.is-only { background: transparent; box-shadow: inset 0 -1px 0 var(--border); }
+.tab.is-only {
+  background: transparent;
+  box-shadow:
+    inset 1px 0 0 transparent,
+    inset -1px 0 0 transparent,
+    inset 0 -1px 0 var(--border);
+}
 
 /* The tab being carried is a hole rather than a dimmed tab: what is drawn
    under the cursor is that tab, and the space it leaves is where it lands.
@@ -331,6 +349,23 @@ body {
 .dock.settles:not(.is-moving) .win.is-arriving { animation: landing-window var(--settle); }
 .dock.settles:not(.is-moving) .tab.is-arriving { animation: landing-tab var(--settle); }
 .dock.settles:not(.is-moving) .win.is-covered { animation: covered var(--settle); }
+
+/* The tab of the window landed in front of fades from showing to not while
+   the other lands, rather than turning at once. */
+.dock.settles:not(.is-moving) .tab.is-covered {
+  transition:
+    left var(--settle) ease,
+    top var(--settle) ease,
+    width var(--settle) ease,
+    height var(--settle) ease,
+    background-color var(--settle) ease,
+    box-shadow var(--settle) ease,
+    color var(--settle) ease;
+}
+
+.dock.settles:not(.is-moving) .tab.is-covered .tab-icon {
+  transition: color var(--settle) ease;
+}
 .dock.settles:not(.is-moving) .pane.is-arriving { animation: landing-new-slot var(--settle); }
 .dock.settles:not(.is-moving) .pane.is-arriving .pane-line {
   animation: landing-strip var(--settle);

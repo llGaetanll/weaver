@@ -315,3 +315,48 @@ fn a_window_put_down_beside_another_covers_nothing() {
     let frame = dock.frame();
     assert!(frame.windows.iter().all(|drawn| !drawn.covered), "nothing is under it");
 }
+
+/// The tab of the window landed in front of is covered too: it goes from
+/// showing to not while the other lands.
+#[test]
+fn the_tab_landed_in_front_of_is_covered() {
+    let mut dock = three();
+
+    eval!(&mut dock,
+        < Event::FromPointer(Down { at: Point::new(10.0, 10.0) }),
+        < Event::FromPointer(Moved { at: Point::new(600.0, 150.0) }),
+        < Event::FromPointer(Up { at: Point::new(600.0, 150.0) }),
+    );
+
+    let frame = dock.frame();
+    let tab = |window| {
+        frame
+            .panes
+            .iter()
+            .flat_map(|pane| &pane.tabs)
+            .find(|tab| tab.window == window)
+            .expect("a tab")
+    };
+
+    assert!(tab(B).covered, "B's tab is going from showing to not");
+    assert!(!tab(A).covered, "A's is the one arriving");
+}
+
+/// A tab pressed afterwards is the pointer's doing, so nothing is landing
+/// any more and nothing is covered.
+#[test]
+fn a_press_ends_a_landing() {
+    let mut dock = three();
+
+    eval!(&mut dock,
+        < Event::FromPointer(Down { at: Point::new(10.0, 10.0) }),
+        < Event::FromPointer(Moved { at: Point::new(600.0, 150.0) }),
+        < Event::FromPointer(Up { at: Point::new(600.0, 150.0) }),
+        < Event::FromPointer(Down { at: Point::new(240.0, 13.0) }),
+        < Event::FromPointer(Up { at: Point::new(240.0, 13.0) }),
+    );
+
+    assert!(window(&dock, B).showing, "B is picked again");
+    assert!(!window(&dock, A).arriving, "and A is no longer landing");
+    assert!(!window(&dock, B).covered, "so nothing is covered");
+}

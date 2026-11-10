@@ -40,6 +40,9 @@ pub struct TabFrame {
     pub rect: Rect,
     pub showing: bool,
     pub lifted: bool,
+    /// The tab of a window a window just put down has landed in front of. It
+    /// goes from showing to not as the other lands.
+    pub covered: bool,
     /// Where it was drawn the moment before, for a tab that has just been put
     /// down: a tab made for it has no old place in this slot to ease from.
     pub from: Option<Rect>,
