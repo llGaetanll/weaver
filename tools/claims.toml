@@ -133,9 +133,18 @@ broken-by = ".ghost .tab { background: var(--sunken) !important }"
 
 [[claim]]
 name = "the window whose tab is being carried is not dimmed"
-says = "The window being moved stays where it is, unchanged. It does not vanish, it does not dim."
-gesture = "down:300,13|move:330,14|move:380,15|move:430,14|move:460,13"
+says = "It is the window itself and not a picture of it."
+gesture = "down:80,13|move:120,60|move:400,200|move:700,300"
 check = "ink"
-role = "win:editor"
-same-as = "dock"
-broken-by = ".win[data-window='1'] { opacity: .4 }"
+role = "win:files"
+same-as = "win:terminal"
+broken-by = ".win[data-window='4'] { opacity: .4 }"
+
+[[claim]]
+name = "the slot a carried window left is empty"
+says = "The window follows its tab, and the slot it left is empty."
+gesture = "down:80,13|move:120,60|move:400,200|move:700,300"
+check = "ink"
+role = "pane:2"
+same-as = "strip:2"
+broken-by = ".win.is-lifted { left: 0 !important; top: 27px !important }"

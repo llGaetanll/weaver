@@ -16,6 +16,7 @@ use fixture::C;
 use fixture::showing;
 use fixture::tabs;
 use fixture::three;
+use fixture::window;
 
 /// The middle of a window is its stack: a window dropped there shares the
 /// slot rather than taking a side of it.
@@ -156,6 +157,52 @@ fn a_tab_pushed_to_the_dock_edge_stops_there() {
 
     let carried = dock.frame().carried.expect("a tab is being carried");
     assert_eq!(carried.rect, Rect::new(0.0, 0.0, 160.0, 27.0), "inside the dock");
+}
+
+/// A window lifted out of a stack leaves the rest behind, and the tab that
+/// slides into its place shows — the one that will show once it lands.
+#[test]
+fn a_window_lifted_out_of_a_stack_leaves_the_next_one_showing() {
+    let mut dock = three();
+
+    eval!(&mut dock,
+        < Event::FromPointer(Down { at: Point::new(10.0, 10.0) }),
+        < Event::FromPointer(Moved { at: Point::new(600.0, 150.0) }),
+        < Event::FromPointer(Up { at: Point::new(600.0, 150.0) }),
+        < Event::FromPointer(Down { at: Point::new(200.0, 13.0) }),
+        < Event::FromPointer(Moved { at: Point::new(100.0, 400.0) }),
+    );
+
+    assert_eq!(tabs(&dock, B), vec![B], "A's tab has left the strip");
+    assert!(showing(&dock, B), "B shows in its place");
+    assert_eq!(
+        window(&dock, A).rect,
+        Rect::new(60.0, 414.0, 800.0, 272.5),
+        "and A hangs under its tab",
+    );
+}
+
+/// Putting tabs in order is not moving a window, so the window stays in its
+/// slot while its tab is carried along its own strip.
+#[test]
+fn a_window_stays_while_its_tab_is_put_in_order() {
+    let mut dock = three();
+
+    eval!(&mut dock,
+        < Event::FromPointer(Down { at: Point::new(10.0, 10.0) }),
+        < Event::FromPointer(Moved { at: Point::new(600.0, 150.0) }),
+        < Event::FromPointer(Up { at: Point::new(600.0, 150.0) }),
+        < Event::FromPointer(Down { at: Point::new(200.0, 13.0) }),
+        < Event::FromPointer(Moved { at: Point::new(20.0, 13.0) }),
+    );
+
+    assert_eq!(
+        window(&dock, A).rect,
+        Rect::new(0.0, 27.0, 800.0, 272.5),
+        "A is where it was",
+    );
+    assert!(showing(&dock, A), "and still the one showing");
+    assert!(!showing(&dock, B), "with B behind it");
 }
 
 /// The tabs move apart as the pointer goes, so the hole they leave is where

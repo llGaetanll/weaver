@@ -17,9 +17,9 @@ pub struct WindowFrame {
     pub window: WindowId,
     pub rect: Rect,
     pub showing: bool,
-    /// Being moved. It stays where it is, dimmed: a dock that closed up the
-    /// moment you picked something up would move the target out from under
-    /// the cursor.
+    /// Being moved. Once its tab leaves its own strip it hangs under the tab
+    /// and its slot is left empty; the slot is not closed up, which would
+    /// move the target out from under the cursor.
     pub lifted: bool,
 }
 

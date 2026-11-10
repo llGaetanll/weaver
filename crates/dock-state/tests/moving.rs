@@ -9,6 +9,7 @@ use dock_state::EventPointer::Down;
 use dock_state::EventPointer::Moved;
 use dock_state::EventPointer::Up;
 use dock_state::Point;
+use dock_state::Rect;
 use dock_state::Share;
 use dock_state::Side;
 use dock_state::Slot;
@@ -53,6 +54,8 @@ fn a_press_on_a_tab_is_not_a_move() {
     near(rect(&dock, A).w, 399.5, "and nothing moved");
 }
 
+/// Once a press has travelled, the window hangs under its tab and goes
+/// where the tab goes, the size it was.
 #[test]
 fn a_press_that_travels_lifts_the_window() {
     let mut dock = three();
@@ -63,14 +66,38 @@ fn a_press_that_travels_lifts_the_window() {
     );
 
     let frame = dock.frame();
+    let carried = frame.carried.expect("now it is a move");
+    let window = frame
+        .windows
+        .iter()
+        .find(|drawn| drawn.window == A)
+        .expect("A is drawn");
 
-    assert!(frame.carried.is_some(), "now it is a move");
+    assert_eq!(carried.rect, Rect::new(190.0, 290.0, 160.0, 27.0), "the tab is where it was held");
+    assert_eq!(window.rect, Rect::new(190.0, 317.0, 399.5, 573.0), "and the window hangs under it");
+    assert!(window.showing && window.lifted, "drawn, and in the air");
+}
+
+/// The slot a lifted window leaves is kept, empty, so nothing moves out from
+/// under the cursor while it is aimed.
+#[test]
+fn the_slot_a_lifted_window_leaves_is_empty() {
+    let mut dock = three();
+
+    eval!(&mut dock,
+        < Event::FromPointer(Down { at: Point::new(10.0, 10.0) }),
+        < Event::FromPointer(Moved { at: Point::new(200.0, 300.0) }),
+    );
+
+    let frame = dock.frame();
+
+    assert_eq!(frame.panes.len(), 3, "the slot is still there");
     assert!(
         frame
-            .windows
+            .panes
             .iter()
-            .any(|drawn| drawn.window == A && drawn.lifted),
-        "and the window stays where it is, dimmed",
+            .any(|pane| pane.rect.x == 0.0 && pane.tabs.is_empty()),
+        "with nothing in it",
     );
 }
 

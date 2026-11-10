@@ -22,7 +22,7 @@
 </p>
 <p class="lead">
   The library draws three things and no more: <b>a window's tab</b>, <b>the gap
-  between two windows</b>, and <b>the tab under the cursor and the drop
+  between two windows</b>, and <b>the window under the cursor and the drop
   regions</b> that exist only while a window is being moved. Everything inside a window belongs to
   whoever is using the library. The look is borrowed from <code>hl</code> to
   have something to draw with — it is a role in
@@ -295,8 +295,7 @@
         </div>
         <div class="gap gap-v"></div>
         <div class="pane sketch">
-          <div class="pane-strip"></div><div class="tab is-showing is-only"><span class="tab-icon"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2 H10 V10 H2 Z" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></span><h3>Inspector</h3></div>
-          <div class="win"><div class="fill lines"></div></div>
+          <div class="pane-strip"></div>
         </div>
 
         <div class="regions-at" style="left: 0; top: 0; width: calc(100% - 300px - var(--gap)); height: calc(100% - 120px - var(--gap))">
@@ -307,6 +306,7 @@
           <div class="region" style="opacity: 1; clip-path: polygon(10% 10%, 90% 10%, 90% 90%, 10% 90%)"></div>
         </div>
 
+        <div class="win is-lifted" style="position: absolute; left: 150px; top: calc(120px + var(--tab)); width: 300px; height: calc(100% - var(--tab))"><div class="fill lines"></div></div>
         <div class="ghost" style="left: 150px; top: 120px; width: 160px; height: var(--tab)">
           <div class="tab is-showing is-only"><span class="tab-icon"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2 H10 V10 H2 Z" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></span><h3>Inspector</h3></div>
         </div>
@@ -317,16 +317,23 @@
     </div>
   </div>
   <p class="note">
-    Four decisions are drawn here.
+    Five decisions are argued here.
   </p>
   <p class="note">
-    <b>The window being moved stays where it is, unchanged</b>, and what
-    follows the cursor is its tab. It does not vanish, it does not dim and the
-    layout does not close up behind it: a dock that reflows the moment you
-    pick something up moves the target you were aiming at out from under your
-    cursor, and a picture of the window under the pointer would cover the very
-    thing being aimed at. The window in the air is the one being read while it
-    is carried, and the hole its tab leaves already says which one that is.
+    <b>The window follows its tab, and the slot it left is empty.</b> It is
+    the window itself and not a picture of it, so there is never a second
+    copy on screen, and whatever the host built inside it is still there when
+    it lands. The layout does not close up behind it: a dock that reflows the
+    moment you pick something up moves the target you were aiming at out from
+    under your cursor. The regions are drawn under the window rather than over
+    it — what aims is the pointer, and the pointer is on the tab.
+  </p>
+  <p class="note">
+    <b>A window lifted out of a stack leaves the rest of the stack behind</b>,
+    and the tab that slides into its place shows, the same one that would show
+    once it is put down. But only once its tab has left the strip: a tab being
+    carried along its own strip is being put in order, not moved, and the
+    window stays where it is while that happens.
   </p>
   <p class="note">
     <b>What the window will get is an equal share of whatever group it lands
@@ -381,8 +388,7 @@
           </div>
           <div class="gap gap-h"></div>
           <div class="pane sketch">
-            <div class="pane-strip"></div><div class="tab is-showing is-only"><span class="tab-icon"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2 H10 V10 H2 Z" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></span><h3>Timeline</h3></div>
-            <div class="win"><div class="fill lines"></div></div>
+            <div class="pane-strip"></div>
           </div>
         </div>
         <div class="gap gap-v"></div>
@@ -395,6 +401,7 @@
           <div class="region" style="opacity: 1; background: var(--drop-chosen)"></div>
         </div>
 
+        <div class="win is-lifted" style="position: absolute; left: calc(100% - 430px); top: calc(150px + var(--tab)); width: calc(100% - 300px - var(--gap)); height: calc(120px - var(--tab))"><div class="fill lines"></div></div>
         <div class="ghost" style="left: calc(100% - 430px); top: 150px; width: 160px; height: var(--tab)">
           <div class="tab is-showing is-only"><span class="tab-icon"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2 H10 V10 H2 Z" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></span><h3>Timeline</h3></div>
         </div>
@@ -443,14 +450,14 @@
         </div>
         <div class="gap gap-v"></div>
         <div class="pane sketch">
-          <div class="pane-strip"></div><div class="tab is-showing is-only"><span class="tab-icon"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2 H10 V10 H2 Z" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></span><h3>Inspector</h3></div>
-          <div class="win"><div class="fill lines"></div></div>
+          <div class="pane-strip"></div>
         </div>
 
         <div class="regions-at" style="left: 0; top: 0; width: 16px; height: 100%">
           <div class="region" style="opacity: 1; background: var(--drop-chosen)"></div>
         </div>
 
+        <div class="win is-lifted" style="position: absolute; left: 24px; top: calc(140px + var(--tab)); width: 300px; height: calc(100% - var(--tab))"><div class="fill lines"></div></div>
         <div class="ghost" style="left: 24px; top: 140px; width: 160px; height: var(--tab)">
           <div class="tab is-showing is-only"><span class="tab-icon"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2 H10 V10 H2 Z" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></span><h3>Inspector</h3></div>
         </div>
@@ -474,7 +481,7 @@
   <p class="note">
     The pointer has left the dock. There is <b>no preview</b>, and that is the
     whole message: let go here and nothing happens — the window goes back to
-    the slot it was lifted from, which it never actually left.
+    the slot it was lifted from, which was kept empty for it.
   </p>
   <p class="note">
     The same picture covers a window dropped on its own slot, and
@@ -499,10 +506,10 @@
         </div>
         <div class="gap gap-v"></div>
         <div class="pane sketch">
-          <div class="pane-strip"></div><div class="tab is-showing is-only"><span class="tab-icon"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2 H10 V10 H2 Z" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></span><h3>Inspector</h3></div>
-          <div class="win"><div class="fill lines"></div></div>
+          <div class="pane-strip"></div>
         </div>
 
+        <div class="win is-lifted" style="position: absolute; left: 50%; top: calc(-22px + var(--tab)); width: 300px; height: calc(100% - var(--tab))"><div class="fill lines"></div></div>
         <div class="ghost" style="left: 50%; top: -22px; width: 160px; height: var(--tab)">
           <div class="tab is-showing is-only"><span class="tab-icon"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2 H10 V10 H2 Z" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></span><h3>Inspector</h3></div>
         </div>
@@ -510,8 +517,8 @@
     </div>
   </div>
   <p class="note">
-    The ghost is clipped by the dock rather than drawn over the host's own
-    chrome. The library was given a surface and does not draw outside it —
+    The window in the air is clipped by the dock rather than drawn over the
+    host's own chrome. The library was given a surface and does not draw outside it —
     which is also what makes a window leaving the surface a different feature
     (the native backend tears it out into an OS window) rather than a bigger
     ghost.

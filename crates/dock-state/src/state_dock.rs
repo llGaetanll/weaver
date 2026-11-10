@@ -580,7 +580,7 @@ impl StateDock {
 
         let moving = self.moving();
 
-        let (carried, regions, aim) = match &self.gesture {
+        let (carried, regions, aim, aloft) = match &self.gesture {
             Some(Gesture::Moving {
                 window,
                 grab,
@@ -597,10 +597,21 @@ impl StateDock {
                     lifted: true,
                 };
 
-                (Some(carried), regions, aim)
+                let aloft = self.aloft(*window, *at, carried.rect, &solved);
+
+                (Some(carried), regions, aim, aloft)
             }
 
-            _ => (None, Vec::new(), None),
+            _ => (None, Vec::new(), None, None),
+        };
+
+        // A window in the air leaves its stack showing the one that would
+        // show once it lands.
+        let shown = |pane: &Pane| match moving {
+            Some(window) if aloft.is_some() && pane.showing == window => {
+                successor(&pane.windows, window).unwrap_or(window)
+            }
+            _ => pane.showing,
         };
 
         let panes = solved
@@ -615,7 +626,7 @@ impl StateDock {
                         window,
                         title: self.title(window),
                         rect,
-                        showing: window == pane.showing,
+                        showing: window == shown(pane),
                         lifted: moving == Some(window),
                     })
                     .collect(),
@@ -626,11 +637,19 @@ impl StateDock {
             .panes
             .iter()
             .flat_map(|pane| {
-                pane.windows.iter().map(|window| WindowFrame {
-                    window: *window,
-                    rect: self.body(pane.rect),
-                    showing: *window == pane.showing,
-                    lifted: moving == Some(*window),
+                pane.windows.iter().map(|window| match aloft {
+                    Some(rect) if moving == Some(*window) => WindowFrame {
+                        window: *window,
+                        rect,
+                        showing: true,
+                        lifted: true,
+                    },
+                    _ => WindowFrame {
+                        window: *window,
+                        rect: self.body(pane.rect),
+                        showing: *window == shown(pane),
+                        lifted: moving == Some(*window),
+                    },
                 })
             })
             .collect();
@@ -776,6 +795,21 @@ impl StateDock {
             size.w,
             size.h,
         )
+    }
+
+    /// Where a window being carried is drawn: hanging under its tab, the size
+    /// it was. None while its tab is over its own strip, where it is being
+    /// put in order rather than moved, and stays in its slot.
+    fn aloft(&self, window: WindowId, at: Point, tab: Rect, solved: &Solved) -> Option<Rect> {
+        let home = solved.pane(window)?;
+
+        if home.rect.contains(at) && at.y < home.rect.y + self.metrics.tab {
+            return None;
+        }
+
+        let body = self.body(home.rect);
+
+        Some(Rect::new(tab.x, tab.y + self.metrics.tab, body.w, body.h))
     }
 
     /// Where a window's tab is right now.
@@ -978,6 +1012,19 @@ fn strip(area: Rect, side: Side, edge: f32) -> Rect {
 
 /// Where a slot's tabs are, given the order they are in. They divide the top
 /// of it, up to a width past which a tab is wider than its name needs.
+/// The window that shows once this one leaves: the one that slides into its
+/// place, or the last if it was at the end. The same rule as `Stack::drop`.
+fn successor(windows: &[WindowId], leaving: WindowId) -> Option<WindowId> {
+    let at = windows.iter().position(|held| *held == leaving)?;
+    let others: Vec<WindowId> = windows
+        .iter()
+        .copied()
+        .filter(|held| *held != leaving)
+        .collect();
+
+    others.get(at).or(others.last()).copied()
+}
+
 fn tabs(windows: &[WindowId], rect: Rect, metrics: &Metrics) -> Vec<(WindowId, Rect)> {
     let count = windows.len().max(1) as f32;
     let width = (rect.w / count).min(metrics.tab_width);

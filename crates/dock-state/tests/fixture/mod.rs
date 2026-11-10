@@ -14,6 +14,7 @@ use dock_state::Side;
 use dock_state::Size;
 use dock_state::Slot;
 use dock_state::StateDock;
+use dock_state::WindowFrame;
 use dock_state::WindowId;
 use dock_state::Zone;
 
@@ -88,6 +89,15 @@ pub fn tabs(dock: &StateDock, window: WindowId) -> Vec<WindowId> {
         .find(|pane| pane.tabs.iter().any(|tab| tab.window == window))
         .map(|pane| pane.tabs.iter().map(|tab| tab.window).collect())
         .unwrap_or_default()
+}
+
+/// Where a window's contents are drawn, and whether they are showing.
+pub fn window(dock: &StateDock, window: WindowId) -> WindowFrame {
+    dock.frame()
+        .windows
+        .into_iter()
+        .find(|drawn| drawn.window == window)
+        .expect("the window is in the dock")
 }
 
 pub fn showing(dock: &StateDock, window: WindowId) -> bool {

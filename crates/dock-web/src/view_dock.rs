@@ -246,6 +246,7 @@ fn Window(dock: Dock, window: WindowId, content: Callback<WindowId, AnyView>) ->
 
     let class = move || match drawn() {
         Some(drawn) if !drawn.showing => "win is-hidden",
+        Some(drawn) if drawn.lifted => "win is-lifted",
         _ => "win",
     };
 

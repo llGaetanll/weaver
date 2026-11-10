@@ -17,11 +17,13 @@ body {
 /* --- The dock ----------------------------------------------------------- */
 
 /* The surface every window lives on. Nothing overlaps: a window is a tile,
-   and the only thing ever drawn over one is the ghost under the cursor.
+   and the only thing ever drawn over one is the window being carried.
    Everything in it is placed by the machine, which is why there is no layout
-   here beyond "fill what you were given". */
+   here beyond "fill what you were given". It clips, because a carried window
+   hangs off the bottom and the host's page is not the dock's to draw on. */
 .dock {
   position: relative;
+  overflow: hidden;
   display: grid;
   min-width: 0;
   min-height: 0;
@@ -195,14 +197,15 @@ body {
 
 .win.is-hidden { display: none; }
 
+/* The window under its tab, above the drop regions. */
+.win.is-lifted { z-index: 2; }
+
 /* --- Moving a window ---------------------------------------------------- */
 
-/* The tab follows the cursor — the tab and nothing else. The window it
-   belongs to is still on screen behind it, so a picture of that window under
-   the pointer would be a second copy of something already there, and it
-   would cover the hole it is going into. It is the one thing in the library
-   allowed over another window, and it is why the dock is a positioned
-   surface.
+/* The tab follows the cursor, and its window hangs under it — the window
+   itself, moved, so there is never a second copy. Together they are the one
+   thing in the library allowed over another window, and why the dock is a
+   positioned surface.
 
    It wears the edges a showing tab wears and nothing else. A shadow under it
    would lift it off the surface, and the tab is still a piece of its own
