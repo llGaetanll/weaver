@@ -55,6 +55,9 @@ enum Gesture {
         grab: Point,
         size: Size,
         at: Point,
+        /// It has been out of its own strip. A window alone in its slot is
+        /// in the air from then on, even back over the slot it left.
+        left: bool,
     },
 
     /// Every gap under the pointer: one along a line, and at a crossing the
@@ -288,17 +291,23 @@ impl StateDock {
                     grab: Point::new(origin.x - tab.x, origin.y - tab.y),
                     size: tab.size(),
                     at,
+                    left: self.left(window, at),
                 });
             }
 
             Some(Gesture::Moving {
-                window, grab, size, ..
+                window,
+                grab,
+                size,
+                left,
+                ..
             }) => {
                 self.gesture = Some(Gesture::Moving {
                     window,
                     grab,
                     size,
                     at,
+                    left: left || self.left(window, at),
                 });
             }
 
@@ -313,6 +322,12 @@ impl StateDock {
 
             None => {}
         }
+    }
+
+    /// Whether a window carried to here has left its own strip.
+    fn left(&self, window: WindowId, at: Point) -> bool {
+        self.solved()
+            .is_some_and(|solved| self.away(window, at, &solved))
     }
 
     fn release(&mut self, at: Point) {
@@ -584,14 +599,16 @@ impl StateDock {
                 grab,
                 size,
                 at,
-            }) if !self.still(*window, *at, &solved) => {
+                left,
+            }) if *left || !self.lone(*window, &solved) => {
                 let (regions, aim) = self.targets(*window, *at);
-                let away = self.away(*window, *at, &solved);
+                let away =
+                    (*left && self.lone(*window, &solved)) || self.away(*window, *at, &solved);
 
                 let carried = TabFrame {
                     window: *window,
                     title: self.title(*window),
-                    rect: self.carried(*at, *grab, *size, away, &solved),
+                    rect: self.carried(*window, *at, *grab, *size, away, &solved),
                     showing: true,
                     lifted: true,
                 };
@@ -778,14 +795,25 @@ impl StateDock {
     /// Pushed to either end it reaches over the gap there, so its own line
     /// lands on the gap's instead of beside it — and so does its top, when it
     /// has one, which is while its window is in the air.
-    fn carried(&self, at: Point, grab: Point, size: Size, away: bool, solved: &Solved) -> Rect {
+    ///
+    /// The slot a lone window left is empty, and an empty strip holds
+    /// nothing to stick to.
+    fn carried(
+        &self,
+        window: WindowId,
+        at: Point,
+        grab: Point,
+        size: Size,
+        away: bool,
+        solved: &Solved,
+    ) -> Rect {
         let loose = Rect::new(at.x - grab.x, at.y - grab.y, size.w, size.h);
 
         let Some(pane) = solved.at(at) else {
             return loose;
         };
 
-        if at.y >= pane.rect.y + self.metrics.tab {
+        if at.y >= pane.rect.y + self.metrics.tab || pane.windows == [window] {
             return loose;
         }
 
@@ -801,13 +829,12 @@ impl StateDock {
         Rect::new(loose.x.clamp(first, last), top, size.w, size.h)
     }
 
-    /// A title bar held over its own strip: it has no order to be put in, so
-    /// until the pointer leaves the strip nothing is drawn as moving at all.
-    fn still(&self, window: WindowId, at: Point, solved: &Solved) -> bool {
-        !self.away(window, at, solved)
-            && solved
-                .pane(window)
-                .is_some_and(|pane| pane.windows.len() == 1)
+    /// Alone in its slot. Its title bar has no order to be put in, so until
+    /// it has left its strip nothing is drawn as moving at all.
+    fn lone(&self, window: WindowId, solved: &Solved) -> bool {
+        solved
+            .pane(window)
+            .is_some_and(|pane| pane.windows.len() == 1)
     }
 
     /// Whether a window being carried has left its slot. Not while its tab is

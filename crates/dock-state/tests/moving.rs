@@ -198,6 +198,53 @@ fn a_window_over_its_own_slot_proposes_nothing() {
     );
 }
 
+/// Once a lone window has left its slot, the slot is empty, and an empty
+/// strip holds nothing to stick to: brought back over it, the tab follows the
+/// pointer and the window stays in the air.
+#[test]
+fn a_window_brought_back_over_its_empty_slot_stays_in_the_air() {
+    let mut dock = three();
+
+    eval!(&mut dock,
+        < Event::FromPointer(Down { at: Point::new(10.0, 13.0) }),
+        < Event::FromPointer(Moved { at: Point::new(200.0, 300.0) }),
+        < Event::FromPointer(Moved { at: Point::new(50.0, 20.0) }),
+    );
+
+    let frame = dock.frame();
+    let carried = frame.carried.expect("still being carried");
+    let window = frame
+        .windows
+        .iter()
+        .find(|drawn| drawn.window == A)
+        .expect("A is drawn");
+
+    assert_eq!(
+        carried.rect,
+        Rect::new(40.0, 7.0, 160.0, 27.0),
+        "the tab is under the pointer, not stuck to the strip",
+    );
+    assert!(window.lifted, "and the window is still in the air");
+    assert!(frame.regions.is_empty(), "with nowhere to land");
+}
+
+/// Let go over the slot it left, a window is back where it was.
+#[test]
+fn a_window_dropped_on_its_empty_slot_is_back_where_it_was() {
+    let mut dock = three();
+
+    eval!(&mut dock,
+        < Event::FromPointer(Down { at: Point::new(10.0, 13.0) }),
+        < Event::FromPointer(Moved { at: Point::new(200.0, 300.0) }),
+        < Event::FromPointer(Moved { at: Point::new(50.0, 20.0) }),
+        < Event::FromPointer(Up { at: Point::new(50.0, 20.0) }),
+    );
+
+    assert!(dock.frame().carried.is_none(), "nothing is carried");
+    assert_eq!(rect(&dock, A), Rect::new(0.0, 0.0, 399.5, 600.0), "A is back");
+    assert_eq!(dock.frame().panes.len(), 3, "and nothing else changed");
+}
+
 /// A fixed window is fixed wherever it is put: the number was somebody's
 /// decision and a move is not a reason to forget it.
 #[test]
