@@ -286,19 +286,14 @@ body {
     height var(--settle) ease;
 }
 
-.dock.settles .win.is-arriving {
-  outline: 1px solid transparent;
-  outline-offset: -1px;
-}
+/* On its way in, what was put down keeps the edges it had in the air: one
+   line round its tab and its window, none between them, with the tab over
+   the window and over everything else. The lines are drawn outside them, so
+   that when they land they are the very pixels the slot's own lines are.
+   Only the tab is raised, not the slot it is in, so the slot's edges and the
+   gaps stay under the window. It all holds for as long as the settle does. */
+.dock.settles .win.is-arriving { outline: 1px solid transparent; }
 
-/* On its way in, what was put down keeps the edges it had in the air and is
-   drawn as it was: its tab over its window, with the row under the tab
-   covered so no line runs between them, and the slot around them no shape
-   of its own. Only the tab is raised, not the slot it is in, so the slot's
-   edges and the gaps stay under the window. They hold for as long as the settle does, and when it lands
-   the slot's own lines take over. */
-/* Above the windows making room for it, whatever order they were opened in,
-   and only until it lands: after that it is a window like any other. */
 @keyframes landing-window { from, to { z-index: 1; outline-color: var(--border); } }
 
 @keyframes landing-tab {
@@ -306,14 +301,12 @@ body {
     z-index: 2;
     background-color: var(--panel);
     color: var(--text-muted);
-    box-shadow:
-      inset 1px 0 0 var(--border),
-      inset -1px 0 0 var(--border),
-      inset 0 1px 0 var(--border),
-      0 2px 0 -1px var(--panel);
+    box-shadow: 0 1px 0 var(--panel), 0 0 0 1px var(--border);
   }
 }
 
+/* A slot made for it is no shape of its own until it lands, and its strip's
+   line would sit a pixel off the window's. */
 @keyframes landing-new-slot {
   from, to { background-color: transparent; box-shadow: 0 0 0 0 transparent; }
 }
@@ -327,12 +320,12 @@ body {
 .dock.settles:not(.is-moving) .tab.is-arriving { animation: landing-tab var(--settle); }
 .dock.settles:not(.is-moving) .win.is-covered { animation: covered var(--settle); }
 .dock.settles:not(.is-moving) .pane.is-arriving { animation: landing-new-slot var(--settle); }
-/* A tab coming in from beside its slot is not cut off at the slot's edge. */
-.dock.settles .pane:has(> .tab.is-arriving) { overflow: visible; }
-
-.dock.settles:not(.is-moving) .pane:has(> .tab.is-arriving) > .pane-strip {
+.dock.settles:not(.is-moving) .pane.is-arriving > .pane-strip {
   animation: landing-strip var(--settle);
 }
+
+/* A tab coming in from beside its slot is not cut off at the slot's edge. */
+.dock.settles .pane:has(> .tab.is-arriving) { overflow: visible; }
 
 /* The cursor, drawn so a picture can show where the pointer is. Not the
    library's. */
