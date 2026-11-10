@@ -204,7 +204,8 @@ body {
   overflow: auto;
 }
 
-.win.is-hidden { display: none; }
+/* Hidden rather than taken out, so that it can go on showing for a while. */
+.win.is-hidden { visibility: hidden; }
 
 /* The window under its tab, above the drop regions, with a line all the way
    round. An outline is drawn over what the host put inside; the tab covers
@@ -319,8 +320,12 @@ body {
 
 @keyframes landing-strip { from, to { border-bottom-color: transparent; } }
 
+/* The window that was showing where it lands goes on showing under it. */
+@keyframes covered { from, to { visibility: visible; } }
+
 .dock.settles:not(.is-moving) .win.is-arriving { animation: landing-window var(--settle); }
 .dock.settles:not(.is-moving) .tab.is-arriving { animation: landing-tab var(--settle); }
+.dock.settles:not(.is-moving) .win.is-covered { animation: covered var(--settle); }
 .dock.settles:not(.is-moving) .pane.is-arriving { animation: landing-new-slot var(--settle); }
 /* A tab coming in from beside its slot is not cut off at the slot's edge. */
 .dock.settles .pane:has(> .tab.is-arriving) { overflow: visible; }

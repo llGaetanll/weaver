@@ -44,12 +44,15 @@ struct Window {
 /// Where a window being put down was drawn the moment before. Its new slot
 /// and its tab in it have no rectangle in the old layout, so this is what
 /// they ease from.
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Debug)]
 struct Arrival {
     window: WindowId,
     tab: Option<Rect>,
     /// None unless the window was in the air.
     body: Option<Rect>,
+    /// The windows that were showing. One the window lands in front of goes
+    /// on showing under it until it has landed.
+    shown: Vec<WindowId>,
 }
 
 /// What the pointer is in the middle of. One value, so resizing while moving
@@ -349,7 +352,7 @@ impl StateDock {
     /// Where a slot made for the window just put down was, the moment before:
     /// around its tab and its window, in the air.
     fn came_from(&self, pane: &Pane) -> Option<Rect> {
-        let arrival = self.arrived?;
+        let arrival = self.arrived.as_ref()?;
 
         if pane.windows != [arrival.window] {
             return None;
@@ -358,6 +361,19 @@ impl StateDock {
         let (tab, body) = (arrival.tab?, arrival.body?);
 
         Some(Rect::new(tab.x, tab.y, body.w, body.bottom() - tab.y))
+    }
+
+    /// Whether a window was showing in the slot the window just put down has
+    /// landed in, and so goes on showing under it until it has.
+    fn covered(&self, pane: &Pane, window: WindowId) -> bool {
+        let Some(arrival) = &self.arrived else {
+            return false;
+        };
+
+        arrival.body.is_some()
+            && window != arrival.window
+            && pane.holds(arrival.window)
+            && arrival.shown.contains(&window)
     }
 
     /// Whether a window carried to here has left its own strip.
@@ -397,6 +413,12 @@ impl StateDock {
             window,
             tab: body.and(frame.carried.map(|tab| tab.rect)),
             body,
+            shown: frame
+                .windows
+                .iter()
+                .filter(|drawn| drawn.showing && drawn.window != window)
+                .map(|drawn| drawn.window)
+                .collect(),
         });
 
         if body.is_some() {
@@ -700,6 +722,7 @@ impl StateDock {
                         lifted: moving == Some(window),
                         from: self
                             .arrived
+                            .as_ref()
                             .filter(|arrival| arrival.window == window)
                             .and_then(|arrival| arrival.tab),
                     })
@@ -718,13 +741,18 @@ impl StateDock {
                         showing: true,
                         lifted: true,
                         arriving: false,
+                        covered: false,
                     },
                     _ => WindowFrame {
                         window: *window,
                         rect: self.body(pane.rect),
                         showing: *window == shown(pane),
                         lifted: false,
-                        arriving: self.arrived.is_some_and(|arrival| arrival.window == *window),
+                        arriving: self
+                            .arrived
+                            .as_ref()
+                            .is_some_and(|arrival| arrival.window == *window),
+                        covered: self.covered(pane, *window),
                     },
                 })
             })

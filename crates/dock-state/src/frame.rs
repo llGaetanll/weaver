@@ -24,6 +24,9 @@ pub struct WindowFrame {
     pub lifted: bool,
     /// Just put down, while the rest of the dock settles around it.
     pub arriving: bool,
+    /// Showing until a moment ago, in the slot a window has just been put
+    /// down in front of. It goes on showing under that one while it lands.
+    pub covered: bool,
 }
 
 /// One tab: the name of a window sharing a slot, and whatever the host draws

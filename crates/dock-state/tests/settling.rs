@@ -19,6 +19,7 @@ use dock_state::Size;
 use eval::eval;
 use fixture::A;
 use fixture::B;
+use fixture::C;
 use fixture::slot;
 use fixture::three;
 use fixture::window;
@@ -280,4 +281,37 @@ fn a_tab_put_in_order_comes_from_nowhere() {
     for tab in tabs {
         assert_eq!(tab.from, None, "{:?} was in its strip all along", tab.window);
     }
+}
+
+/// A window put down in front of a stack covers the one that was showing
+/// there, which goes on showing under it until it has landed rather than
+/// leaving a hole for it to land in.
+#[test]
+fn the_window_landed_in_front_of_is_covered() {
+    let mut dock = three();
+
+    eval!(&mut dock,
+        < Event::FromPointer(Down { at: Point::new(10.0, 10.0) }),
+        < Event::FromPointer(Moved { at: Point::new(600.0, 150.0) }),
+        < Event::FromPointer(Up { at: Point::new(600.0, 150.0) }),
+    );
+
+    assert!(!window(&dock, B).showing, "A is the one showing");
+    assert!(window(&dock, B).covered, "but B is under it until it lands");
+    assert!(!window(&dock, C).covered, "C is in a slot of its own");
+}
+
+/// A window put down beside another covers nothing.
+#[test]
+fn a_window_put_down_beside_another_covers_nothing() {
+    let mut dock = three();
+
+    eval!(&mut dock,
+        < Event::FromPointer(Down { at: Point::new(10.0, 10.0) }),
+        < Event::FromPointer(Moved { at: Point::new(420.0, 100.0) }),
+        < Event::FromPointer(Up { at: Point::new(420.0, 100.0) }),
+    );
+
+    let frame = dock.frame();
+    assert!(frame.windows.iter().all(|drawn| !drawn.covered), "nothing is under it");
 }
