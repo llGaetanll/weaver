@@ -10,6 +10,9 @@ Nothing here runs. Every file is a picture.
 
 - `dock/index.html` — every state the dock can be in, each in a frame of its
   own, with the reason it is that way. A state is drawn here and nowhere else.
+- `notify/index.html` — notifications in the bottom right corner: the card,
+  a stack of them, warnings and errors, and how they come and go. Ids `corner` `card`
+  `stack` `kinds` `coming`.
 
 Each sheet carries an id, so from a terminal:
 

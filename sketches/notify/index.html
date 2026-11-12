@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Notifications, state by state</title>
+<link rel="stylesheet" href="../design/theme.css" />
+<link rel="stylesheet" href="../../crates/dock-web/dock.css" />
+<link rel="stylesheet" href="../dock/board.css" />
+<link rel="stylesheet" href="notify.css" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+</head>
+<body>
+<div class="wrap">
+
+<h1>Notifications, state by state</h1>
+<p class="lead">
+  A notification is a card in the <b>bottom right corner</b> of the surface,
+  saying something happened that nobody was looking at. <b>Nothing here
+  runs.</b> It is drawn before it is built, so that it is argued about once.
+</p>
+
+<nav class="toc">
+  <a href="#corner">the corner</a>
+  <a href="#card">the card</a>
+  <a href="#stack">more than one</a>
+  <a href="#kinds">warnings and errors</a>
+  <a href="#coming">coming and going</a>
+</nav>
+
+<section class="sheet" id="corner">
+  <div class="name"><h2>The corner</h2><code>#corner</code></div>
+  <p class="note">
+    <b>Bottom right of the surface the library was given</b>, not of the
+    browser window: the library does not draw outside its surface, and a host
+    whose dock is half the page wants its notes over its dock. It is drawn
+    over whatever window is there and moves nothing, because a layout that jumps
+    when a message arrives is a layout nobody can work in.
+  </p>
+  <div class="frame">
+    <div class="app">
+        <div class="hostbar"><b>weaver</b> <span>one notification</span></div>
+        <div class="dock row" style="grid-template-columns: 1fr var(--gap) 260px">
+          <div class="pane sketch"><div class="pane-strip"><div class="pane-line" style="left: 160px"></div></div><div class="tab is-showing is-only"><span class="tab-icon"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2 H10 V10 H2 Z" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></span><h3>Canvas</h3></div><div class="win"><div class="fill">the host&#39;s</div></div></div>
+          <div class="gap gap-v"></div>
+          <div class="pane sketch"><div class="pane-strip"><div class="pane-line" style="left: 160px"></div></div><div class="tab is-showing is-only"><span class="tab-icon"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2 H10 V10 H2 Z" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></span><h3>Inspector</h3></div><div class="win"><div class="fill lines"></div></div></div>
+        <div class="notes" style="top: auto"><div class="note-card "><span class="note-mark"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><circle cx="6" cy="6" r="4.6" fill="none" stroke="currentColor" stroke-width="1.2"/><path d="M6 5.3 V8.6" stroke="currentColor" stroke-width="1.2"/><circle cx="6" cy="3.6" r=".7" fill="currentColor"/></svg></span><h4>Saved</h4><button class="note-x" title="Dismiss"><svg width="9" height="9" viewBox="0 0 9 9" aria-hidden="true"><path d="M1 1 L8 8 M8 1 L1 8" stroke="currentColor" stroke-width="1.2"/></svg></button><p>scene.weave, 2.4 MB</p></div></div>
+        </div>
+      </div>
+  </div>
+  <p class="note">
+    <b>12px from both edges</b>, so it reads as set down on the dock rather than
+    as part of the window under it, and so the gap line under it still shows
+    where it reaches the corner.
+  </p>
+</section>
+
+<section class="sheet" id="card">
+  <div class="name"><h2>The card</h2><code>#card</code></div>
+  <p class="note">
+    <b>Rounded at <code>--radius-lg</code></b>, the one shape on the surface
+    that is not a tile: everything else meets its neighbours edge to edge, and a
+    rounded card is how it says it is not one of them. A firm border and a soft
+    shadow lift it off the window beneath; the shadow alone disappears on white.
+  </p>
+  <div class="frame two">
+    <figure>
+      <div style="position: relative; height: 140px; background: var(--sunken); border-radius: var(--radius-lg); box-shadow: inset 0 0 0 1px var(--border)">
+        <div class="notes" style="right: 50%; bottom: 40px; transform: translateX(50%)">
+          <div class="note-card "><span class="note-mark"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><circle cx="6" cy="6" r="4.6" fill="none" stroke="currentColor" stroke-width="1.2"/><path d="M6 5.3 V8.6" stroke="currentColor" stroke-width="1.2"/><circle cx="6" cy="3.6" r=".7" fill="currentColor"/></svg></span><h4>Export finished</h4><button class="note-x" title="Dismiss"><svg width="9" height="9" viewBox="0 0 9 9" aria-hidden="true"><path d="M1 1 L8 8 M8 1 L1 8" stroke="currentColor" stroke-width="1.2"/></svg></button><p>timeline.mp4 is in Downloads. It took 41 seconds.</p></div>
+        </div>
+        <div class="measure h" style="left: calc(50% - 150px); width: 300px; bottom: 16px">300px</div>
+      </div>
+      <figcaption>
+        <b>A mark, a title, a line, a dismiss.</b> The title says what happened in
+        a few words; the line under it is optional and says the detail.
+        300px wide, height from the text.
+      </figcaption>
+    </figure>
+    <figure>
+      <div style="position: relative; height: 140px; background: var(--sunken); border-radius: var(--radius-lg); box-shadow: inset 0 0 0 1px var(--border)">
+        <div class="notes" style="right: 50%; bottom: 40px; transform: translateX(50%)">
+          <div class="note-card "><span class="note-mark"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><circle cx="6" cy="6" r="4.6" fill="none" stroke="currentColor" stroke-width="1.2"/><path d="M6 5.3 V8.6" stroke="currentColor" stroke-width="1.2"/><circle cx="6" cy="3.6" r=".7" fill="currentColor"/></svg></span><h4>Saved</h4><button class="note-x is-hover" title="Dismiss"><svg width="9" height="9" viewBox="0 0 9 9" aria-hidden="true"><path d="M1 1 L8 8 M8 1 L1 8" stroke="currentColor" stroke-width="1.2"/></svg></button></div>
+        </div>
+      </div>
+      <figcaption>
+        <b>Title only</b> is one line high. The dismiss is grey until the pointer
+        is on it, the same as the host's control in a tab.
+      </figcaption>
+    </figure>
+  </div>
+  <p class="note">
+    <b>A card can carry actions</b>, as buttons under its line. Pressing one is
+    an action the machine emits, naming the card and the button, and the host
+    does the rest; the card then leaves, because what it said has been answered.
+  </p>
+  <div class="frame two">
+    <figure>
+      <div style="position: relative; height: 140px; background: var(--sunken); border-radius: var(--radius-lg); box-shadow: inset 0 0 0 1px var(--border)">
+        <div class="notes" style="right: 50%; bottom: 34px; transform: translateX(50%)">
+          <div class="note-card "><span class="note-mark"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><circle cx="6" cy="6" r="4.6" fill="none" stroke="currentColor" stroke-width="1.2"/><path d="M6 5.3 V8.6" stroke="currentColor" stroke-width="1.2"/><circle cx="6" cy="3.6" r=".7" fill="currentColor"/></svg></span><h4>Window closed</h4><button class="note-x" title="Dismiss"><svg width="9" height="9" viewBox="0 0 9 9" aria-hidden="true"><path d="M1 1 L8 8 M8 1 L1 8" stroke="currentColor" stroke-width="1.2"/></svg></button><p>Inspector</p><div class="note-actions"><button class="note-act">Undo</button></div></div>
+        </div>
+      </div>
+      <figcaption>
+        <b>An action</b> is a word in a grey 1px border, right under the line it
+        answers. Never filled: a black button would be the loudest thing on the
+        surface, in a corner nobody is working in.
+      </figcaption>
+    </figure>
+    <figure>
+      <div style="position: relative; height: 140px; background: var(--sunken); border-radius: var(--radius-lg); box-shadow: inset 0 0 0 1px var(--border)">
+        <div class="notes" style="right: 50%; bottom: 34px; transform: translateX(50%)">
+          <div class="note-card "><span class="note-mark"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><circle cx="6" cy="6" r="4.6" fill="none" stroke="currentColor" stroke-width="1.2"/><path d="M6 5.3 V8.6" stroke="currentColor" stroke-width="1.2"/><circle cx="6" cy="3.6" r=".7" fill="currentColor"/></svg></span><h4>Window closed</h4><button class="note-x" title="Dismiss"><svg width="9" height="9" viewBox="0 0 9 9" aria-hidden="true"><path d="M1 1 L8 8 M8 1 L1 8" stroke="currentColor" stroke-width="1.2"/></svg></button><p>Inspector</p><div class="note-actions"><button class="note-act is-hover">Undo</button></div></div>
+        </div>
+      </div>
+      <figcaption>
+        <b>The pointer on it</b> raises it and its line goes black, the way a
+        card's does while the pointer is on it.
+      </figcaption>
+    </figure>
+  </div>
+</section>
+
+<section class="sheet" id="stack">
+  <div class="name"><h2>More than one</h2><code>#stack</code></div>
+  <p class="note">
+    <b>The newest is nearest the corner</b> and the older ones are pushed up,
+    8px apart. The corner is where the eye goes when something arrives, so the
+    thing that just arrived is the thing there.
+  </p>
+  <div class="frame two">
+    <figure>
+      <div class="app short">
+        <div class="hostbar"><b>weaver</b> <span>three notifications</span></div>
+        <div class="dock row" style="grid-template-columns: 1fr var(--gap) 260px">
+          <div class="pane sketch"><div class="pane-strip"><div class="pane-line" style="left: 160px"></div></div><div class="tab is-showing is-only"><span class="tab-icon"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2 H10 V10 H2 Z" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></span><h3>Canvas</h3></div><div class="win"><div class="fill">the host&#39;s</div></div></div>
+          <div class="gap gap-v"></div>
+          <div class="pane sketch"><div class="pane-strip"><div class="pane-line" style="left: 160px"></div></div><div class="tab is-showing is-only"><span class="tab-icon"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2 H10 V10 H2 Z" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></span><h3>Inspector</h3></div><div class="win"><div class="fill lines"></div></div></div>
+        <div class="notes" style="top: auto"><div class="note-card "><span class="note-mark"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><circle cx="6" cy="6" r="4.6" fill="none" stroke="currentColor" stroke-width="1.2"/><path d="M6 5.3 V8.6" stroke="currentColor" stroke-width="1.2"/><circle cx="6" cy="3.6" r=".7" fill="currentColor"/></svg></span><h4>Synced</h4><button class="note-x" title="Dismiss"><svg width="9" height="9" viewBox="0 0 9 9" aria-hidden="true"><path d="M1 1 L8 8 M8 1 L1 8" stroke="currentColor" stroke-width="1.2"/></svg></button><p>4 files from the server</p></div><div class="note-card "><span class="note-mark"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><circle cx="6" cy="6" r="4.6" fill="none" stroke="currentColor" stroke-width="1.2"/><path d="M6 5.3 V8.6" stroke="currentColor" stroke-width="1.2"/><circle cx="6" cy="3.6" r=".7" fill="currentColor"/></svg></span><h4>Export finished</h4><button class="note-x" title="Dismiss"><svg width="9" height="9" viewBox="0 0 9 9" aria-hidden="true"><path d="M1 1 L8 8 M8 1 L1 8" stroke="currentColor" stroke-width="1.2"/></svg></button><p>timeline.mp4 is in Downloads</p></div><div class="note-card "><span class="note-mark"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><circle cx="6" cy="6" r="4.6" fill="none" stroke="currentColor" stroke-width="1.2"/><path d="M6 5.3 V8.6" stroke="currentColor" stroke-width="1.2"/><circle cx="6" cy="3.6" r=".7" fill="currentColor"/></svg></span><h4>Saved</h4><button class="note-x" title="Dismiss"><svg width="9" height="9" viewBox="0 0 9 9" aria-hidden="true"><path d="M1 1 L8 8 M8 1 L1 8" stroke="currentColor" stroke-width="1.2"/></svg></button><p>scene.weave, 2.4 MB</p></div></div>
+        </div>
+      </div>
+      <figcaption><b>Three</b>, oldest at the top.</figcaption>
+    </figure>
+    <figure>
+      <div class="app short">
+        <div class="hostbar"><b>weaver</b> <span>five notifications</span></div>
+        <div class="dock row" style="grid-template-columns: 1fr var(--gap) 260px">
+          <div class="pane sketch"><div class="pane-strip"><div class="pane-line" style="left: 160px"></div></div><div class="tab is-showing is-only"><span class="tab-icon"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2 H10 V10 H2 Z" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></span><h3>Canvas</h3></div><div class="win"><div class="fill">the host&#39;s</div></div></div>
+          <div class="gap gap-v"></div>
+          <div class="pane sketch"><div class="pane-strip"><div class="pane-line" style="left: 160px"></div></div><div class="tab is-showing is-only"><span class="tab-icon"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2 H10 V10 H2 Z" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></span><h3>Inspector</h3></div><div class="win"><div class="fill lines"></div></div></div>
+        <div class="notes" style="top: auto"><div class="note-card "><span class="note-mark"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><circle cx="6" cy="6" r="4.6" fill="none" stroke="currentColor" stroke-width="1.2"/><path d="M6 5.3 V8.6" stroke="currentColor" stroke-width="1.2"/><circle cx="6" cy="3.6" r=".7" fill="currentColor"/></svg></span><h4>Synced</h4><button class="note-x" title="Dismiss"><svg width="9" height="9" viewBox="0 0 9 9" aria-hidden="true"><path d="M1 1 L8 8 M8 1 L1 8" stroke="currentColor" stroke-width="1.2"/></svg></button><p>4 files from the server</p></div><div class="note-card "><span class="note-mark"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><circle cx="6" cy="6" r="4.6" fill="none" stroke="currentColor" stroke-width="1.2"/><path d="M6 5.3 V8.6" stroke="currentColor" stroke-width="1.2"/><circle cx="6" cy="3.6" r=".7" fill="currentColor"/></svg></span><h4>Export finished</h4><button class="note-x" title="Dismiss"><svg width="9" height="9" viewBox="0 0 9 9" aria-hidden="true"><path d="M1 1 L8 8 M8 1 L1 8" stroke="currentColor" stroke-width="1.2"/></svg></button><p>timeline.mp4 is in Downloads</p></div><div class="note-card "><span class="note-mark"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><circle cx="6" cy="6" r="4.6" fill="none" stroke="currentColor" stroke-width="1.2"/><path d="M6 5.3 V8.6" stroke="currentColor" stroke-width="1.2"/><circle cx="6" cy="3.6" r=".7" fill="currentColor"/></svg></span><h4>Export finished</h4><button class="note-x" title="Dismiss"><svg width="9" height="9" viewBox="0 0 9 9" aria-hidden="true"><path d="M1 1 L8 8 M8 1 L1 8" stroke="currentColor" stroke-width="1.2"/></svg></button><p>timeline.mp4 is in Downloads</p></div><div class="note-card "><span class="note-mark"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><circle cx="6" cy="6" r="4.6" fill="none" stroke="currentColor" stroke-width="1.2"/><path d="M6 5.3 V8.6" stroke="currentColor" stroke-width="1.2"/><circle cx="6" cy="3.6" r=".7" fill="currentColor"/></svg></span><h4>Synced</h4><button class="note-x" title="Dismiss"><svg width="9" height="9" viewBox="0 0 9 9" aria-hidden="true"><path d="M1 1 L8 8 M8 1 L1 8" stroke="currentColor" stroke-width="1.2"/></svg></button><p>4 files from the server</p></div><div class="note-card "><span class="note-mark"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><circle cx="6" cy="6" r="4.6" fill="none" stroke="currentColor" stroke-width="1.2"/><path d="M6 5.3 V8.6" stroke="currentColor" stroke-width="1.2"/><circle cx="6" cy="3.6" r=".7" fill="currentColor"/></svg></span><h4>Saved</h4><button class="note-x" title="Dismiss"><svg width="9" height="9" viewBox="0 0 9 9" aria-hidden="true"><path d="M1 1 L8 8 M8 1 L1 8" stroke="currentColor" stroke-width="1.2"/></svg></button><p>scene.weave, 2.4 MB</p></div></div>
+        </div>
+      </div>
+      <figcaption>
+        <b>There is no cap.</b> A stack taller than the surface runs off its
+        top and is clipped there, like anything else the dock draws; the
+        oldest are the ones out of sight, and they are the next to leave.
+      </figcaption>
+    </figure>
+  </div>
+  </section>
+
+<section class="sheet" id="kinds">
+  <div class="name"><h2>Warnings and errors</h2><code>#kinds</code></div>
+  <p class="note">
+    <b>Three kinds</b>: something happened, something might be wrong, and
+    something went wrong. Only the mark carries the kind — amber for a
+    warning, and red kept for the one thing red is for. A coloured card is an
+    alarm, and neither of these is always one.
+    
+  </p>
+  <div class="frame">
+    <div class="app short">
+        <div class="hostbar"><b>weaver</b> <span>an error and a warning</span></div>
+        <div class="dock row" style="grid-template-columns: 1fr var(--gap) 260px">
+          <div class="pane sketch"><div class="pane-strip"><div class="pane-line" style="left: 160px"></div></div><div class="tab is-showing is-only"><span class="tab-icon"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2 H10 V10 H2 Z" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></span><h3>Canvas</h3></div><div class="win"><div class="fill">the host&#39;s</div></div></div>
+          <div class="gap gap-v"></div>
+          <div class="pane sketch"><div class="pane-strip"><div class="pane-line" style="left: 160px"></div></div><div class="tab is-showing is-only"><span class="tab-icon"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2 H10 V10 H2 Z" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></span><h3>Inspector</h3></div><div class="win"><div class="fill lines"></div></div></div>
+        <div class="notes" style="top: auto"><div class="note-card is-warning"><span class="note-mark"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M6 1 L11.4 10.6 H0.6 Z" fill="currentColor" stroke="currentColor" stroke-width=".8" stroke-linejoin="round"/><path d="M6 4.4 V7.4" stroke="#fff" stroke-width="1.2"/><circle cx="6" cy="9" r=".7" fill="#fff"/></svg></span><h4>Running low on disk</h4><button class="note-x" title="Dismiss"><svg width="9" height="9" viewBox="0 0 9 9" aria-hidden="true"><path d="M1 1 L8 8 M8 1 L1 8" stroke="currentColor" stroke-width="1.2"/></svg></button><p>300 MB free on the export drive.</p></div><div class="note-card is-danger"><span class="note-mark"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><circle cx="6" cy="6" r="5.2" fill="currentColor"/><path d="M6 3 V6.6" stroke="#fff" stroke-width="1.3"/><circle cx="6" cy="8.6" r=".75" fill="#fff"/></svg></span><h4>Export failed</h4><button class="note-x" title="Dismiss"><svg width="9" height="9" viewBox="0 0 9 9" aria-hidden="true"><path d="M1 1 L8 8 M8 1 L1 8" stroke="currentColor" stroke-width="1.2"/></svg></button><p>Disk is full. 1.2 GB needed, 300 MB free.</p></div><div class="note-card "><span class="note-mark"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><circle cx="6" cy="6" r="4.6" fill="none" stroke="currentColor" stroke-width="1.2"/><path d="M6 5.3 V8.6" stroke="currentColor" stroke-width="1.2"/><circle cx="6" cy="3.6" r=".7" fill="currentColor"/></svg></span><h4>Saved</h4><button class="note-x" title="Dismiss"><svg width="9" height="9" viewBox="0 0 9 9" aria-hidden="true"><path d="M1 1 L8 8 M8 1 L1 8" stroke="currentColor" stroke-width="1.2"/></svg></button><p>scene.weave, 2.4 MB</p></div></div>
+        </div>
+      </div>
+  </div>
+  </section>
+
+<section class="sheet" id="coming">
+  <div class="name"><h2>Coming and going</h2><code>#coming</code></div>
+  <p class="note">
+    A card <b>slides up from the bottom edge</b> and fades in, over
+    <code>--fade</code>. The ones above it move up to make room over the same
+    time, so the whole stack rises together and nothing jumps.
+  </p>
+  <div class="frame two">
+    <figure>
+      <div class="app short">
+        <div class="hostbar"><b>weaver</b> <span>arriving</span></div>
+        <div class="dock row" style="grid-template-columns: 1fr var(--gap) 260px">
+          <div class="pane sketch"><div class="pane-strip"><div class="pane-line" style="left: 160px"></div></div><div class="tab is-showing is-only"><span class="tab-icon"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2 H10 V10 H2 Z" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></span><h3>Canvas</h3></div><div class="win"><div class="fill">the host&#39;s</div></div></div>
+          <div class="gap gap-v"></div>
+          <div class="pane sketch"><div class="pane-strip"><div class="pane-line" style="left: 160px"></div></div><div class="tab is-showing is-only"><span class="tab-icon"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2 H10 V10 H2 Z" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></span><h3>Inspector</h3></div><div class="win"><div class="fill lines"></div></div></div>
+        <div class="notes" style="top: auto"><div class="note-card "><span class="note-mark"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><circle cx="6" cy="6" r="4.6" fill="none" stroke="currentColor" stroke-width="1.2"/><path d="M6 5.3 V8.6" stroke="currentColor" stroke-width="1.2"/><circle cx="6" cy="3.6" r=".7" fill="currentColor"/></svg></span><h4>Synced</h4><button class="note-x" title="Dismiss"><svg width="9" height="9" viewBox="0 0 9 9" aria-hidden="true"><path d="M1 1 L8 8 M8 1 L1 8" stroke="currentColor" stroke-width="1.2"/></svg></button><p>4 files from the server</p></div><div class="note-card is-arriving"><span class="note-mark"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><circle cx="6" cy="6" r="4.6" fill="none" stroke="currentColor" stroke-width="1.2"/><path d="M6 5.3 V8.6" stroke="currentColor" stroke-width="1.2"/><circle cx="6" cy="3.6" r=".7" fill="currentColor"/></svg></span><h4>Saved</h4><button class="note-x" title="Dismiss"><svg width="9" height="9" viewBox="0 0 9 9" aria-hidden="true"><path d="M1 1 L8 8 M8 1 L1 8" stroke="currentColor" stroke-width="1.2"/></svg></button><p>scene.weave, 2.4 MB</p></div></div>
+        </div>
+      </div>
+      <figcaption><b>Arriving</b>, part way in.</figcaption>
+    </figure>
+    <figure>
+      <div class="app short">
+        <div class="hostbar"><b>weaver</b> <span>the pointer on a card</span></div>
+        <div class="dock row" style="grid-template-columns: 1fr var(--gap) 260px">
+          <div class="pane sketch"><div class="pane-strip"><div class="pane-line" style="left: 160px"></div></div><div class="tab is-showing is-only"><span class="tab-icon"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2 H10 V10 H2 Z" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></span><h3>Canvas</h3></div><div class="win"><div class="fill">the host&#39;s</div></div></div>
+          <div class="gap gap-v"></div>
+          <div class="pane sketch"><div class="pane-strip"><div class="pane-line" style="left: 160px"></div></div><div class="tab is-showing is-only"><span class="tab-icon"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2 H10 V10 H2 Z" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></span><h3>Inspector</h3></div><div class="win"><div class="fill lines"></div></div></div>
+        <div class="notes" style="top: auto"><div class="note-card is-held"><span class="note-mark"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><circle cx="6" cy="6" r="4.6" fill="none" stroke="currentColor" stroke-width="1.2"/><path d="M6 5.3 V8.6" stroke="currentColor" stroke-width="1.2"/><circle cx="6" cy="3.6" r=".7" fill="currentColor"/></svg></span><h4>Synced</h4><button class="note-x is-hover" title="Dismiss"><svg width="9" height="9" viewBox="0 0 9 9" aria-hidden="true"><path d="M1 1 L8 8 M8 1 L1 8" stroke="currentColor" stroke-width="1.2"/></svg></button><p>4 files from the server</p></div><div class="note-card "><span class="note-mark"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><circle cx="6" cy="6" r="4.6" fill="none" stroke="currentColor" stroke-width="1.2"/><path d="M6 5.3 V8.6" stroke="currentColor" stroke-width="1.2"/><circle cx="6" cy="3.6" r=".7" fill="currentColor"/></svg></span><h4>Saved</h4><button class="note-x" title="Dismiss"><svg width="9" height="9" viewBox="0 0 9 9" aria-hidden="true"><path d="M1 1 L8 8 M8 1 L1 8" stroke="currentColor" stroke-width="1.2"/></svg></button><p>scene.weave, 2.4 MB</p></div></div>
+        </div>
+      </div>
+      <figcaption>
+        <b>The pointer on a card holds every card</b> where it is: nothing leaves
+        while you are reading it, and nothing below it moves up under the pointer.
+      </figcaption>
+    </figure>
+  </div>
+  <p class="note">
+    <b>It leaves on its own after five seconds</b>, or when dismissed, by fading
+    in place; the ones above it then settle down into the room it left. The five seconds are a constant in
+    <code>dock-state</code>, and the time arrives with the frame's batch of
+    events, so the machine still has no clock of its own.
+  </p>
+  </section>
+
+</div>
+</body>
+</html>

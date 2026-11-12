@@ -32,12 +32,14 @@ top of it.
 **Scope, as decided so far.** Each of these was a choice and each can be
 revisited, but none of them is a gap to be helpfully filled in:
 
-- **Tiled, never overlapping.** No z-order, no floating windows. The one thing
-  ever drawn over a window is the ghost under the cursor mid-drag.
+- **Tiled, never overlapping.** No z-order, no floating windows. Windows
+  never overlap each other; what is drawn over them is the ghost under the
+  cursor mid-drag and the notifications in the bottom right corner.
 - **No tabs yet.** A slot holds one window. Tabs are wanted later, which is why
   nothing claims the centre of a window as a drop target.
 - **No components.** No buttons, rows, inputs, palettes. The library draws a
-  title bar, a gap, a ghost and a preview, and that is the whole list.
+  title bar, a gap, a ghost, a preview and a notification card with its
+  actions, and that is the whole list.
 - **The web first.** Native comes later, and GPUI is the intended backend for
   it — which is why nothing in the machine may name a browser type.
 - **The theme is not part of the library.** It is a role set a host can

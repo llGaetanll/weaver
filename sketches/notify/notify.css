@@ -1,0 +1,58 @@
+/* A notification card, drawn for the board only. It moves into the library's
+   own stylesheet the day the library draws one. */
+
+.notes {
+  position: absolute; z-index: 4;
+  right: 12px; bottom: 12px;
+  width: 300px;
+  display: flex; flex-direction: column; gap: 8px;
+  pointer-events: none;
+}
+
+.note-card {
+  position: relative;
+  display: grid; grid-template-columns: auto 1fr auto; gap: 1px 9px;
+  padding: 10px 10px 11px 12px;
+  background: var(--panel);
+  border: 1px solid var(--border-firm);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 8px 24px rgb(0 0 0 / .08), 0 1px 3px rgb(0 0 0 / .06);
+  pointer-events: auto;
+}
+
+.note-mark { grid-row: 1 / span 2; padding-top: 4px; color: var(--text-faint); }
+.note-mark > svg { display: block; }
+.note-card h4 { margin: 0; font-size: 13px; font-weight: 500; line-height: 20px; }
+.note-card p { grid-column: 2; margin: 0; font-size: 12px; color: var(--text-muted); }
+.note-x {
+  grid-row: 1; grid-column: 3;
+  display: grid; place-items: center; width: var(--row-sm); height: var(--row-sm);
+  margin: -1px -2px 0 0; border: 0; border-radius: var(--radius-sm);
+  background: transparent; color: var(--text-faint);
+}
+.note-x.is-hover { background: var(--raised); color: var(--text); }
+
+.note-actions { grid-column: 2 / span 2; display: flex; gap: 6px; margin-top: 7px; }
+.note-act {
+  height: var(--row-sm); padding: 0 9px;
+  border: 1px solid var(--border-firm); border-radius: var(--radius-sm);
+  background: var(--panel); color: var(--text);
+  font: 500 12px var(--sans);
+}
+.note-act.is-hover { background: var(--raised); border-color: var(--accent); }
+
+/* Only the mark carries the kind. */
+.note-card.is-warning .note-mark { color: var(--warning); }
+.note-card.is-danger .note-mark { color: var(--danger); }
+
+/* A card the pointer is on holds still, and says so with its line. */
+.note-card.is-held { border-color: var(--accent); }
+
+/* Coming and going, frozen part way for the picture. */
+.note-card.is-arriving { transform: translateY(24px); opacity: .45; }
+.note-card.is-leaving  { opacity: .35; }
+
+/* The dimensions, drawn over a card. */
+.measure { position: absolute; font-family: var(--mono); font-size: 10px; color: var(--text-muted); }
+.measure.h { border-top: 1px dashed var(--text-faint); padding-top: 2px; text-align: center; }
+.measure.v { border-left: 1px dashed var(--text-faint); padding-left: 4px; display: flex; align-items: center; }
