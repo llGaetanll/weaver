@@ -1,0 +1,62 @@
+/* The launcher, drawn for the board only. It moves into the library's own
+   stylesheet the day the library draws one. */
+
+.launcher {
+  position: absolute; z-index: 4;
+  left: 50%; top: 18%; transform: translateX(-50%);
+  width: min(520px, calc(100% - 48px));
+  background: var(--panel);
+  border: 1px solid var(--border-firm);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 16px 48px rgb(0 0 0 / .12), 0 2px 6px rgb(0 0 0 / .06);
+  overflow: hidden;
+}
+
+.launcher-query {
+  display: flex; align-items: center; gap: 9px;
+  height: 40px; padding: 0 14px;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+}
+.launcher-query > svg { flex: none; color: var(--text-faint); }
+.launcher-query .placeholder { color: var(--text-faint); }
+.launcher-query .caret {
+  display: inline-block; width: 1px; height: 17px; margin-left: 1px;
+  vertical-align: -3px; background: var(--accent);
+}
+
+.launcher-list { padding: 5px; }
+.launcher-row {
+  display: flex; align-items: center; gap: 10px;
+  height: 30px; padding: 0 9px;
+  border-radius: var(--radius);
+  color: var(--text);
+}
+.launcher-row .name { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.launcher-row .name b { font-weight: 600; }
+
+/* The chosen row is the one Enter would run. */
+.launcher-row.is-chosen { background: var(--accent-weak); }
+.launcher-row.is-chosen::before {
+  content: ""; width: 2px; height: 14px; margin: 0 -2px 0 -6px;
+  border-radius: 1px; background: var(--accent);
+}
+
+.launcher-empty { padding: 18px 14px 20px; color: var(--text-muted); font-size: 13px; }
+
+.launcher-foot {
+  display: flex; gap: 14px; padding: 7px 14px;
+  border-top: 1px solid var(--border);
+  font-size: 11px; color: var(--text-faint);
+}
+.launcher-foot kbd { font: 11px var(--mono); color: var(--text-muted); }
+
+/* The definition, written out beside a picture. */
+.def {
+  margin: 0; padding: 14px 16px;
+  border: 1px solid var(--border); border-radius: var(--radius);
+  background: var(--panel);
+  font: 12px/1.6 var(--mono); color: var(--text-muted);
+  white-space: pre; overflow-x: auto;
+}
+.def b { color: var(--text); font-weight: 500; }

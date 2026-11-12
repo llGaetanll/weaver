@@ -13,6 +13,9 @@ Nothing here runs. Every file is a picture.
 - `notify/index.html` — notifications in the bottom right corner: the card,
   a stack of them, warnings and errors, and how they come and go. Ids `corner` `card`
   `stack` `kinds` `coming`.
+- `launcher/index.html` — the command launcher over the middle of the
+  surface: open, finding a command, nothing found, running one, closing. Ids
+  `open` `find` `none` `run` `close`.
 
 Each sheet carries an id, so from a terminal:
 

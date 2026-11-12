@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>The launcher, state by state</title>
+<link rel="stylesheet" href="../design/theme.css" />
+<link rel="stylesheet" href="../../crates/dock-web/dock.css" />
+<link rel="stylesheet" href="../dock/board.css" />
+<link rel="stylesheet" href="launcher.css" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+</head>
+<body>
+<div class="wrap">
+
+<h1>The launcher, state by state</h1>
+<p class="lead">
+  A box over the middle of the surface where any command the host defined can
+  be found by name and run. <b>Nothing here runs.</b> It is drawn before it is
+  built, so that it is argued about once.
+</p>
+<p class="lead">
+  <b>A command is a name and a list of actions.</b> Running it emits those
+  actions, in order, exactly as if each had come from its own gesture. The
+  launcher adds no way of doing anything; it is another way of asking for what
+  the dock and the host can already do.
+</p>
+
+<nav class="toc">
+  <a href="#open">open</a>
+  <a href="#find">finding one</a>
+  <a href="#none">nothing found</a>
+  <a href="#run">running one</a>
+  <a href="#close">closing</a>
+</nav>
+
+<section class="sheet" id="open">
+  <div class="name"><h2>Open</h2><code>#open</code></div>
+  <p class="note">
+    <b>Centred across the surface, a fifth of the way down</b>, 520px wide. A
+    fifth rather than a half because the list grows downward from the query,
+    and a box that starts at the middle runs out of room halfway through it.
+    Same card as a notification: <code>--radius-lg</code>, a firm border and a
+    deeper shadow, because this one is in front of everything and has the keys.
+  </p>
+  <div class="frame">
+    <div class="app" style="height: 480px">
+        <div class="hostbar"><b>weaver</b> <span>the launcher open</span></div>
+        <div class="dock row" style="grid-template-columns: 1fr var(--gap) 260px">
+          <div class="col" style="grid-template-rows: 1fr var(--gap) 110px">
+            <div class="pane sketch"><div class="pane-strip"><div class="pane-line" style="left: 160px"></div></div><div class="tab is-showing is-only"><span class="tab-icon"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2 H10 V10 H2 Z" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></span><h3>Canvas</h3></div><div class="win"><div class="fill">the host&#39;s</div></div></div>
+            <div class="gap gap-h"></div>
+            <div class="pane sketch"><div class="pane-strip"><div class="pane-line" style="left: 160px"></div></div><div class="tab is-showing is-only"><span class="tab-icon"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2 H10 V10 H2 Z" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></span><h3>Timeline</h3></div><div class="win"><div class="fill lines"></div></div></div>
+          </div>
+          <div class="gap gap-v"></div>
+          <div class="pane sketch"><div class="pane-strip"><div class="pane-line" style="left: 160px"></div></div><div class="tab is-showing is-only"><span class="tab-icon"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2 H10 V10 H2 Z" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></span><h3>Inspector</h3></div><div class="win"><div class="fill lines"></div></div></div>
+          <div class="launcher"><div class="launcher-query"><svg width="13" height="13" viewBox="0 0 13 13" aria-hidden="true"><circle cx="5.5" cy="5.5" r="4" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M8.5 8.5 L12 12" stroke="currentColor" stroke-width="1.3"/></svg><span><span class="caret"></span><span class="placeholder">Run a command</span></span></div><div class="launcher-list"><div class="launcher-row is-chosen"><span class="name">Close window</span></div><div class="launcher-row"><span class="name">Split right</span></div><div class="launcher-row"><span class="name">Split down</span></div><div class="launcher-row"><span class="name">Move window to the left</span></div><div class="launcher-row"><span class="name">Move window to the right</span></div><div class="launcher-row"><span class="name">Focus next window</span></div><div class="launcher-row"><span class="name">Show the inspector</span></div><div class="launcher-row"><span class="name">Reset the layout</span></div></div><div class="launcher-foot"><span><kbd>↑↓</kbd> choose</span><span><kbd>↵</kbd> run</span><span><kbd>esc</kbd> close</span></div></div>
+        </div>
+      </div>
+  </div>
+  <p class="note">
+    <b>The dock is not dimmed.</b> A command acts on what is behind the
+    launcher — the window it would close, the slot it would split — so what is
+    behind stays readable. The shadow is enough to say which is in front.
+  </p>
+  <p class="note">
+    <b>Empty, it lists every command</b> in the order the host defined them,
+    the first one chosen, so Enter on an open launcher does something
+    predictable. Eight rows show; past eight the list scrolls inside the card,
+    and the card never grows past the surface.
+  </p>
+  <div class="gap-note">
+    <b>Not decided:</b> what opens it. A key, presumably, but the machine has
+    no keys yet — drawn as the host sending <i>open the launcher</i> as an
+    event, until the dock grows key bindings of its own.
+  </div>
+</section>
+
+<section class="sheet" id="find">
+  <div class="name"><h2>Finding one</h2><code>#find</code></div>
+  <p class="note">
+    <b>Typing narrows the list</b> to the commands whose name contains the
+    letters typed, in order, not necessarily together: <i>spr</i> finds
+    <i>Split right</i>. Letters that start a word rank first, so the obvious
+    one is on top, and the matched letters are bold so it is plain why each row
+    is there.
+  </p>
+  <div class="frame two">
+    <figure>
+      <div class="app short">
+        <div class="hostbar"><b>weaver</b> <span>typed spl</span></div>
+        <div class="dock row" style="grid-template-columns: 1fr var(--gap) 260px">
+          <div class="col" style="grid-template-rows: 1fr var(--gap) 110px">
+            <div class="pane sketch"><div class="pane-strip"><div class="pane-line" style="left: 160px"></div></div><div class="tab is-showing is-only"><span class="tab-icon"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2 H10 V10 H2 Z" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></span><h3>Canvas</h3></div><div class="win"><div class="fill">the host&#39;s</div></div></div>
+            <div class="gap gap-h"></div>
+            <div class="pane sketch"><div class="pane-strip"><div class="pane-line" style="left: 160px"></div></div><div class="tab is-showing is-only"><span class="tab-icon"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2 H10 V10 H2 Z" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></span><h3>Timeline</h3></div><div class="win"><div class="fill lines"></div></div></div>
+          </div>
+          <div class="gap gap-v"></div>
+          <div class="pane sketch"><div class="pane-strip"><div class="pane-line" style="left: 160px"></div></div><div class="tab is-showing is-only"><span class="tab-icon"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2 H10 V10 H2 Z" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></span><h3>Inspector</h3></div><div class="win"><div class="fill lines"></div></div></div>
+          <div class="launcher"><div class="launcher-query"><svg width="13" height="13" viewBox="0 0 13 13" aria-hidden="true"><circle cx="5.5" cy="5.5" r="4" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M8.5 8.5 L12 12" stroke="currentColor" stroke-width="1.3"/></svg><span>spl<span class="caret"></span></span></div><div class="launcher-list"><div class="launcher-row is-chosen"><span class="name"><b>Spl</b>it right</span></div><div class="launcher-row"><span class="name"><b>Spl</b>it down</span></div></div><div class="launcher-foot"><span><kbd>↑↓</kbd> choose</span><span><kbd>↵</kbd> run</span><span><kbd>esc</kbd> close</span></div></div>
+        </div>
+      </div>
+      <figcaption><b>Two left</b>, the first chosen. Each key resets the choice to the top row.</figcaption>
+    </figure>
+    <figure>
+      <div class="app short">
+        <div class="hostbar"><b>weaver</b> <span>typed move</span></div>
+        <div class="dock row" style="grid-template-columns: 1fr var(--gap) 260px">
+          <div class="col" style="grid-template-rows: 1fr var(--gap) 110px">
+            <div class="pane sketch"><div class="pane-strip"><div class="pane-line" style="left: 160px"></div></div><div class="tab is-showing is-only"><span class="tab-icon"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2 H10 V10 H2 Z" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></span><h3>Canvas</h3></div><div class="win"><div class="fill">the host&#39;s</div></div></div>
+            <div class="gap gap-h"></div>
+            <div class="pane sketch"><div class="pane-strip"><div class="pane-line" style="left: 160px"></div></div><div class="tab is-showing is-only"><span class="tab-icon"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2 H10 V10 H2 Z" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></span><h3>Timeline</h3></div><div class="win"><div class="fill lines"></div></div></div>
+          </div>
+          <div class="gap gap-v"></div>
+          <div class="pane sketch"><div class="pane-strip"><div class="pane-line" style="left: 160px"></div></div><div class="tab is-showing is-only"><span class="tab-icon"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2 H10 V10 H2 Z" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></span><h3>Inspector</h3></div><div class="win"><div class="fill lines"></div></div></div>
+          <div class="launcher"><div class="launcher-query"><svg width="13" height="13" viewBox="0 0 13 13" aria-hidden="true"><circle cx="5.5" cy="5.5" r="4" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M8.5 8.5 L12 12" stroke="currentColor" stroke-width="1.3"/></svg><span>move<span class="caret"></span></span></div><div class="launcher-list"><div class="launcher-row"><span class="name"><b>Move</b> window to the right</span></div><div class="launcher-row is-chosen"><span class="name"><b>Move</b> window to the left</span></div></div><div class="launcher-foot"><span><kbd>↑↓</kbd> choose</span><span><kbd>↵</kbd> run</span><span><kbd>esc</kbd> close</span></div></div>
+        </div>
+      </div>
+      <figcaption><b>The second chosen</b> with ↓, or with the pointer: a row under the pointer is the chosen row, there is only ever one.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<section class="sheet" id="none">
+  <div class="name"><h2>Nothing found</h2><code>#none</code></div>
+  <p class="note">
+    <b>A plain line where the list was</b>, and the card shrinks to it. Enter
+    does nothing and the launcher stays open, because the likeliest thing next
+    is a deleted letter, not a second try from scratch.
+  </p>
+  <div class="frame">
+    <div class="app short">
+        <div class="hostbar"><b>weaver</b> <span>typed qqq</span></div>
+        <div class="dock row" style="grid-template-columns: 1fr var(--gap) 260px">
+          <div class="col" style="grid-template-rows: 1fr var(--gap) 110px">
+            <div class="pane sketch"><div class="pane-strip"><div class="pane-line" style="left: 160px"></div></div><div class="tab is-showing is-only"><span class="tab-icon"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2 H10 V10 H2 Z" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></span><h3>Canvas</h3></div><div class="win"><div class="fill">the host&#39;s</div></div></div>
+            <div class="gap gap-h"></div>
+            <div class="pane sketch"><div class="pane-strip"><div class="pane-line" style="left: 160px"></div></div><div class="tab is-showing is-only"><span class="tab-icon"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2 H10 V10 H2 Z" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></span><h3>Timeline</h3></div><div class="win"><div class="fill lines"></div></div></div>
+          </div>
+          <div class="gap gap-v"></div>
+          <div class="pane sketch"><div class="pane-strip"><div class="pane-line" style="left: 160px"></div></div><div class="tab is-showing is-only"><span class="tab-icon"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2 H10 V10 H2 Z" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></span><h3>Inspector</h3></div><div class="win"><div class="fill lines"></div></div></div>
+          <div class="launcher"><div class="launcher-query"><svg width="13" height="13" viewBox="0 0 13 13" aria-hidden="true"><circle cx="5.5" cy="5.5" r="4" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M8.5 8.5 L12 12" stroke="currentColor" stroke-width="1.3"/></svg><span>qqq<span class="caret"></span></span></div><div class="launcher-empty">No command matches <b>qqq</b>.</div><div class="launcher-foot"><span><kbd>↑↓</kbd> choose</span><span><kbd>↵</kbd> run</span><span><kbd>esc</kbd> close</span></div></div>
+        </div>
+      </div>
+  </div>
+</section>
+
+<section class="sheet" id="run">
+  <div class="name"><h2>Running one</h2><code>#run</code></div>
+  <p class="note">
+    <b>Enter, or a click on a row, runs the chosen command</b>: the launcher
+    closes and the command's actions come out of the next
+    <code>emit_actions</code>, in the order it lists them. One batch, so a
+    command that closes a window and focuses the next one is one change on
+    screen and not two.
+  </p>
+  <div class="frame two">
+    <figure>
+<pre class="def"><b>Command</b> {
+  name:    "Close window",
+  actions: [
+    <b>CloseWindow</b>(focused),
+    <b>FocusNext</b>,
+  ],
+}</pre>
+      <figcaption><b>What the host defines.</b> The list is fixed when the command is; it is not worked out when it runs.</figcaption>
+    </figure>
+    <figure>
+<pre class="def">&lt; OpenLauncher
+&lt; Query("clo")
+&lt; Enter
+&gt; <b>CloseWindow</b>(Inspector)
+&gt; <b>FocusNext</b></pre>
+      <figcaption><b>What goes in and what comes out.</b> The launcher's own events never leave it; only the command's actions do.</figcaption>
+    </figure>
+  </div>
+  <div class="gap-note">
+    <b>Not decided, on purpose:</b> commands that ask for something before
+    they run — <i>Move window to…</i> then a slot, <i>Open…</i> then a file.
+    There is no general answer yet, and none will be guessed at; each one is
+    decided when it is in front of us, and the board says no more about
+    commands than it has to until then.
+  </div>
+</section>
+
+<section class="sheet" id="close">
+  <div class="name"><h2>Closing</h2><code>#close</code></div>
+  <p class="note">
+    <b>Escape, or a press anywhere outside the card, closes it</b> and emits
+    nothing. The press outside is spent closing the launcher: it does not also
+    pick up a tab or a gap, because a click meant to dismiss something should
+    not move something else.
+  </p>
+  <p class="note">
+    <b>It opens empty every time.</b> What was typed last time is gone, so
+    the first key is always the start of a name.
+  </p>
+  <div class="gap-note">
+    <b>Not decided:</b> who owns the text being typed. The machine can hold
+    the query and match it, but a caret, selection and an input method for
+    non-Latin text are the platform's job, and nothing in the machine may name
+    a browser type. Drawn as the runtime keeping the text field and sending the
+    query as an event each time it changes.
+  </div>
+</section>
+
+</div>
+</body>
+</html>
