@@ -90,9 +90,10 @@ touching the machine; what follows is only what is specific to this library.
   computation and cannot disagree.
 - **Hit testing is in the machine**, because the machine owns the rects. The
   runtime forwards raw pointer positions and classifies nothing.
-- **No clock.** The drag threshold is a distance. The day something needs time —
-  a double click, a press and hold — it arrives as an event, never as a timer
-  in the runtime.
+- **Time is an event.** The machine reads no clock: the runtime sends the time
+  in as a tick, the machine keeps it, and every rule about time — a
+  notification's five seconds, a key sequence's timeout — is a comparison
+  against what it kept. Never a timer in the runtime.
 - **The alphabet is as small as the program can prove it needs.** Add the
   obvious events and actions; leave out anything you are unsure of and add it
   when the thing that needs it is in front of you.
