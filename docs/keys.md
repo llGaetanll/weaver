@@ -43,6 +43,24 @@ commands that take parameters, one case at a time.
 The primary modifier is Cmd on macOS and Ctrl elsewhere, so one config serves
 both.
 
+## Commands have names, and live in modules
+
+Every command has a proper name, `Module::Command`: `Dock::FocusNext`,
+`Launcher::Open`, `Editor::Restart`. The module is the part of the program the
+command belongs to and the command is what it does, as in Zed. The library
+defines its own modules (`Dock`, `Launcher`) and the host defines the rest. The
+name is what a binding refers to, so it is stable: renaming a command is a
+change to every config that binds it.
+
+**A module is only a namespace**, and which module a command goes in is
+decided by whoever defines it. It says nothing about where the command can
+run: `Timeline::PlayPause` is not tied to a timeline having focus. Where a key
+works is decided by contexts alone.
+
+**Each command also has a display name**, written by whoever defines it, and
+that is what the launcher lists: `Dock::CloseWindow` is shown as *Close
+window*. The name is for configs and the display name is for people.
+
 ## Sequences, and the timeout
 
 `ctrl-k ctrl-c` is two chords. While a sequence is part way through, the
@@ -86,16 +104,16 @@ around it untouched.
 
 ```toml
 [global]
-"primary-p"         = "open the launcher"
-"ctrl-k ctrl-c"     = "comment"
+"primary-p"         = "Launcher::Open"
+"ctrl-k ctrl-c"     = "Editor::Comment"
 
 [timeline]
-"space"             = "play or pause"
+"space"             = "Timeline::PlayPause"
 "ctrl-k ctrl-c"     = false
 
 [text]
 unbind-unmodified   = true
-"escape"            = "leave the input"
+"escape"            = "Text::Leave"
 ```
 
 A context unbinds every key without a modifier with one flag,
